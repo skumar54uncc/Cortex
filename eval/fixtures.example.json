@@ -1,0 +1,7 @@
+[
+  {
+    "query": "example company name",
+    "comment": "After indexing pages that mention this phrase, expect matching URLs here.",
+    "expectUrlsContaining": ["example.com", "linkedin.com"]
+  }
+]

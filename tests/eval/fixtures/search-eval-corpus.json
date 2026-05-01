@@ -1,0 +1,30 @@
+{
+  "documents": [
+    {"id": 1, "url": "https://docs.k8s.io/concepts/overview/", "domain": "docs.k8s.io", "title": "Kubernetes concepts", "summary": "Orchestration overview", "lastVisitedAt": 1700000012000, "visitCount": 2, "importanceScore": 0.72},
+    {"id": 2, "url": "https://react.dev/learn", "domain": "react.dev", "title": "Learn React", "summary": "Components and JSX", "lastVisitedAt": 1700000011000, "visitCount": 3, "importanceScore": 0.68},
+    {"id": 3, "url": "https://docs.python.org/3/tutorial/", "domain": "docs.python.org", "title": "Python tutorial", "summary": "Basics of Python language", "lastVisitedAt": 1700000010000, "visitCount": 2, "importanceScore": 0.55},
+    {"id": 4, "url": "https://langchain-ai.github.io/langgraph/", "domain": "langchain-ai.github.io", "title": "LangGraph agents", "summary": "Multi-agent graphs", "lastVisitedAt": 1700000009000, "visitCount": 2, "importanceScore": 0.62},
+    {"id": 5, "url": "https://nodejs.org/en/learn/getting-started", "domain": "nodejs.org", "title": "Node.js getting started", "summary": "Runtime basics", "lastVisitedAt": 1700000008000, "visitCount": 1, "importanceScore": 0.48},
+    {"id": 6, "url": "https://typescriptlang.org/docs/handbook/", "domain": "typescriptlang.org", "title": "TypeScript handbook", "summary": "Types and interfaces", "lastVisitedAt": 1700000007000, "visitCount": 2, "importanceScore": 0.58},
+    {"id": 7, "url": "https://developer.chrome.com/docs/extensions/", "domain": "developer.chrome.com", "title": "Chrome extensions", "summary": "MV3 overview", "lastVisitedAt": 1700000006000, "visitCount": 4, "importanceScore": 0.75},
+    {"id": 8, "url": "https://web.dev/vitals/", "domain": "web.dev", "title": "Core Web Vitals", "summary": "Performance metrics", "lastVisitedAt": 1700000005000, "visitCount": 1, "importanceScore": 0.42},
+    {"id": 9, "url": "https://sqlite.org/lang.html", "domain": "sqlite.org", "title": "SQLite SQL", "summary": "Query syntax", "lastVisitedAt": 1700000004000, "visitCount": 1, "importanceScore": 0.4},
+    {"id": 10, "url": "https://nginx.org/en/docs/", "domain": "nginx.org", "title": "Nginx docs", "summary": "Reverse proxy config", "lastVisitedAt": 1700000003000, "visitCount": 1, "importanceScore": 0.38},
+    {"id": 11, "url": "https://example.com/recipes/pasta", "domain": "example.com", "title": "Pasta recipes", "summary": "Cooking", "lastVisitedAt": 1700000002000, "visitCount": 1, "importanceScore": 0.22},
+    {"id": 12, "url": "https://postgres.ai/blog/docker", "domain": "postgres.ai", "title": "Postgres in Docker", "summary": "Containers database", "lastVisitedAt": 1700000001000, "visitCount": 2, "importanceScore": 0.52}
+  ],
+  "chunks": [
+    {"id": 101, "documentId": 1, "ord": 0, "text": "Kubernetes schedules workloads across clusters using pods deployments services ingress controllers"},
+    {"id": 102, "documentId": 2, "ord": 0, "text": "React lets you build user interfaces from reusable components with hooks state jsx rendering"},
+    {"id": 103, "documentId": 3, "ord": 0, "text": "Python indentation defines blocks pip installs packages django flask asyncio keywords"},
+    {"id": 104, "documentId": 4, "ord": 0, "text": "LangGraph orchestrates agents tools graphs retrieval augmented generation workflows"},
+    {"id": 105, "documentId": 5, "ord": 0, "text": "Node npm javascript runtime http servers streams buffers promises"},
+    {"id": 106, "documentId": 6, "ord": 0, "text": "TypeScript adds static types interfaces generics narrowing inference compiler"},
+    {"id": 107, "documentId": 7, "ord": 0, "text": "Chrome extension manifest service worker content scripts permissions mv3"},
+    {"id": 108, "documentId": 8, "ord": 0, "text": "largest contentful paint cumulative layout shift cls fid inp metrics vitals"},
+    {"id": 109, "documentId": 9, "ord": 0, "text": "SQLite lightweight relational sql transactions selects joins pragmas"},
+    {"id": 110, "documentId": 10, "ord": 0, "text": "nginx reverse proxy load balancer tls ssl upstream directives"},
+    {"id": 111, "documentId": 11, "ord": 0, "text": "boiling spaghetti marinara parmesan basil olive oil dinner"},
+    {"id": 112, "documentId": 12, "ord": 0, "text": "Postgresql docker compose volumes replication backups tuning"}
+  ]
+}

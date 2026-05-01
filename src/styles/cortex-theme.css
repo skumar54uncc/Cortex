@@ -1,0 +1,91 @@
+/**
+ * Cortex brand: warm beige surfaces (#e4e2dd) + accent (#c72a09).
+ * Imported before popup/options component CSS.
+ */
+:root {
+  /* Prefer Garet when fonts/Garet-Heavy.woff2 is bundled; else Plus Jakarta Sans */
+  --cx-brand-font:
+    "Garet", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --cx-font-body:
+    "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --cx-font-mono:
+    ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+
+  --cx-ts-display: 700 19px/1.15 var(--cx-brand-font);
+  --cx-ts-title: 700 14px/1.35 var(--cx-font-body);
+  --cx-ts-body: 400 13px/1.5 var(--cx-font-body);
+  --cx-ts-small: 500 12px/1.45 var(--cx-font-body);
+  --cx-ts-caption: 500 11px/1.45 var(--cx-font-body);
+  --cx-ts-metric: 700 22px/1.2 var(--cx-font-body);
+
+  --cx-bg: #e4e2dd;
+  --cx-surface: #f0eee9;
+  --cx-surface-raised: #faf8f4;
+  --cx-surface-2: #dad8d3;
+  --cx-accent: #c72a09;
+  --cx-accent-hover: #a82207;
+  --cx-accent-soft: rgba(199, 42, 9, 0.14);
+  --cx-accent-strong: rgba(199, 42, 9, 0.28);
+  --cx-text: #1c1917;
+  --cx-text-muted: #57534e;
+  --cx-border: rgba(28, 25, 23, 0.14);
+  --cx-link: #9a3412;
+  --cx-success: #166534;
+  --cx-success-soft: rgba(34, 197, 94, 0.14);
+  --cx-warning: #92400e;
+  --cx-warning-soft: rgba(245, 158, 11, 0.18);
+  --cx-danger: #b91c1c;
+  --cx-danger-soft: rgba(239, 68, 68, 0.12);
+  --cx-focus: rgba(199, 42, 9, 0.45);
+}
+
+body {
+  font: var(--cx-ts-body);
+}
+
+.cx-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cx-brand-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.12);
+  text-decoration: none;
+}
+
+.cx-brand-link:hover {
+  box-shadow: 0 2px 8px rgba(199, 42, 9, 0.22);
+}
+
+.cx-brand-link:focus-visible {
+  outline: 2px solid var(--cx-accent);
+  outline-offset: 2px;
+}
+
+.cx-brand-mark-wrap {
+  display: inline-flex;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.cx-brand-mark {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.cx-brand-wordmark {
+  font-family: var(--cx-brand-font);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-size: 19px;
+  line-height: 1.1;
+  color: var(--cx-accent);
+}

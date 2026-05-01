@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cortex — Privacy policy</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #1a1a1a;
+        --muted: #555;
+        --bg: #faf9f7;
+        --border: #ddd;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #e8e6e3;
+          --muted: #a8a6a3;
+          --bg: #1c1b19;
+          --border: #3d3c39;
+        }
+      }
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.55;
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: 1.5rem clamp(16px, 4vw, 28px) 3rem;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-top: 0;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin-top: 1.75rem;
+      }
+      p,
+      li {
+        color: var(--fg);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 0.5rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: rgba(127, 127, 127, 0.08);
+      }
+      a {
+        color: #c72a09;
+      }
+      @media (prefers-color-scheme: dark) {
+        a {
+          color: #f06543;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Cortex — Privacy policy</h1>
+    <p class="muted">Last updated: April 2026</p>
+
+    <p>
+      <strong>Summary:</strong> Cortex is a <strong>local-first</strong> Chrome extension. It builds a
+      searchable index of <strong>readable page text</strong> from sites you visit. Indexing and search run
+      <strong>on your device</strong> using IndexedDB and optional on-device ML. <strong>Optional cloud
+      chat</strong> (Google Gemini) sends only what you choose when you enable it in settings—typically
+      your question plus retrieved snippets—not your entire browsing history. Cortex does not operate a
+      backend that receives your indexed content.
+    </p>
+
+    <h2>Data collected by Cortex</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Where it stays</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Extracted page text (chunked)</td>
+          <td>Your device (IndexedDB)</td>
+          <td>Search, Ask, Digest</td>
+        </tr>
+        <tr>
+          <td>Visit timestamps / URLs / titles</td>
+          <td>Your device</td>
+          <td>Recency ranking, digests</td>
+        </tr>
+        <tr>
+          <td>Settings (blocklist, pause, chat mode, optional API key)</td>
+          <td><code>chrome.storage.local</code> on your device</td>
+          <td>Extension behavior</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      There is no Cortex account and no Cortex-hosted sync. <strong>Cortex does not sell your data.</strong>
+    </p>
+
+    <h2>Optional cloud chat (Gemini)</h2>
+    <p>
+      If you turn on cloud chat and add a Google Gemini API key, prompts are sent
+      <strong>from your browser directly to Google’s API</strong> under Google’s terms—not through Cortex
+      infrastructure. You can disable cloud chat at any time and remove your key from settings.
+    </p>
+
+    <h2>Permissions (Chrome)</h2>
+    <ul>
+      <li><strong>tabs / broad host access:</strong> Read active-tab context for indexing and show the in-page overlay when you use Cortex.</li>
+      <li><strong>storage:</strong> Saves settings and local extension state.</li>
+      <li><strong>history:</strong> Used only for optional bulk import features you trigger (e.g. first-install backfill), not continuous surveillance.</li>
+      <li><strong>scripting / offscreen / alarms:</strong> Required for MV3 lifecycle, embeddings, and periodic maintenance (e.g. storage headroom).</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>
+      Questions or privacy requests:
+      <a href="https://github.com/skumar54uncc/Cortex/issues">GitHub Issues</a>
+      for this project.
+    </p>
+
+    <p class="muted">
+      Source repository:
+      <a href="https://github.com/skumar54uncc/Cortex">github.com/skumar54uncc/Cortex</a>
+    </p>
+  </body>
+</html>

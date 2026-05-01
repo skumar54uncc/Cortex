@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cortex</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="cx cx-popup">
+      <header class="cx-popup-head">
+        <h1 class="cx-brand">
+          <a
+            class="cx-brand-link"
+            href="options.html"
+            target="_blank"
+            title="Cortex settings"
+          >
+            <img
+              src="icons/icon-128.png"
+              alt=""
+              width="32"
+              height="32"
+              class="cx-brand-mark"
+            />
+          </a>
+          <span class="cx-brand-wordmark">Cortex</span>
+        </h1>
+        <p class="cx-tagline">Private memory from pages you read.</p>
+        <div id="cx-privacy-blurb" class="cx-privacy-blurb">
+          <p class="cx-privacy-note">
+            Indexed data stays on your device. Live indexing uses no network — the embedding model
+            is bundled with the extension. Optional Cloud Chat (off by default) can send retrieved
+            snippets to Google Gemini only when you enable it in settings.
+          </p>
+          <button type="button" id="cx-privacy-ack" class="cx-privacy-ack">
+            Got it — don’t show again
+          </button>
+        </div>
+      </header>
+
+      <section class="cx-popup-status" aria-label="Status">
+        <p class="cx-status-line" role="status">
+          <span class="cx-status-prefix">Indexing</span>
+          <span class="cx-status-sep" aria-hidden="true">·</span>
+          <strong id="cx-indexing-state" class="cx-indexing-state">—</strong>
+          <span id="cx-indexing-detail" class="cx-status-detail"></span>
+        </p>
+        <p id="cx-current-tab" class="cx-current-tab" hidden></p>
+      </section>
+
+      <div class="cx-popup-actions">
+        <button type="button" id="cx-open-search" class="cx-btn cx-btn-primary cx-btn-hero">
+          Open search
+        </button>
+        <button type="button" id="cx-open-settings" class="cx-btn-link">
+          Privacy &amp; settings
+        </button>
+      </div>
+
+      <section class="cx-popup-library" aria-label="Library snapshot">
+        <h2 class="cx-section-title">Your library</h2>
+        <div id="cx-stats-error" class="cx-alert cx-alert-error" hidden>
+          <span id="cx-stats-error-msg">Couldn’t load stats.</span>
+          <button type="button" id="cx-retry-stats" class="cx-btn cx-btn-inline">
+            Retry
+          </button>
+        </div>
+        <dl id="cx-stats-dl" class="cx-stats">
+          <div class="cx-row">
+            <dt>Pages saved</dt>
+            <dd id="cx-pages">—</dd>
+          </div>
+          <div class="cx-row">
+            <dt>Text passages</dt>
+            <dd id="cx-chunks">—</dd>
+          </div>
+          <div class="cx-row">
+            <dt>Visits logged</dt>
+            <dd id="cx-visits">—</dd>
+          </div>
+        </dl>
+        <div id="cx-storage-wrap" class="cx-storage-wrap" hidden>
+          <div class="cx-storage-head">
+            <span class="cx-storage-label">Storage (browser quota)</span>
+            <span id="cx-storage-text" class="cx-storage-text"></span>
+          </div>
+          <div class="cx-storage-track" role="presentation">
+            <div id="cx-storage-bar" class="cx-storage-bar"></div>
+          </div>
+        </div>
+      </section>
+
+      <p class="cx-popup-shortcuts" title="Alternate: Alt+Shift+C — change shortcuts in chrome://extensions">
+        <kbd>Cmd/Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>
+        <span class="cx-shortcuts-note"> opens search · Alt+Shift+C also works</span>
+      </p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

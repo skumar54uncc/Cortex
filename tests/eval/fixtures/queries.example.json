@@ -1,0 +1,8 @@
+[
+  {
+    "query": "example hybrid retrieval",
+    "expectedTopUrls": ["https://example.com/article"],
+    "minScoreForTop": 0.05,
+    "shouldNotContain": ["evil.example"]
+  }
+]

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to Cortex</title>
+    <style>
+      body {
+        font-family: system-ui, Segoe UI, Roboto, sans-serif;
+        max-width: 40rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+        color: #1c1917;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      ol {
+        padding-left: 1.25rem;
+      }
+      button {
+        margin-top: 1rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        border: 1px solid #c72a09;
+        background: #fff5f3;
+        color: #c72a09;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:hover {
+        filter: brightness(0.97);
+      }
+      code {
+        font-size: 0.9em;
+        background: #f5f5f4;
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Welcome to Cortex</h1>
+      <p>
+        Cortex keeps a <strong>private, on-device</strong> memory of readable pages you visit so you can search and ask questions over what you actually read.
+      </p>
+      <p style="font-size: 14px; color: #444">
+        Right now Cortex is also <strong>scanning the last 7 days of your browser history</strong> (same behavior as Settings → History scan) and <strong>indexing open tabs</strong> in the background. Pause/blocklist and sensitive-site skips still apply.
+      </p>
+      <ol>
+        <li>Browse normally — pages are chunked and indexed locally (respecting your pause/blocklist).</li>
+        <li>
+          Press <code>Ctrl+Shift+K</code> (Windows/Linux) or <code>Cmd+Shift+K</code> (Mac), or
+          <code>Alt+Shift+C</code>, to open Search / Ask / Digest on any page.
+        </li>
+        <li>Use the toolbar icon for stats and <strong>Open settings</strong> for privacy and optional cloud chat.</li>
+      </ol>
+      <button type="button" id="cx-onb-done">Got it — open settings</button>
+    </main>
+    <script src="onboarding.js"></script>
+  </body>
+</html>
