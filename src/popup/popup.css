@@ -302,8 +302,20 @@ h1.cx-brand {
   color: var(--cx-text);
 }
 
-.cx-popup-shortcuts {
+.cx-popup-builder {
   margin: 14px 0 0;
+  font-size: 11px;
+  color: var(--cx-text-muted);
+  line-height: 1.45;
+}
+
+.cx-popup-builder a {
+  color: var(--cx-accent);
+  font-weight: 600;
+}
+
+.cx-popup-shortcuts {
+  margin: 8px 0 0;
   font-size: 11px;
   color: var(--cx-text-muted);
   line-height: 1.45;

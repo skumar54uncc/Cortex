@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Cortex — Local Second Brain",
   "version": "1.0.0",
-  "description": "Indexes what you read locally. Semantic search & connections — nothing leaves your machine.",
+  "description": "Indexes what you read locally. Semantic search & connections — nothing leaves your machine. Solely built by Shailesh Kumar.",
   "minimum_chrome_version": "116",
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; object-src 'self'"

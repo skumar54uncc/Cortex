@@ -2,6 +2,10 @@
 
 **Last updated:** April 2026  
 
+The [HTML version](privacy-policy.html) (for GitHub Pages) includes the Cortex icon and the same content.
+
+**Author:** Solely built by [Shailesh Kumar](https://www.linkedin.com/in/shailesh-entrant/).
+
 **Summary:** Cortex is a **local-first** Chrome extension. It builds a searchable index of **readable page text** from sites you visit. **Indexing and search run on your device** using IndexedDB and optional on-device ML. **Optional cloud chat** (Gemini) sends only what you choose when you enable it in settings—typically your question plus retrieved snippets—not your entire browsing history to a Cortex server (there is none).
 
 ## Data collected by Cortex

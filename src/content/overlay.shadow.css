@@ -542,6 +542,21 @@
   overflow: hidden;
 }
 
+.cortex-attribution {
+  flex-shrink: 0;
+  padding: 8px 14px 10px;
+  font-size: 11px;
+  color: var(--cx-text-subtle);
+  text-align: center;
+  border-top: 1px solid var(--cx-border);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.cortex-attribution a {
+  color: var(--cx-link);
+  font-weight: 600;
+}
+
 /* Ask / chat */
 .cortex-ask-layout {
   display: flex;

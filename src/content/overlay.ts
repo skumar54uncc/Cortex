@@ -200,6 +200,15 @@ function openSearchOverlay(): void {
       </div>
       <div class="cortex-tabs" role="tablist"></div>
       <div class="cortex-body"></div>
+      <footer class="cortex-attribution">
+        Solely built by
+        <a
+          href="https://www.linkedin.com/in/shailesh-entrant/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Shailesh Kumar</a
+        >
+      </footer>
     </div>
   `;
   shadow.appendChild(shell);

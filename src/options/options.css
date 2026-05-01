@@ -114,8 +114,21 @@ body {
   gap: 12px;
 }
 
-.cx-opt-footer {
+.cx-opt-builder {
   margin-top: 28px;
+  margin-bottom: 0;
+  font-size: 12px;
+  color: var(--cx-text-muted);
+  line-height: 1.5;
+}
+
+.cx-opt-builder a {
+  color: var(--cx-accent);
+  font-weight: 600;
+}
+
+.cx-opt-footer {
+  margin-top: 12px;
   font-size: 11px;
   color: var(--cx-text-muted);
   line-height: 1.5;
