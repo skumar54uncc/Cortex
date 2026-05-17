@@ -1,6 +1,9 @@
 import Dexie, { type EntityTable } from "dexie";
 
+import { CORTEX_DB_SCHEMA_VERSION } from "../shared/cortex-constants";
 import { CORTEX_EMBED_MODEL_ID } from "../shared/embed-model";
+
+export { CORTEX_DB_SCHEMA_VERSION };
 
 /** Legacy — migrated into documents + chunks in v3 */
 export interface IndexedPage {

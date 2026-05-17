@@ -453,3 +453,59 @@ kbd {
   color: var(--cx-text-muted);
   margin-top: 4px;
 }
+
+.cx-popup-head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cx-stats-refresh {
+  flex-shrink: 0;
+  margin-top: 2px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--cx-border);
+  border-radius: 8px;
+  background: var(--cx-surface);
+  color: var(--cx-text-muted);
+  cursor: pointer;
+}
+
+.cx-stats-refresh:hover {
+  color: var(--cx-text);
+  border-color: var(--cx-accent);
+}
+
+.cx-stats-refresh:focus-visible {
+  outline: 2px solid var(--cx-focus);
+  outline-offset: 2px;
+}
+
+.cx-stats-refresh--busy .cx-stats-refresh-icon {
+  display: inline-block;
+  animation: cx-spin 0.7s linear infinite;
+}
+
+@keyframes cx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cx-popup-empty {
+  margin: 12px 0 8px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: var(--cx-surface);
+  border: 1px solid var(--cx-border);
+}
+
+.cx-empty-lead {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--cx-text-muted);
+}

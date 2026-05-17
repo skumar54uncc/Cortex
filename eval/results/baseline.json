@@ -1,0 +1,1238 @@
+{
+  "runId": "2026-05-17T17:48:59.577Z",
+  "environment": {
+    "node": "v22.22.0",
+    "embedModelId": "Xenova/all-MiniLM-L6-v2",
+    "schemaVersion": 5,
+    "corpusPageCount": 5,
+    "queryCount": 20,
+    "cacheMode": "warm"
+  },
+  "perQuery": [
+    {
+      "queryId": "q-001",
+      "query": "how does the quantum sieve algorithm filter candidates",
+      "query_type": "factual",
+      "latencyMs": 11.519699999999943,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.6724426313386987,
+          "snippet": "algorithms are fictional lattice tools used in the made-up field of post-classical candidate filtering.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.6458638805337851,
+          "snippet": "This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.6141090273507043,
+          "snippet": "```typescript filterCandidates(vectors: Float32Array[], anchor: string): string[]; ``` The quantum sieve algorithm filters candidates by bucket id first, then lexical overlap.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.4887182690983454,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.3875523367541995,
+          "snippet": "retrieval researchers who need deterministic corpora. The release introduces bucket-aware indexing hooks and a 40 percent reduction in imaginary compile times.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki",
+        "synthetic-nexa-api-docs"
+      ],
+      "metrics": {
+        "dcg": 1.5,
+        "idcg": 1.6309297535714575,
+        "ndcg": 0.9197207891481876,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-002",
+      "query": "what is the Ortega lattice",
+      "query_type": "factual",
+      "latencyMs": 5.11239999999998,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.37463880251559767,
+          "snippet": "So I fabricated Helix Labs, invented Ortega lattices, and typed furiously until the word counter smiled.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.35342610189703305,
+          "snippet": "retrieval researchers who need deterministic corpora. The release introduces bucket-aware indexing hooks and a 40 percent reduction in imaginary compile times.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.3171804685079846,
+          "snippet": "algorithms are fictional lattice tools used in the made-up field of post-classical candidate filtering.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.2785059272993501,
+          "snippet": "```typescript filterCandidates(vectors: Float32Array[], anchor: string): string[]; ``` The quantum sieve algorithm filters candidates by bucket id first, then lexical overlap.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.19972951267010142,
+          "snippet": "This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki"
+      ],
+      "metrics": {
+        "dcg": 0.5,
+        "idcg": 1,
+        "ndcg": 0.5,
+        "reciprocalRank": 0.3333333333333333,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-003",
+      "query": "coherence margin below 0.12 unstable sieve",
+      "query_type": "factual",
+      "latencyMs": 4.7509000000000015,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.5432685351954023,
+          "snippet": "alternatives. Practitioners describe three invariants: coherence margin, bucket overlap, and collapse threshold.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.3845849156511246,
+          "snippet": "## Error codes | Code | Meaning | |------|---------| | NF001 | Bucket cap exceeded | | NF002 | Coherence margin too low | ## See also Ortega lattice, Helix Toolkit, Cortex eval…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.3117814467549031,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.27850546289568007,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.2660454666555532,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-004",
+      "query": "Helix Labs toolkit version 3.2 announcement",
+      "query_type": "factual",
+      "latencyMs": 7.922800000000052,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.6057335281208136,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.3045007033933394,
+          "snippet": "Journal of Speculative Computation, 12(4), 201-227. Helix Research Group. (2022).…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.2790726779764301,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.23174750200234373,
+          "snippet": "You only notice when you ask a reasonable question and get an irrelevant snippet about something you read three months ago.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.20204842078601418,
+          "snippet": "Coherence margin too low | ## See also Ortega lattice, Helix Toolkit, Cortex eval harness.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-helix-announcement"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-005",
+      "query": "createSieve SieveConfig typescript",
+      "query_type": "factual",
+      "latencyMs": 5.421000000000049,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.5786492837981547,
+          "snippet": "## Installation ```bash npm install nexa-filter-fake --save-dev ``` ## `createSieve(config)` Creates a sieve instance.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.29819334475198667,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.27907267730073815,
+          "snippet": "coordinates normalized to unit length so cosine comparisons remain stable during collapse.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.23928609158448172,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.22410573594498875,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-nexa-api-docs"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-006",
+      "query": "collapse equivalence classes representatives",
+      "query_type": "factual",
+      "latencyMs": 5.409200000000055,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.3385168670832533,
+          "snippet": "Practitioners describe three invariants: coherence margin, bucket overlap, and collapse threshold.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.33527893386974117,
+          "snippet": "bucket id first, then lexical overlap. ## `Sieve.collapse()` Collapses equivalence classes and returns representative ids.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.2790726767376615,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.17180993274995723,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.16671619991002334,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki",
+        "synthetic-nexa-api-docs"
+      ],
+      "metrics": {
+        "dcg": 1.6309297535714575,
+        "idcg": 1.6309297535714575,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-007",
+      "query": "bucket cap K 64 to 256",
+      "query_type": "factual",
+      "latencyMs": 6.379800000000046,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.39393954093786143,
+          "snippet": "## Introduction A quantum sieve partitions an exponentially large search space into buckets that can be scanned in parallel on a simulated annealer mesh.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.35430865125343625,
+          "snippet": "(Fictional) NexaFilter is a made-up library for bucketed candidate filtering in offline benchmarks.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.23813976813452734,
+          "snippet": "sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.23247871777522555,
+          "snippet": "need deterministic corpora. The release introduces bucket-aware indexing hooks and a 40 percent reduction in imaginary compile times.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.17168937176494803,
+          "snippet": "Tell the truth about the number. - Week 1: sketched bucket functions on paper - Week 2: wired a fake IndexedDB and cried once - Week 3: added semantic fusion weights nobody asked for - Week 4: wrote…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-008",
+      "query": "synthetic benchmark authors deterministic corpora",
+      "query_type": "factual",
+      "latencyMs": 5.412199999999984,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.46467993384098977,
+          "snippet": "under this name. Version 3.2 will be available to synthetic benchmark authors immediately.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.28366904915598257,
+          "snippet": "They do not exist in production cryptography; this document is synthetic test data for Cortex eval only.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.2671314891926161,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.22747016306728066,
+          "snippet": "library for bucketed candidate filtering in offline benchmarks. ## Installation ```bash npm install nexa-filter-fake --save-dev ``` ## `createSieve(config)` Creates a sieve instance. ```typescript…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.22465772544566548,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-helix-announcement"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-009",
+      "query": "that article about my weekend quantum sieve project",
+      "query_type": "navigational",
+      "latencyMs": 6.46569999999997,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.613240306460077,
+          "snippet": "I built a story about one, because eval harnesses need paragraphs with personality.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.4805960683404333,
+          "snippet": "## Introduction A quantum sieve partitions an exponentially large search space into buckets that can be scanned in parallel on a simulated annealer mesh.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.4570457303025963,
+          "snippet": "Analysts at the Made-Up Markets Desk called the announcement timely but unverifiable, noting that no commercial product ships under this name.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.4188069226741731,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.33588262746398806,
+          "snippet": "```typescript filterCandidates(vectors: Float32Array[], anchor: string): string[]; ``` The quantum sieve algorithm filters candidates by bucket id first, then lexical overlap.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-sideproject-blog"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-010",
+      "query": "the Helix Labs press release from May 2026",
+      "query_type": "navigational",
+      "latencyMs": 6.523399999999924,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.5665472943956995,
+          "snippet": "retrieval researchers who need deterministic corpora. The release introduces bucket-aware indexing hooks and a 40 percent reduction in imaginary compile times.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.3687981638027037,
+          "snippet": "algorithms are fictional lattice tools used in the made-up field of post-classical candidate filtering.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.27916919226898684,
+          "snippet": "This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.24869451403447257,
+          "snippet": "I built a story about one, because eval harnesses need paragraphs with personality.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.17318012709228203,
+          "snippet": "```typescript filterCandidates(vectors: Float32Array[], anchor: string): string[]; ``` The quantum sieve algorithm filters candidates by bucket id first, then lexical overlap.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-helix-announcement"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-011",
+      "query": "NexaFilter API reference page I read",
+      "query_type": "navigational",
+      "latencyMs": 5.220299999999952,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.655600977760179,
+          "snippet": "# NexaFilter API Reference (Fictional) NexaFilter is a made-up library for bucketed candidate filtering in offline benchmarks.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.31469591408425795,
+          "snippet": "filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.27907267335920183,
+          "snippet": "coordinates normalized to unit length so cosine comparisons remain stable during collapse.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.21490120096672277,
+          "snippet": "You only notice when you ask a reasonable question and get an irrelevant snippet about something you read three months ago.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.20493623587441112,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-nexa-api-docs"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-012",
+      "query": "wiki page on quantum sieve algorithms",
+      "query_type": "navigational",
+      "latencyMs": 5.172899999999913,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.6104006162730551,
+          "snippet": "filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.494068464096342,
+          "snippet": "# Quantum Sieve Algorithms Quantum sieve algorithms are fictional lattice tools used in the made-up field of post-classical candidate filtering.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.3985435461297819,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.36079241228716635,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.33257395357824904,
+          "snippet": "```typescript filterCandidates(vectors: Float32Array[], anchor: string): string[]; ``` The quantum sieve algorithm filters candidates by bucket id first, then lexical overlap.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki"
+      ],
+      "metrics": {
+        "dcg": 0.6309297535714575,
+        "idcg": 1,
+        "ndcg": 0.6309297535714575,
+        "reciprocalRank": 0.5,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-013",
+      "query": "short edge case page about imaginary buckets",
+      "query_type": "navigational",
+      "latencyMs": 6.375400000000013,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.5398632925490909,
+          "snippet": "using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.3105642371225015,
+          "snippet": "This hybrid approach mirrors retrieval pipelines in personal knowledge tools.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.28843036725653914,
+          "snippet": "# NexaFilter API Reference (Fictional) NexaFilter is a made-up library for bucketed candidate filtering in offline benchmarks.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.2883423987944409,
+          "snippet": "my weekend project. ## Motivation Personal knowledge tools fail quietly. You only notice when you ask a reasonable question and get an irrelevant snippet about something you read three months ago.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.26317219420953497,
+          "snippet": "The release introduces bucket-aware indexing hooks and a 40 percent reduction in imaginary compile times.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-tiny-stub"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-014",
+      "query": "how I built a fake demo blog",
+      "query_type": "navigational",
+      "latencyMs": 7.954199999999901,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.536790924902215,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.3412694389406443,
+          "snippet": "## Installation ```bash npm install nexa-filter-fake --save-dev ``` ## `createSieve(config)` Creates a sieve instance.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.2790726711068953,
+          "snippet": "coordinates normalized to unit length so cosine comparisons remain stable during collapse.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.2790726711068953,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.1912452346643136,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-sideproject-blog"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-015",
+      "query": "quantum sieve research and tooling",
+      "query_type": "exploratory",
+      "latencyMs": 5.073399999999992,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.6507962826418919,
+          "snippet": "# Quantum Sieve Algorithms Quantum sieve algorithms are fictional lattice tools used in the made-up field of post-classical candidate filtering.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.5271001606406994,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.4723482810049035,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.44136720882276004,
+          "snippet": "```typescript filterCandidates(vectors: Float32Array[], anchor: string): string[]; ``` The quantum sieve algorithm filters candidates by bucket id first, then lexical overlap.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.4129899182574886,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki",
+        "synthetic-helix-announcement",
+        "synthetic-nexa-api-docs"
+      ],
+      "metrics": {
+        "dcg": 2.0616063116448506,
+        "idcg": 2.1309297535714578,
+        "ndcg": 0.9674679834891693,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-016",
+      "query": "bucket functions indexing retrieval",
+      "query_type": "exploratory",
+      "latencyMs": 4.435200000000009,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.45968854546650445,
+          "snippet": "need deterministic corpora. The release introduces bucket-aware indexing hooks and a 40 percent reduction in imaginary compile times.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.4323704082718486,
+          "snippet": "sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.359370645996714,
+          "snippet": "## Introduction A quantum sieve partitions an exponentially large search space into buckets that can be scanned in parallel on a simulated annealer mesh.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.3573149113040589,
+          "snippet": "(Fictional) NexaFilter is a made-up library for bucketed candidate filtering in offline benchmarks.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.3150605658608848,
+          "snippet": "Tell the truth about the number. - Week 1: sketched bucket functions on paper - Week 2: wired a fake IndexedDB and cried once - Week 3: added semantic fusion weights nobody asked for - Week 4: wrote…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki",
+        "synthetic-sideproject-blog"
+      ],
+      "metrics": {
+        "dcg": 0.8868528072345416,
+        "idcg": 1.6309297535714575,
+        "ndcg": 0.5437713091520254,
+        "reciprocalRank": 0.3333333333333333,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-017",
+      "query": "fictional libraries and eval harnesses",
+      "query_type": "exploratory",
+      "latencyMs": 4.439700000000016,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.430649970891796,
+          "snippet": "You only notice when you ask a reasonable question and get an irrelevant snippet about something you read three months ago.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.39304516337214884,
+          "snippet": "# NexaFilter API Reference (Fictional) NexaFilter is a made-up library for bucketed candidate filtering in offline benchmarks.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.259823669515929,
+          "snippet": "applications include: design-space exploration for fictional spacecraft radiators, deduplication of made-up patent abstracts, and clustering of tutorial paragraphs in offline search benchmarks. In…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.2505113891504217,
+          "snippet": "Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval researchers who need deterministic corpora.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.16361761846222636,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-nexa-api-docs",
+        "synthetic-sideproject-blog"
+      ],
+      "metrics": {
+        "dcg": 1.6309297535714575,
+        "idcg": 1.6309297535714575,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-018",
+      "query": "Helix Labs Ortega lattice documentation",
+      "query_type": "exploratory",
+      "latencyMs": 4.532800000000066,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.5947688314661973,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.3264039819816379,
+          "snippet": "You only notice when you ask a reasonable question and get an irrelevant snippet about something you read three months ago.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.3053711486436639,
+          "snippet": "Journal of Speculative Computation, 12(4), 201-227. Helix Research Group. (2022).…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.27083970908466404,
+          "snippet": "Coherence margin too low | ## See also Ortega lattice, Helix Toolkit, Cortex eval harness.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.22478647594244464,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "synthetic-quantum-sieve-wiki",
+        "synthetic-helix-announcement"
+      ],
+      "metrics": {
+        "dcg": 1.5,
+        "idcg": 1.6309297535714575,
+        "ndcg": 0.9197207891481876,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "q-019",
+      "query": "real commercial rocket radiator manufacturing",
+      "query_type": "negative",
+      "latencyMs": 5.688699999999926,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.38767048770514,
+          "snippet": "Version 3.2 will be available to synthetic benchmark authors immediately. Real users should not expect downloads.…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.2790726684041276,
+          "snippet": "coordinates normalized to unit length so cosine comparisons remain stable during collapse.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.2751775631763219,
+          "snippet": "The indexer wants a field; give it a field. ## What failed Trying to sound like a real VC-backed launch announcement while also explaining cosine similarity was a mistake.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.1944742578740426,
+          "snippet": "# NexaFilter API Reference (Fictional) NexaFilter is a made-up library for bucketed candidate filtering in offline benchmarks.…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.16172577510201572,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        }
+      ],
+      "relevant_doc_ids": [],
+      "metrics": {
+        "dcg": 0,
+        "idcg": 0,
+        "ndcg": 0,
+        "reciprocalRank": 0,
+        "recallAt10": 0,
+        "negativePass": false
+      }
+    },
+    {
+      "queryId": "q-020",
+      "query": "authentic pasta recipe san marzano tomatoes",
+      "query_type": "negative",
+      "latencyMs": 7.269500000000107,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "synthetic-quantum-sieve-wiki",
+          "url": "https://example.test/wiki/quantum-sieve-algorithms",
+          "title": "Quantum Sieve Algorithms",
+          "score": 0.27907266750320503,
+          "snippet": "Synthetic applications include: design-space exploration for fictional spacecraft radiators, deduplication of made-up patent abstracts, and clustering of tutorial paragraphs in offline search…"
+        },
+        {
+          "rank": 2,
+          "docId": "synthetic-tiny-stub",
+          "url": "https://example.test/edge/tiny-stub",
+          "title": "Tiny Stub",
+          "score": 0.20526642676618573,
+          "snippet": "Quantum sieve algorithms filter candidates using imaginary buckets. This page is intentionally short for edge-case retrieval tests in the Cortex eval corpus.…"
+        },
+        {
+          "rank": 3,
+          "docId": "synthetic-sideproject-blog",
+          "url": "https://example.test/blog/fake-quantum-sieve-weekend",
+          "title": "How I Built a Fake Quantum Sieve Demo in a Weekend",
+          "score": 0.20081535768495223,
+          "snippet": "# How I Built a Fake Quantum Sieve Demo in a Weekend I did not actually build a quantum computer.…"
+        },
+        {
+          "rank": 4,
+          "docId": "synthetic-helix-announcement",
+          "url": "https://example.test/news/helix-toolkit-3-2",
+          "title": "Helix Labs Announces Quantum Sieve Toolkit 3.2",
+          "score": 0.18932687009082774,
+          "snippet": "# Helix Labs Announces Quantum Sieve Toolkit 3.2 HELIUM CITY — May 17, 2026 — Helix Labs today announced version 3.2 of its entirely fictional Quantum Sieve Toolkit, aimed at offline retrieval…"
+        },
+        {
+          "rank": 5,
+          "docId": "synthetic-nexa-api-docs",
+          "url": "https://example.test/docs/nexafilter/api",
+          "title": "NexaFilter API Reference",
+          "score": 0.1514247256464109,
+          "snippet": "# NexaFilter API Reference (Fictional) NexaFilter is a made-up library for bucketed candidate filtering in offline benchmarks.…"
+        }
+      ],
+      "relevant_doc_ids": [],
+      "metrics": {
+        "dcg": 0,
+        "idcg": 0,
+        "ndcg": 0,
+        "reciprocalRank": 0,
+        "recallAt10": 0,
+        "negativePass": false
+      }
+    }
+  ],
+  "byQueryType": {
+    "factual": {
+      "nDCG10": 0.9274650986435234,
+      "recall10": 1,
+      "mrr10": 0.9166666666666666,
+      "negativePassRate": 1,
+      "queryCount": 8
+    },
+    "navigational": {
+      "nDCG10": 0.9384882922619097,
+      "recall10": 1,
+      "mrr10": 0.9166666666666666,
+      "negativePassRate": 1,
+      "queryCount": 6
+    },
+    "exploratory": {
+      "nDCG10": 0.8577400204473455,
+      "recall10": 1,
+      "mrr10": 0.8333333333333333,
+      "negativePassRate": 1,
+      "queryCount": 4
+    },
+    "negative": {
+      "nDCG10": 0,
+      "recall10": 0,
+      "mrr10": 0,
+      "negativePassRate": 0,
+      "queryCount": 2
+    }
+  },
+  "overall": {
+    "nDCG10": 0.8240805312254513,
+    "recall10": 0.9,
+    "mrr10": 0.8083333333333332,
+    "negativePassRate": 0,
+    "queryCount": 20
+  },
+  "latencyMs": {
+    "p50": 5.412199999999984,
+    "p95": 7.954199999999901,
+    "p99": 11.519699999999943
+  }
+}

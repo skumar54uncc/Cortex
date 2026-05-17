@@ -9,23 +9,34 @@
   <body>
     <main class="cx cx-popup">
       <header class="cx-popup-head">
-        <h1 class="cx-brand">
-          <a
-            class="cx-brand-link"
-            href="options.html"
-            target="_blank"
-            title="Cortex settings"
+        <div class="cx-popup-head-row">
+          <h1 class="cx-brand">
+            <a
+              class="cx-brand-link"
+              href="options.html"
+              target="_blank"
+              title="Cortex settings"
+            >
+              <img
+                src="icons/icon-128.png"
+                alt=""
+                width="32"
+                height="32"
+                class="cx-brand-mark"
+              />
+            </a>
+            <span class="cx-brand-wordmark">Cortex</span>
+          </h1>
+          <button
+            type="button"
+            id="cx-stats-refresh"
+            class="cx-stats-refresh"
+            aria-label="Refresh stats"
+            title="Refresh library stats"
           >
-            <img
-              src="icons/icon-128.png"
-              alt=""
-              width="32"
-              height="32"
-              class="cx-brand-mark"
-            />
-          </a>
-          <span class="cx-brand-wordmark">Cortex</span>
-        </h1>
+            <span class="cx-stats-refresh-icon" aria-hidden="true">↻</span>
+          </button>
+        </div>
         <p class="cx-tagline">Private memory from pages you read.</p>
         <div id="cx-privacy-blurb" class="cx-privacy-blurb">
           <p class="cx-privacy-note">
@@ -43,7 +54,7 @@
         <p class="cx-status-line" role="status">
           <span class="cx-status-prefix">Indexing</span>
           <span class="cx-status-sep" aria-hidden="true">·</span>
-          <strong id="cx-indexing-state" class="cx-indexing-state">—</strong>
+          <strong id="cx-indexing-state" class="cx-indexing-state">Active</strong>
           <span id="cx-indexing-detail" class="cx-status-detail"></span>
         </p>
         <p id="cx-current-tab" class="cx-current-tab" hidden></p>
@@ -58,26 +69,30 @@
         </button>
       </div>
 
-      <section class="cx-popup-library" aria-label="Library snapshot">
+      <section id="cx-empty-state" class="cx-popup-empty" hidden>
+        <p class="cx-empty-lead">Welcome — browse a few pages to build your private library.</p>
+        <button type="button" id="cx-empty-get-started" class="cx-btn cx-btn-primary">
+          Get started
+        </button>
+      </section>
+
+      <section id="cx-popup-library" class="cx-popup-library" aria-label="Library snapshot">
         <h2 class="cx-section-title">Your library</h2>
         <div id="cx-stats-error" class="cx-alert cx-alert-error" hidden>
-          <span id="cx-stats-error-msg">Couldn’t load stats.</span>
-          <button type="button" id="cx-retry-stats" class="cx-btn cx-btn-inline">
-            Retry
-          </button>
+          <span id="cx-stats-error-msg">Couldn’t refresh stats.</span>
         </div>
         <dl id="cx-stats-dl" class="cx-stats">
           <div class="cx-row">
             <dt>Pages saved</dt>
-            <dd id="cx-pages">—</dd>
+            <dd id="cx-pages">0</dd>
           </div>
           <div class="cx-row">
             <dt>Text passages</dt>
-            <dd id="cx-chunks">—</dd>
+            <dd id="cx-chunks">0</dd>
           </div>
           <div class="cx-row">
             <dt>Visits logged</dt>
-            <dd id="cx-visits">—</dd>
+            <dd id="cx-visits">0</dd>
           </div>
         </dl>
         <div id="cx-storage-wrap" class="cx-storage-wrap" hidden>

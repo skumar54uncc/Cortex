@@ -14,6 +14,7 @@ declare global {
   interface Window {
     __cortexMainLoaded?: boolean;
     __cortexInstallKickListener?: boolean;
+    __cortex_injected?: boolean;
   }
 }
 
@@ -151,9 +152,15 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") scheduleIndex(600);
 });
 
+window.__cortex_injected = true;
+
 if (!window.__cortexInstallKickListener) {
   window.__cortexInstallKickListener = true;
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg?.type === "CORTEX_PING") {
+      sendResponse({ ok: true as const });
+      return true;
+    }
     if (msg?.type === "CORTEX_FORCE_INDEX_NOW") {
       scheduleIndex(120);
       scheduleCaptureRetries();

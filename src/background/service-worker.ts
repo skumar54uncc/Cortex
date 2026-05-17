@@ -6,10 +6,7 @@ import {
   setChunkEmbedding,
   markChunkEmbedFailed,
   appendVisit,
-  getRecentVisits,
   hostnameFromUrl,
-  documentCount,
-  chunkCount,
   clearAllIndexedData,
 } from "../db/schema";
 import { chunkArticle } from "../lib/chunking";
@@ -56,6 +53,12 @@ import {
   ONBOARDING_DONE_KEY,
 } from "../shared/onboarding-constants";
 import { ensureIndexingHeadroom } from "../lib/storage-eviction";
+import {
+  computeFreshSnapshot,
+  onIndexCommitted,
+  refreshSnapshotNow,
+  writeSnapshot,
+} from "../lib/stats-snapshot";
 
 const MIN_INDEX_CHARS_DEFAULT = 80;
 
@@ -284,6 +287,7 @@ async function commitIndexPayload(p: IndexPayload): Promise<{
     textLength: p.text.length,
   });
 
+  onIndexCommitted();
   return { id: docId, chunks: chunkIds.length };
 }
 
@@ -637,9 +641,63 @@ async function maybeRunFirstInstallBackfill(): Promise<void> {
   }
 }
 
+async function writeInitialStatsSnapshot(): Promise<void> {
+  try {
+    const snap = await computeFreshSnapshot();
+    await writeSnapshot(snap);
+  } catch (e: unknown) {
+    devLog.warn("[Cortex] initial stats snapshot:", e);
+  }
+}
+
+const CONTENT_SCRIPT_PING_MS = 150;
+
+function pingContentScript(tabId: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), CONTENT_SCRIPT_PING_MS);
+    chrome.tabs.sendMessage(tabId, { type: "CORTEX_PING" }, (res) => {
+      clearTimeout(timer);
+      if (chrome.runtime.lastError) {
+        resolve(false);
+        return;
+      }
+      const ok =
+        typeof res === "object" &&
+        res !== null &&
+        (res as { ok?: boolean }).ok === true;
+      resolve(ok);
+    });
+  });
+}
+
+async function warmContentScriptOnTab(tabId: number, url: string): Promise<void> {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) return;
+  if (await pingContentScript(tabId)) return;
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"],
+    });
+  } catch {
+    /* chrome://, PDF viewer, restricted pages */
+  }
+}
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  void chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (chrome.runtime.lastError || tab?.id == null) return;
+    const url = tab.url ?? "";
+    void warmContentScriptOnTab(activeInfo.tabId, url);
+  });
+});
+
 chrome.runtime.onInstalled.addListener((details) => {
   devLog.info("[Cortex] installed — local-only indexing (chunk-level)");
   scheduleStorageMaintenanceAlarm();
+
+  if (details.reason === "install" || details.reason === "update") {
+    void writeInitialStatsSnapshot();
+  }
 
   if (details.reason === "install") {
     void maybeRunFirstInstallBackfill();
@@ -868,16 +926,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     return true;
   }
 
+  /**
+   * @deprecated Prefer `readSnapshot()` in the popup. Kept for options and legacy callers.
+   */
   if (type === "CORTEX_STATS") {
     void (async () => {
-      // #region agent log
-      agentDebugLog({
-        hypothesisId: "H3",
-        location: "service-worker.ts:CORTEX_STATS",
-        message: "stats_enter",
-        data: {},
-      });
-      // #endregion
       try {
         const tabUrl =
           typeof (msg as { tabUrl?: string }).tabUrl === "string"
@@ -887,75 +940,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           (msg as { tabIncognito?: boolean }).tabIncognito
         );
 
-        const storageEstimate = async (): Promise<
-          StorageEstimate | undefined
-        > => {
-          try {
-            return await navigator.storage?.estimate?.();
-          } catch {
-            return undefined;
-          }
-        };
-
-        const [pages, chunksN, visitCount, recent, settings, est] =
-          await Promise.all([
-            documentCount(),
-            chunkCount(),
-            db.visitLog.count(),
-            getRecentVisits(12),
-            getUserSettings(),
-            storageEstimate(),
-          ]);
-
-        let storageBytes: number | undefined;
-        let storageQuotaBytes: number | undefined;
-        if (est && typeof est.usage === "number") storageBytes = est.usage;
-        if (est && typeof est.quota === "number") storageQuotaBytes = est.quota;
-        let currentTab:
-          | {
-              line: string;
-              badge:
-                | "active"
-                | "paused"
-                | "blocked"
-                | "skipped"
-                | "indexed"
-                | "neutral";
-            }
-          | undefined;
-
-        if (tabUrl !== undefined) {
-          currentTab = await describeTabForPopup(tabUrl, tabIncognito, settings);
-        }
+        const snap = await computeFreshSnapshot({
+          tabUrl,
+          tabIncognito,
+        });
 
         sendResponse({
           ok: true,
-          pageCount: pages,
-          chunkCount: chunksN,
-          visitCount,
-          storageBytes,
-          storageQuotaBytes,
-          indexingPaused: settings.indexingPaused,
-          currentTab,
-          recent: recent.map((v) => ({
-            url: v.url,
-            title: v.title,
-            visitedAt: v.visitedAt,
-            hostname: v.hostname,
-          })),
+          pageCount: snap.pageCount,
+          chunkCount: snap.chunkCount,
+          visitCount: snap.visitCount,
+          storageBytes: snap.storageBytes,
+          storageQuotaBytes: snap.storageQuotaBytes,
+          indexingPaused: snap.indexingPaused,
+          currentTab: snap.currentTab
+            ? { line: snap.currentTab.line, badge: snap.currentTab.badge }
+            : undefined,
+          recent: snap.recent,
         });
       } catch (e: unknown) {
         const errMsg = e instanceof Error ? e.message : String(e);
         devLog.warn("[Cortex] CORTEX_STATS failed:", errMsg);
-        // #region agent log
-        agentDebugLog({
-          hypothesisId: "H3",
-          location: "service-worker.ts:CORTEX_STATS",
-          message: "stats_handler_error",
-          data: { err: errMsg },
-          runId: "post-fix",
-        });
-        // #endregion
         try {
           sendResponse({
             ok: false,
@@ -964,6 +969,31 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
         } catch (sendErr: unknown) {
           devLog.warn("[Cortex] CORTEX_STATS sendResponse failed:", sendErr);
         }
+      }
+    })();
+    return true;
+  }
+
+  if (type === "CORTEX_STATS_REFRESH") {
+    void (async () => {
+      try {
+        const tabUrl =
+          typeof (msg as { tabUrl?: string }).tabUrl === "string"
+            ? (msg as { tabUrl?: string }).tabUrl
+            : undefined;
+        const tabIncognito = Boolean(
+          (msg as { tabIncognito?: boolean }).tabIncognito
+        );
+
+        const snapshot = await refreshSnapshotNow({
+          tabUrl,
+          tabIncognito,
+        });
+
+        sendResponse({ ok: true as const, snapshot });
+      } catch (e: unknown) {
+        const errMsg = e instanceof Error ? e.message : String(e);
+        sendResponse({ ok: false as const, error: errMsg });
       }
     })();
     return true;
@@ -1066,101 +1096,3 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
 
   return false;
 });
-
-async function describeTabForPopup(
-  tabUrl: string,
-  tabIncognito: boolean,
-  settings: Awaited<ReturnType<typeof getUserSettings>>
-): Promise<{
-  line: string;
-  badge: "active" | "paused" | "blocked" | "skipped" | "indexed" | "neutral";
-}> {
-  if (settings.indexingPaused) {
-    return { line: "", badge: "paused" };
-  }
-
-  if (tabIncognito) {
-    return {
-      line: "Private window — not indexed.",
-      badge: "skipped",
-    };
-  }
-
-  let url: URL;
-  try {
-    url = new URL(tabUrl);
-  } catch {
-    return { line: "Can’t index this URL.", badge: "skipped" };
-  }
-
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    return {
-      line: "Can’t index this page.",
-      badge: "skipped",
-    };
-  }
-
-  if (shouldAlwaysSkipUrl(tabUrl)) {
-    return {
-      line: "Skipped — sensitive or inbox/storage URL.",
-      badge: "skipped",
-    };
-  }
-
-  const host = url.hostname.toLowerCase();
-
-  if (settings.allowlistOnly) {
-    const ok = settings.allowlist.some((h) => {
-      const x = h.trim().toLowerCase();
-      return x && (host === x || host.endsWith(`.${x}`));
-    });
-    if (!ok) {
-      return {
-        line: "Host not on your allowlist.",
-        badge: "blocked",
-      };
-    }
-  }
-
-  if (isBlockedDomain(host, settings.blocklist)) {
-    return {
-      line: "Domain on your blocklist.",
-      badge: "blocked",
-    };
-  }
-
-  if (looksSensitiveHostname(host, url.pathname)) {
-    return {
-      line: "Skipped (sensitive URL).",
-      badge: "skipped",
-    };
-  }
-
-  const doc = await db.documents.where("url").equals(tabUrl).first();
-  if (doc?.lastVisitedAt) {
-    const when = new Date(doc.lastVisitedAt);
-    const rel = formatRelativeTime(when.getTime());
-    return {
-      line: `This page is indexed · ${rel}`,
-      badge: "indexed",
-    };
-  }
-
-  return {
-    line: "Not saved yet — keep this tab open briefly so Cortex can capture it.",
-    badge: "neutral",
-  };
-}
-
-function formatRelativeTime(ts: number): string {
-  const diff = Date.now() - ts;
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return "just now";
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m} min ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h} h ago`;
-  const d = Math.floor(h / 24);
-  if (d < 14) return `${d} day${d === 1 ? "" : "s"} ago`;
-  return new Date(ts).toLocaleDateString();
-}
