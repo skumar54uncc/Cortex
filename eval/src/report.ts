@@ -178,6 +178,15 @@ export function printDiffTable(rows: BaselineDiffRow[]): void {
   }
 }
 
-export function ciRegressionFailed(rows: BaselineDiffRow[]): boolean {
-  return rows.some((r) => r.status === "regression");
+/** @param skipLatencyRegression — true when embed cache was cold (unfair vs warm baseline). */
+export function ciRegressionFailed(
+  rows: BaselineDiffRow[],
+  opts?: { skipLatencyRegression?: boolean }
+): boolean {
+  return rows.some((r) => {
+    if (opts?.skipLatencyRegression && r.metric.includes("latency")) {
+      return false;
+    }
+    return r.status === "regression";
+  });
 }

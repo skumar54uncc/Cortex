@@ -65,7 +65,15 @@ export async function runEvalCli(argv: string[] = process.argv.slice(2)): Promis
   if (baseline) {
     const diff = diffAgainstBaseline(run, baseline);
     printDiffTable(diff);
-    if (args.ci && ciRegressionFailed(diff) && !args.override) {
+    const skipLatency =
+      run.environment.cacheMode === "cold" &&
+      baseline.environment.cacheMode === "warm";
+    if (args.ci && ciRegressionFailed(diff, { skipLatencyRegression: skipLatency }) && !args.override) {
+      if (skipLatency) {
+        console.info(
+          "\n[eval] Skipping p95 latency gate (cold embed cache vs warm baseline)."
+        );
+      }
       console.error("\n[eval] CI gate failed (nDCG −2% or p95 latency +25%).");
       console.error("Add [eval-override: reason] to the PR description to bypass.");
       return 1;

@@ -85,6 +85,10 @@ jobs:
         if: steps.filter.outputs.retrieval == 'true'
         run: npm run eval:seed
 
+      - name: Warm embedding cache
+        if: steps.filter.outputs.retrieval == 'true'
+        run: npx tsx eval/src/cli.ts
+
       - name: Run retrieval eval
         id: eval
         if: steps.filter.outputs.retrieval == 'true'
