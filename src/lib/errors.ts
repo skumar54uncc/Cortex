@@ -16,6 +16,9 @@ export const ERROR_CODES = {
   RATE_LIMITED: "rate_limited",
   INVALID_URL: "invalid_url",
   FOREIGN_SENDER: "foreign_sender",
+  QUERY_TOO_LONG: "query_too_long",
+  INDEX_TEXT_TOO_LARGE: "index_text_too_large",
+  INDEX_URL_MISMATCH: "index_url_mismatch",
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -108,6 +111,24 @@ export const ERROR_MESSAGES: Record<ErrorCode, CortexErrorShape> = {
     userMessage: "Request rejected.",
     userAction: undefined,
     recoverable: false,
+  },
+  [ERROR_CODES.QUERY_TOO_LONG]: {
+    code: ERROR_CODES.QUERY_TOO_LONG,
+    userMessage: "That search is too long.",
+    userAction: "Shorten your query and try again.",
+    recoverable: true,
+  },
+  [ERROR_CODES.INDEX_TEXT_TOO_LARGE]: {
+    code: ERROR_CODES.INDEX_TEXT_TOO_LARGE,
+    userMessage: "This page is too large to index.",
+    userAction: undefined,
+    recoverable: true,
+  },
+  [ERROR_CODES.INDEX_URL_MISMATCH]: {
+    code: ERROR_CODES.INDEX_URL_MISMATCH,
+    userMessage: "Indexing was rejected for this tab.",
+    userAction: undefined,
+    recoverable: true,
   },
 };
 

@@ -8,11 +8,18 @@ export interface GeminiOptions {
   maxOutputTokens?: number;
 }
 
+function sanitizeGeminiErrorBody(body: string, maxLen = 240): string {
+  const scrubbed = body
+    .replace(/key=AIza[0-9A-Za-z_-]+/gi, "key=[redacted]")
+    .replace(/AIza[0-9A-Za-z_-]{20,}/g, "[redacted]");
+  return scrubbed.length > maxLen ? `${scrubbed.slice(0, maxLen)}…` : scrubbed;
+}
+
 export async function* geminiStream(
   prompt: string,
   options: GeminiOptions
 ): AsyncIterable<string> {
-  const url = `${GEMINI_STREAM_URL}?key=${encodeURIComponent(options.apiKey)}&alt=sse`;
+  const url = `${GEMINI_STREAM_URL}?alt=sse`;
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
@@ -27,13 +34,18 @@ export async function* geminiStream(
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": options.apiKey,
+    },
     body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${errorBody}`);
+    throw new Error(
+      `Gemini API error ${response.status}: ${sanitizeGeminiErrorBody(errorBody)}`
+    );
   }
 
   const reader = response.body!.getReader();

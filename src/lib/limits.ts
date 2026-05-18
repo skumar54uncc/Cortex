@@ -3,6 +3,11 @@ export const CHAT_LIMITS = {
   MAX_QUESTION_CHARS: 12_000,
 } as const;
 
+/** Search overlay query cap (aligns with embed truncation in search-engine). */
+export const SEARCH_LIMITS = {
+  MAX_QUERY_CHARS: 8_000,
+} as const;
+
 /**
  * Storage + indexing caps — wired progressively into eviction (Step 2) and indexing guards.
  */

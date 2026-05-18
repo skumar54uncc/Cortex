@@ -1,4 +1,3 @@
-import "../styles/cortex-theme.css";
 import { injectBrandFontFacesInto } from "../styles/brand-fonts";
 import type { StatsSnapshot } from "../lib/stats-snapshot-types";
 import {
@@ -6,6 +5,7 @@ import {
   readSnapshot,
 } from "../lib/stats-snapshot-storage";
 import { sendRuntimeMessage } from "../shared/extension-runtime";
+import { storageLocalGet, storageLocalSet } from "../shared/storage-local";
 import {
   applySnapshotToDom,
   showEmptyState,
@@ -57,7 +57,7 @@ async function refreshPrivacyBlurb(): Promise<void> {
   const wrap = document.querySelector<HTMLElement>("#cx-privacy-blurb");
   if (!wrap) return;
   try {
-    const r = await chrome.storage.local.get(POPUP_PRIVACY_ACK_KEY);
+    const r = await storageLocalGet([POPUP_PRIVACY_ACK_KEY]);
     wrap.hidden = Boolean(r[POPUP_PRIVACY_ACK_KEY]);
   } catch {
     wrap.hidden = false;
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
   void loadPopup();
 
   qs("#cx-privacy-ack").addEventListener("click", () => {
-    void chrome.storage.local.set({ [POPUP_PRIVACY_ACK_KEY]: true });
+    void storageLocalSet({ [POPUP_PRIVACY_ACK_KEY]: true });
     qs<HTMLElement>("#cx-privacy-blurb").hidden = true;
   });
 

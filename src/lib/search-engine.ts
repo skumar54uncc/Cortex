@@ -12,6 +12,13 @@ import {
 import { cosineSimilarity } from "./similarity";
 import { titleMatchScore, recencyBoost } from "./ranking";
 import { parseAskQuery, buildEvidenceIntro } from "./query-parse";
+import {
+  computeQueryGrounding,
+  distinctiveQueryTerms,
+  domainPhraseBoost,
+  groundingForConfidence,
+  relevanceMultiplier,
+} from "./query-relevance";
 
 export interface SearchHitDTO {
   url: string;
@@ -20,6 +27,8 @@ export interface SearchHitDTO {
   visitedAt: number;
   snippet: string;
   score: number;
+  /** 0–1 how well title/url/body match distinctive query terms (for match labels) */
+  grounding: number;
   /** Optional — only when there’s a non-obvious lexical hook */
   matchReason?: string;
   /** Human-readable scores for “Why this matched” */
@@ -202,9 +211,11 @@ function explainMatch(
   queryTerms: string[],
   chunkText: string,
   title: string,
+  url: string,
   cosine: number,
   bm25Norm: number,
-  hasSemantic: boolean
+  hasSemantic: boolean,
+  grounding: ReturnType<typeof computeQueryGrounding>
 ): { matchReason?: string; scoreBreakdown: string } {
   const semPct = Math.round(Math.min(100, Math.max(0, cosine * 100)));
   const lexPct = Math.round(Math.min(100, Math.max(0, bm25Norm * 100)));
@@ -216,9 +227,15 @@ function explainMatch(
     breakdownParts.push("Semantic layer weak — this rank leaned on keywords and recency");
   }
   breakdownParts.push(`Keyword layer ~${lexPct}% vs other passages in your library`);
+  const groundPct = Math.round(
+    Math.min(100, Math.max(0, groundingForConfidence(grounding) * 100))
+  );
+  breakdownParts.push(`Term alignment ~${groundPct}% with your query`);
 
-  const pool = `${title} ${chunkText}`.toLowerCase();
-  const distinctive = queryTerms.filter((w) => w.length >= 6 && pool.includes(w));
+  const pool = `${title} ${chunkText} ${url}`.toLowerCase();
+  const distinctive = distinctiveQueryTerms(queryTerms).filter((w) =>
+    pool.includes(w)
+  );
 
   let matchReason: string | undefined;
   if (distinctive.length >= 2) {
@@ -334,6 +351,7 @@ export async function runAdvancedSearch(
 
   type Acc = {
     score: number;
+    grounding: number;
     chunk: ChunkRecord;
     matchReason?: string;
     scoreBreakdown: string;
@@ -382,16 +400,34 @@ export async function runAdvancedSearch(
       bonus += 0.05;
     }
 
+    const grounding = computeQueryGrounding(
+      p.corpus,
+      doc.url,
+      doc.title || "",
+      queryTerms,
+      parsed.entityTerms
+    );
+    fused += domainPhraseBoost(
+      doc.url,
+      doc.title || "",
+      queryTerms,
+      parsed.entityTerms
+    );
+    fused *= relevanceMultiplier(grounding);
     fused = Math.min(1.45, fused + bonus);
+
+    const groundScore = groundingForConfidence(grounding);
 
     const prev = bestByDoc.get(doc.id!);
     const { matchReason, scoreBreakdown } = explainMatch(
       queryTerms,
       p.chunk.text,
       doc.title || "",
+      doc.url,
       cosine,
       bm25Norm,
-      hasSemantic
+      hasSemantic,
+      grounding
     );
 
     if (
@@ -401,6 +437,7 @@ export async function runAdvancedSearch(
     ) {
       bestByDoc.set(doc.id!, {
         score: fused,
+        grounding: groundScore,
         chunk: p.chunk,
         matchReason,
         scoreBreakdown,
@@ -442,7 +479,7 @@ export async function runAdvancedSearch(
   const slice = ranked.slice(0, maxHits);
 
   const hits: SearchHitDTO[] = slice.map(
-    ({ doc, score, chunk, matchReason, scoreBreakdown }) => ({
+    ({ doc, score, grounding, chunk, matchReason, scoreBreakdown }) => ({
       url: doc.url,
       title: doc.title || "Untitled",
       summary: doc.summary,
@@ -452,6 +489,7 @@ export async function runAdvancedSearch(
           : Date.now(),
       snippet: pickSnippet(chunk.text, q),
       score,
+      grounding,
       ...(matchReason ? { matchReason } : {}),
       scoreBreakdown,
     })

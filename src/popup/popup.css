@@ -325,6 +325,11 @@ h1.cx-brand {
   opacity: 0.92;
 }
 
+.cx-popup-shortcuts a {
+  color: var(--cx-accent);
+  font-weight: 600;
+}
+
 .cx-popup-shortcuts code {
   font-family: var(--cx-font-mono);
   font-size: 10px;

@@ -145,6 +145,47 @@ describe("runAdvancedSearch", () => {
     expect(urls).toContain("https://low.test/");
   });
 
+  it("ranks domain-aligned pages above generic career-only matches", async () => {
+    mocks.docs = [
+      doc(
+        1,
+        "https://www.passes.com/",
+        "Passes - creators platform",
+        now + 86_400_000
+      ),
+      doc(
+        2,
+        "https://careers.atriumhealth.org/search",
+        "Job Search Results",
+        now
+      ),
+    ];
+    mocks.chunks = [
+      ch(
+        1,
+        1,
+        "the best decisions in my social media career. supported as a creator on passes."
+      ),
+      ch(
+        2,
+        2,
+        "Atrium Health career portal job search results for clinical roles."
+      ),
+    ];
+    const res = await runAdvancedSearch(
+      "Atrium Health Career Portal Exploration",
+      async () => null
+    );
+    expect(res.hits.length).toBeGreaterThanOrEqual(1);
+    expect(res.hits[0]!.url).toContain("atriumhealth");
+    const passes = res.hits.find((h) => h.url.includes("passes"));
+    const atrium = res.hits.find((h) => h.url.includes("atriumhealth"));
+    expect(atrium).toBeDefined();
+    if (passes) {
+      expect(atrium!.grounding).toBeGreaterThan(passes.grounding);
+    }
+  });
+
   it("adaptive cutoff removes very weak scores when stronger docs exist", async () => {
     mocks.docs = [
       doc(1, "https://strong.test/s", "S", now),

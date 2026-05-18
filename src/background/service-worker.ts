@@ -20,6 +20,16 @@ import {
   getUserSettings,
 } from "../shared/extension-settings";
 import {
+  deliverOverlayMessage,
+  resolveOverlayTabId,
+} from "../shared/shell-routing";
+import { storageLocalGet, storageLocalSet } from "../shared/storage-local";
+import {
+  indexPayloadUrlMatchesTab,
+  isOptionsPageSender,
+  isPrivilegedExtensionSender,
+} from "../lib/message-security";
+import {
   CORTEX_EXTENSION_BUS_CHANNEL,
   type CortexBusInbound,
   type CortexBusOutbound,
@@ -32,15 +42,35 @@ import { extractPageTextFromHtml } from "../content/extract";
 import { redactPII } from "../lib/pii-filter";
 import { summarizeBestEffort } from "../lib/summarize";
 import {
+  composeHistoryIndexText,
   dedupeHistoryItems,
   fetchHtmlForHistory,
   historySearch,
+  MIN_HISTORY_IMPORT_TEXT_CHARS,
   HISTORY_IMPORT_IDLE,
   HISTORY_IMPORT_FETCH_CONCURRENCY,
   readHistoryImportProgress,
   writeHistoryImportProgress,
 } from "../lib/history-import";
-import { CHAT_LIMITS } from "../lib/limits";
+import {
+  deleteConversation,
+  getConversationMessages,
+  listRecentConversations,
+} from "../lib/chat/conversation-store";
+import { CHAT_LIMITS, SEARCH_LIMITS, STORAGE_LIMITS } from "../lib/limits";
+import { isHistoryFetchAllowedUrl } from "../lib/history-fetch-security";
+import { isInjectableWebUrl } from "../lib/injectable-url";
+import {
+  installActiveTabCacheListeners,
+  setActiveTabSnapshot,
+} from "../lib/active-tab-cache";
+import {
+  configureSidePanelBehavior,
+  enableGlobalSidePanel,
+  enableSidePanelForRestrictedTab,
+  openSearchSidePanelReliable,
+} from "../lib/side-panel-launcher";
+import { openCortexSearchForTab } from "../lib/open-cortex-search";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { RateLimiter } from "../lib/rate-limiter";
 import {
@@ -49,7 +79,13 @@ import {
   CortexError,
 } from "../lib/errors";
 import {
+  notifyFirstInstallHistoryScanFinished,
+  notifyFirstInstallHistoryScanStarted,
+} from "../lib/first-install-history-notify";
+import {
   FIRST_INSTALL_BACKFILL_DONE_KEY,
+  FIRST_INSTALL_HISTORY_DAYS,
+  FIRST_INSTALL_HISTORY_MAX_URLS,
   ONBOARDING_DONE_KEY,
 } from "../shared/onboarding-constants";
 import { ensureIndexingHeadroom } from "../lib/storage-eviction";
@@ -105,34 +141,40 @@ cortexBus.onmessage = (ev: MessageEvent<CortexBusOutbound>) => {
   const d = ev.data;
   if (!d?.kind) return;
   if (d.kind === "chat-event") {
-    chrome.tabs.sendMessage(d.tabId, {
+    deliverOverlayMessage(d.tabId, {
       type: "CORTEX_CHAT_PUSH",
       event: d.event,
-    }).catch(() => {
-      /* tab may not have content script */
     });
     return;
   }
   if (d.kind === "digest-done") {
-    chrome.tabs.sendMessage(d.tabId, {
+    deliverOverlayMessage(d.tabId, {
       type: "CORTEX_DIGEST_PUSH",
       ok: true,
       result: d.result,
-    }).catch(() => {
-      /* ignore */
     });
     return;
   }
   if (d.kind === "digest-error") {
-    chrome.tabs.sendMessage(d.tabId, {
+    deliverOverlayMessage(d.tabId, {
       type: "CORTEX_DIGEST_PUSH",
       ok: false,
       error: d.message,
-    }).catch(() => {
-      /* ignore */
     });
   }
 };
+
+/** Stale offscreen docs survive extension reload — close so new bundle loads. */
+async function closeOffscreenDocument(): Promise<void> {
+  try {
+    const has = await chrome.offscreen.hasDocument?.();
+    if (has) {
+      await chrome.offscreen.closeDocument();
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 async function ensureOffscreen(): Promise<void> {
   if (offscreenCreating) return offscreenCreating;
@@ -344,31 +386,53 @@ async function runHistoryImportJob(
       try {
         const gate = await shouldSkipIndexing(item.url, HISTORY_IMPORT_SENDER, {
           bypassIndexingPause: true,
+          historyImport: true,
         });
         if (gate.skip) {
           skipped++;
           return;
         }
 
-        const html = await fetchHtmlForHistory(item.url);
-        if (!html) {
-          fetchFailed++;
-          return;
-        }
-
-        const rawExtract = extractPageTextFromHtml(html, item.url);
-        const titleRed = redactPII(rawExtract.title);
-        const textRed = redactPII(rawExtract.text);
-        const title = titleRed.redacted || item.title || item.url;
-        const text = textRed.redacted;
-
-        const minLen = minCharsForUrl(item.url);
-        if (text.length < minLen) {
+        let extractedTitle = "";
+        let extractedText = "";
+        if (!isHistoryFetchAllowedUrl(item.url)) {
           skipped++;
           return;
         }
 
-        const summary = await summarizeBestEffort(text);
+        const html = await fetchHtmlForHistory(item.url);
+        if (html) {
+          const rawExtract = extractPageTextFromHtml(html, item.url);
+          const titleRed = redactPII(rawExtract.title);
+          const textRed = redactPII(rawExtract.text);
+          extractedTitle = titleRed.redacted;
+          extractedText = textRed.redacted;
+        } else {
+          fetchFailed++;
+        }
+
+        const composed = composeHistoryIndexText(item, extractedText);
+        const composedRed = redactPII(composed);
+        const text = composedRed.redacted.trim();
+        if (text.length < MIN_HISTORY_IMPORT_TEXT_CHARS) {
+          skipped++;
+          return;
+        }
+
+        let hostLabel = item.url;
+        try {
+          hostLabel = new URL(item.url).hostname;
+        } catch {
+          /* ignore */
+        }
+        const title =
+          extractedTitle || item.title.trim() || hostLabel || item.url;
+
+        const summary =
+          extractedText.length >= minCharsForUrl(item.url)
+            ? await summarizeBestEffort(extractedText)
+            : title;
+
         const payload: IndexPayload = {
           url: item.url,
           title,
@@ -482,7 +546,7 @@ function searchViaOffscreen(query: string): Promise<
 async function shouldSkipIndexing(
   urlStr: string,
   sender: chrome.runtime.MessageSender,
-  opts?: { bypassIndexingPause?: boolean }
+  opts?: { bypassIndexingPause?: boolean; historyImport?: boolean }
 ): Promise<{ skip: true; reason: string } | { skip: false }> {
   const settings = await getUserSettings();
   if (settings.indexingPaused && !opts?.bypassIndexingPause) {
@@ -500,7 +564,11 @@ async function shouldSkipIndexing(
     return { skip: true, reason: "bad_url" };
   }
 
-  if (shouldAlwaysSkipUrl(urlStr)) {
+  if (
+    shouldAlwaysSkipUrl(urlStr, {
+      applyPathPatterns: opts?.historyImport !== true,
+    })
+  ) {
     return { skip: true, reason: "always_skip_registry" };
   }
 
@@ -525,45 +593,119 @@ async function shouldSkipIndexing(
   return { skip: false };
 }
 
-async function openSearchOnTab(tabId: number): Promise<void> {
-  const msg = { type: "CORTEX_OPEN_SEARCH" as const };
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  const delivered = await new Promise<boolean>((resolve) => {
+async function deliverOpenSearchMessage(tabId: number): Promise<boolean> {
+  const msg = { type: "CORTEX_OPEN_SEARCH" as const };
+  return new Promise((resolve) => {
     chrome.tabs.sendMessage(tabId, msg, () => {
       resolve(!chrome.runtime.lastError);
     });
   });
+}
 
-  if (delivered) return;
+async function openSearchOnTab(tabId: number): Promise<boolean> {
+  let tabUrl = "";
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    tabUrl = tab.url ?? "";
+  } catch {
+    return false;
+  }
+  if (!isInjectableWebUrl(tabUrl)) {
+    return false;
+  }
+
+  if (await deliverOpenSearchMessage(tabId)) return true;
+
+  const warm = warmContentScriptOnTab(tabId, tabUrl);
+
+  if (await deliverOpenSearchMessage(tabId)) return true;
+
+  await warm;
+
+  if (await deliverOpenSearchMessage(tabId)) return true;
 
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
       files: ["content.js"],
     });
-    await new Promise<void>((resolve, reject) => {
-      chrome.tabs.sendMessage(tabId, msg, () => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-          return;
-        }
-        resolve();
-      });
-    });
   } catch (e) {
     devLog.warn("[Cortex] overlay inject:", e);
-    try {
-      await chrome.scripting.executeScript({
-        target: { tabId },
-        func: () => {
-          window.dispatchEvent(new CustomEvent("cortex-open-search"));
-        },
-      });
-    } catch {
-      /* e.g. chrome:// or PDF viewer — shortcut cannot inject */
-    }
+  }
+
+  for (let i = 0; i < 4; i++) {
+    if (await deliverOpenSearchMessage(tabId)) return true;
+    if (i < 3) await sleepMs(24);
+  }
+
+  return false;
+}
+
+function queryActiveTab(): Promise<chrome.tabs.Tab | undefined> {
+  return new Promise((resolve) => {
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (chrome.runtime.lastError) {
+        resolve(undefined);
+        return;
+      }
+      resolve(tabs[0]);
+    });
+  });
+}
+
+/** Popup “Open search” and keyboard shortcut. */
+let openCortexSearchInFlight = false;
+let openCortexSearchUnlockTimer: ReturnType<typeof setTimeout> | undefined;
+
+async function withOpenCortexSearchGuard(
+  fn: () => Promise<void>
+): Promise<void> {
+  if (openCortexSearchInFlight) return;
+  openCortexSearchInFlight = true;
+  try {
+    await fn();
+  } finally {
+    clearTimeout(openCortexSearchUnlockTimer);
+    openCortexSearchUnlockTimer = setTimeout(() => {
+      openCortexSearchInFlight = false;
+    }, 450);
   }
 }
+
+async function openCortexSearchFromShortcut(): Promise<void> {
+  const tab = await queryActiveTab();
+  if (!tab) return;
+  setActiveTabSnapshot(tab);
+  await openCortexSearchForTab(tab, openSearchOnTab);
+}
+
+configureSidePanelBehavior();
+installActiveTabCacheListeners();
+enableGlobalSidePanel();
+
+async function handleSearchCommand(): Promise<void> {
+  await withOpenCortexSearchGuard(() => openCortexSearchFromShortcut());
+}
+
+/** Toolbar icon — open search immediately (no stats popup). */
+function openCortexSearchFromToolbarClick(tab: chrome.tabs.Tab): void {
+  void withOpenCortexSearchGuard(async () => {
+    if (tab.windowId == null) {
+      await openCortexSearchFromShortcut();
+      return;
+    }
+    setActiveTabSnapshot(tab);
+    await openCortexSearchForTab(tab, openSearchOnTab);
+  });
+}
+
+chrome.action.onClicked.addListener((tab) => {
+  openCortexSearchFromToolbarClick(tab);
+});
 
 /** Stagger tab kicks to stay under per-domain index rate limits (~30/min). */
 const FIRST_INSTALL_OPEN_TAB_STAGGER_MS = 2200;
@@ -622,20 +764,30 @@ async function primeOpenTabsAfterInstall(): Promise<void> {
 
 async function maybeRunFirstInstallBackfill(): Promise<void> {
   try {
-    const r = await chrome.storage.local.get(FIRST_INSTALL_BACKFILL_DONE_KEY);
+    const r = await storageLocalGet([FIRST_INSTALL_BACKFILL_DONE_KEY]);
     if (r[FIRST_INSTALL_BACKFILL_DONE_KEY]) return;
 
-    await chrome.storage.local.set({
+    await storageLocalSet({
       [FIRST_INSTALL_BACKFILL_DONE_KEY]: Date.now(),
     });
 
-    void runHistoryImportJob(7, 300).catch((err: unknown) => {
-      devLog.warn("[Cortex] first-install history import:", err);
-    });
+    notifyFirstInstallHistoryScanStarted();
 
     void primeOpenTabsAfterInstall().catch((err: unknown) => {
       devLog.warn("[Cortex] first-install open-tab indexing:", err);
     });
+
+    try {
+      await runHistoryImportJob(
+        FIRST_INSTALL_HISTORY_DAYS,
+        FIRST_INSTALL_HISTORY_MAX_URLS
+      );
+    } catch (err: unknown) {
+      devLog.warn("[Cortex] first-install history import:", err);
+    }
+
+    const progress = await readHistoryImportProgress();
+    notifyFirstInstallHistoryScanFinished(progress);
   } catch {
     /* ignore */
   }
@@ -671,7 +823,7 @@ function pingContentScript(tabId: number): Promise<boolean> {
 }
 
 async function warmContentScriptOnTab(tabId: number, url: string): Promise<void> {
-  if (!url.startsWith("http://") && !url.startsWith("https://")) return;
+  if (!isInjectableWebUrl(url)) return;
   if (await pingContentScript(tabId)) return;
   try {
     await chrome.scripting.executeScript({
@@ -687,23 +839,42 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   void chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (chrome.runtime.lastError || tab?.id == null) return;
     const url = tab.url ?? "";
+    enableSidePanelForRestrictedTab(tab.id, url);
     void warmContentScriptOnTab(activeInfo.tabId, url);
   });
 });
 
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+  if (tab.id == null) return;
+  if (changeInfo.url != null || changeInfo.status === "complete") {
+    enableSidePanelForRestrictedTab(tab.id, tab.url ?? changeInfo.url);
+  }
+  if (
+    tab.id != null &&
+    isInjectableWebUrl(tab.url ?? changeInfo.url) &&
+    changeInfo.status === "complete"
+  ) {
+    void warmContentScriptOnTab(tab.id, tab.url ?? "");
+  }
+});
+
 chrome.runtime.onInstalled.addListener((details) => {
+  void getUserSettings();
   devLog.info("[Cortex] installed — local-only indexing (chunk-level)");
   scheduleStorageMaintenanceAlarm();
 
+  configureSidePanelBehavior();
+  enableGlobalSidePanel();
+
   if (details.reason === "install" || details.reason === "update") {
+    void closeOffscreenDocument();
     void writeInitialStatsSnapshot();
   }
 
   if (details.reason === "install") {
     void maybeRunFirstInstallBackfill();
 
-    void chrome.storage.local.get([ONBOARDING_DONE_KEY], (r) => {
-      if (chrome.runtime.lastError) return;
+    void storageLocalGet([ONBOARDING_DONE_KEY]).then((r) => {
       if (r[ONBOARDING_DONE_KEY]) return;
       void chrome.tabs.create({
         url: chrome.runtime.getURL("onboarding.html"),
@@ -714,7 +885,10 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 chrome.runtime.onStartup.addListener(() => {
+  void getUserSettings();
   scheduleStorageMaintenanceAlarm();
+  configureSidePanelBehavior();
+  enableGlobalSidePanel();
 });
 
 function scheduleStorageMaintenanceAlarm(): void {
@@ -735,11 +909,7 @@ chrome.commands.onCommand.addListener((command) => {
   ) {
     return;
   }
-  void chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const id = tabs[0]?.id;
-    if (id == null) return;
-    void openSearchOnTab(id);
-  });
+  void handleSearchCommand();
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
@@ -749,8 +919,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     return false;
   }
 
-  if ((msg as { type?: string }).type === "CORTEX_EMBED_TEXT") return false;
-  if ((msg as { type?: string }).type === "CORTEX_SEARCH_RUN") return false;
+  const msgType = (msg as { type?: string }).type;
+  if (
+    msgType === "CORTEX_EMBED_TEXT" ||
+    msgType === "CORTEX_SEARCH_RUN"
+  ) {
+    if (!isPrivilegedExtensionSender(sender)) {
+      sendResponse({
+        ok: false,
+        error: ERROR_CODES.FOREIGN_SENDER,
+        ...payloadFromCode(ERROR_CODES.FOREIGN_SENDER),
+      });
+      return true;
+    }
+    return false;
+  }
 
   const type = (msg as { type: string }).type;
 
@@ -771,9 +954,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
         }
 
         const p = (msg as { payload: IndexPayload }).payload;
+        if (!indexPayloadUrlMatchesTab(p.url, sender)) {
+          sendResponse({
+            ok: false,
+            error: ERROR_CODES.INDEX_URL_MISMATCH,
+            ...payloadFromCode(ERROR_CODES.INDEX_URL_MISMATCH),
+          });
+          return;
+        }
+
         const minLen = minCharsForUrl(p.url);
         if (!p?.text || p.text.length < minLen) {
           sendResponse({ ok: false, reason: "too_short", minLen });
+          return;
+        }
+
+        if (p.text.length > STORAGE_LIMITS.MAX_DOCUMENT_TEXT_BYTES) {
+          sendResponse({
+            ok: false,
+            error: ERROR_CODES.INDEX_TEXT_TOO_LARGE,
+            ...payloadFromCode(ERROR_CODES.INDEX_TEXT_TOO_LARGE),
+          });
           return;
         }
 
@@ -809,7 +1010,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (type === "CORTEX_CHAT_START") {
-    const tabId = sender.tab?.id;
+    const tabId = resolveOverlayTabId(
+      sender,
+      Boolean((msg as { shell?: boolean }).shell)
+    );
     if (tabId == null) {
       sendResponse({ ok: false, error: "no_tab" });
       return true;
@@ -855,8 +1059,78 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     return true;
   }
 
+  if (type === "CORTEX_CHAT_LIST") {
+    void (async () => {
+      try {
+        const conversations = await listRecentConversations(48);
+        sendResponse({ ok: true as const, conversations });
+      } catch (e: unknown) {
+        sendResponse({
+          ok: false as const,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    })();
+    return true;
+  }
+
+  if (type === "CORTEX_CHAT_LOAD") {
+    const conversationIdRaw = (msg as { conversationId?: unknown })
+      .conversationId;
+    const conversationId =
+      typeof conversationIdRaw === "number" &&
+      Number.isFinite(conversationIdRaw)
+        ? conversationIdRaw
+        : null;
+    if (conversationId == null) {
+      sendResponse({ ok: false, error: "bad_conversation_id" });
+      return true;
+    }
+    void (async () => {
+      try {
+        const messages = await getConversationMessages(conversationId);
+        sendResponse({ ok: true as const, conversationId, messages });
+      } catch (e: unknown) {
+        sendResponse({
+          ok: false as const,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    })();
+    return true;
+  }
+
+  if (type === "CORTEX_CHAT_DELETE") {
+    const conversationIdRaw = (msg as { conversationId?: unknown })
+      .conversationId;
+    const conversationId =
+      typeof conversationIdRaw === "number" &&
+      Number.isFinite(conversationIdRaw)
+        ? conversationIdRaw
+        : null;
+    if (conversationId == null) {
+      sendResponse({ ok: false, error: "bad_conversation_id" });
+      return true;
+    }
+    void (async () => {
+      try {
+        await deleteConversation(conversationId);
+        sendResponse({ ok: true as const, conversationId });
+      } catch (e: unknown) {
+        sendResponse({
+          ok: false as const,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    })();
+    return true;
+  }
+
   if (type === "CORTEX_DIGEST_START") {
-    const tabId = sender.tab?.id;
+    const tabId = resolveOverlayTabId(
+      sender,
+      Boolean((msg as { shell?: boolean }).shell)
+    );
     if (tabId == null) {
       sendResponse({ ok: false, error: "no_tab" });
       return true;
@@ -900,6 +1174,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     void (async () => {
       try {
         const q = String((msg as { query?: string }).query || "");
+        if (q.length > SEARCH_LIMITS.MAX_QUERY_CHARS) {
+          sendResponse({
+            ok: false,
+            error: ERROR_CODES.QUERY_TOO_LONG,
+            maxLen: SEARCH_LIMITS.MAX_QUERY_CHARS,
+            ...payloadFromCode(ERROR_CODES.QUERY_TOO_LONG),
+          });
+          return;
+        }
         const result = await searchViaOffscreen(q);
         if (result.ok) {
           sendResponse({
@@ -1000,6 +1283,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (type === "CORTEX_CLEAR_ALL_DATA") {
+    if (!isOptionsPageSender(sender)) {
+      sendResponse({
+        ok: false,
+        error: ERROR_CODES.FOREIGN_SENDER,
+        ...payloadFromCode(ERROR_CODES.FOREIGN_SENDER),
+      });
+      return true;
+    }
     void (async () => {
       try {
         await clearAllIndexedData();
@@ -1015,7 +1306,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (type === "CORTEX_HISTORY_IMPORT_START") {
-    if (!rateLimitHit("history_import_start", 1, sendResponse)) return true;
+    if (!rateLimitHit("history_import_start", 3, sendResponse)) return true;
     void (async () => {
       const daysRaw = Number((msg as { daysBack?: number }).daysBack);
       const maxRaw = Number((msg as { maxUrls?: number }).maxUrls);
@@ -1071,11 +1362,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (type === "CORTEX_POPUP_OPEN_SEARCH") {
-    void chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const id = tabs[0]?.id;
-      if (id != null) void openSearchOnTab(id);
+    void (async () => {
+      await openCortexSearchFromShortcut();
       sendResponse({ ok: true });
-    });
+    })();
     return true;
   }
 

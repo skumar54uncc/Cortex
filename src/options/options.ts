@@ -2,14 +2,27 @@ import {
   getUserSettings,
   setUserSettings,
 } from "../shared/extension-settings";
-import {
-  HISTORY_IMPORT_IDLE,
-  type HistoryImportProgress,
-} from "../lib/history-import";
-import "../styles/cortex-theme.css";
-import "../popup/popup.css";
-import "./options.css";
+import type { HistoryImportProgress } from "../lib/history-import";
 import { injectBrandFontFacesInto } from "../styles/brand-fonts";
+
+const HISTORY_IDLE: HistoryImportProgress = {
+  running: false,
+  total: 0,
+  processed: 0,
+  indexed: 0,
+  skipped: 0,
+  fetchFailed: 0,
+};
+
+type RecentRow = {
+  url: string;
+  title: string;
+  hostname: string;
+  visitedAt: number;
+};
+
+let statsAnimatedOnce = false;
+let deleteOpenAt = 0;
 
 injectBrandFontFacesInto(document.head);
 
@@ -38,10 +51,63 @@ function domainsFromTextarea(ta: HTMLTextAreaElement): string[] {
     .filter(Boolean);
 }
 
+function relativeTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hr ago`;
+  const day = Math.floor(hr / 24);
+  if (day === 1) return "yesterday";
+  if (day < 7) return `${day} days ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
+function openTab(url: string): void {
+  try {
+    const u = new URL(url.trim());
+    if (u.protocol === "http:" || u.protocol === "https:") {
+      void chrome.runtime.sendMessage({ type: "CORTEX_OPEN_TAB", url: u.href });
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function animateStat(el: HTMLElement, target: number): void {
+  el.querySelector(".cx-stat-skeleton")?.remove();
+  el.classList.add("is-loaded");
+  if (!Number.isFinite(target)) {
+    el.textContent = "—";
+    return;
+  }
+  const n = Math.round(target);
+  if (statsAnimatedOnce) {
+    el.textContent = String(n);
+    return;
+  }
+  const t0 = performance.now();
+  const step = (t: number) => {
+    const p = Math.min(1, (t - t0) / 300);
+    el.textContent = String(Math.round(n * (1 - (1 - p) ** 3)));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function syncPauseToggle(checked: boolean): void {
+  const toggle = qs<HTMLButtonElement>("#cx-opt-pause-toggle");
+  const input = qs<HTMLInputElement>("#cx-opt-pause");
+  input.checked = checked;
+  toggle.setAttribute("aria-checked", String(checked));
+}
+
 function renderBlocklistChips(): void {
   const ta = qs<HTMLTextAreaElement>("#cx-opt-blocklist");
   const row = qs<HTMLElement>("#cx-opt-blocklist-chips");
-  row.innerHTML = "";
+  row.replaceChildren();
   const domains = domainsFromTextarea(ta);
   for (const d of domains) {
     const chip = document.createElement("span");
@@ -62,9 +128,99 @@ function renderBlocklistChips(): void {
   }
 }
 
+function renderRecentList(recent: RecentRow[]): void {
+  const ul = qs<HTMLUListElement>("#cx-opt-recent");
+  const empty = qs<HTMLElement>("#cx-opt-recent-empty");
+  const badge = qs<HTMLElement>("#cx-recent-count");
+  ul.replaceChildren();
+
+  const map = new Map<
+    string,
+    { url: string; title: string; host: string; at: number; n: number }
+  >();
+  for (const row of recent) {
+    const e = map.get(row.url);
+    if (!e) {
+      map.set(row.url, {
+        url: row.url,
+        title: row.title,
+        host: row.hostname,
+        at: row.visitedAt,
+        n: 1,
+      });
+    } else {
+      e.n++;
+      if (row.visitedAt > e.at) {
+        e.at = row.visitedAt;
+        e.title = row.title || e.title;
+        e.host = row.hostname || e.host;
+      }
+    }
+  }
+  const deduped = [...map.values()].sort((a, b) => b.at - a.at).slice(0, 20);
+  badge.textContent = `(${deduped.length})`;
+  empty.hidden = deduped.length > 0;
+
+  for (const r of deduped) {
+    const li = document.createElement("li");
+    li.className = "cx-recent-item";
+    li.tabIndex = 0;
+    const letter = (r.host || "?").charAt(0).toUpperCase();
+    const fav = document.createElement("img");
+    fav.className = "cx-recent-favicon";
+    fav.width = 16;
+    fav.height = 16;
+    fav.alt = "";
+    fav.src = `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(r.host)}`;
+    fav.onerror = () => {
+      const fb = document.createElement("span");
+      fb.className = "cx-recent-fallback";
+      fb.textContent = letter;
+      fav.replaceWith(fb);
+    };
+
+    const main = document.createElement("div");
+    main.className = "cx-recent-main";
+    const title = document.createElement("span");
+    title.className = "cx-recent-title";
+    title.textContent = r.title || r.host || r.url;
+    const host = document.createElement("span");
+    host.className = "cx-recent-host";
+    host.textContent = r.host;
+    main.append(title, host);
+
+    const meta = document.createElement("div");
+    meta.className = "cx-recent-meta";
+    if (r.n > 1) {
+      const pill = document.createElement("span");
+      pill.className = "cx-recent-count-pill";
+      pill.textContent = `${r.n} visits`;
+      meta.appendChild(pill);
+    }
+    const when = document.createElement("span");
+    when.textContent = relativeTime(r.at);
+    meta.appendChild(when);
+    const go = () => openTab(r.url);
+    li.addEventListener("click", go);
+    li.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        go();
+      }
+    });
+
+    li.append(fav, main, meta);
+    ul.appendChild(li);
+  }
+}
+
 async function refreshStats(): Promise<void> {
   const errEl = qs<HTMLElement>("#cx-opt-stats-error");
   errEl.hidden = true;
+
+  const pagesEl = qs<HTMLElement>("#cx-opt-pages");
+  const chunksEl = qs<HTMLElement>("#cx-opt-chunks");
+  const visitsEl = qs<HTMLElement>("#cx-opt-visits");
 
   try {
     const res = (await chrome.runtime.sendMessage({
@@ -76,22 +232,23 @@ async function refreshStats(): Promise<void> {
       visitCount?: number;
       storageBytes?: number;
       storageQuotaBytes?: number;
-      recent?: {
-        url: string;
-        title: string;
-        visitedAt: number;
-        hostname: string;
-      }[];
+      recent?: RecentRow[];
     };
 
     if (!res?.ok) throw new Error("unavailable");
 
-    qs("#cx-opt-pages").textContent =
-      typeof res.pageCount === "number" ? String(res.pageCount) : "—";
-    qs("#cx-opt-chunks").textContent =
-      typeof res.chunkCount === "number" ? String(res.chunkCount) : "—";
-    qs("#cx-opt-visits").textContent =
-      typeof res.visitCount === "number" ? String(res.visitCount) : "—";
+    animateStat(
+      pagesEl,
+      typeof res.pageCount === "number" ? res.pageCount : NaN
+    );
+    animateStat(
+      chunksEl,
+      typeof res.chunkCount === "number" ? res.chunkCount : NaN
+    );
+    animateStat(
+      visitsEl,
+      typeof res.visitCount === "number" ? res.visitCount : NaN
+    );
 
     const used = fmtBytes(res.storageBytes);
     const cap = fmtBytes(res.storageQuotaBytes);
@@ -100,36 +257,18 @@ async function refreshStats(): Promise<void> {
         ? `Approximate storage (browser quota): ${used} of ${cap}`
         : `Approximate storage in use: ${used}`;
 
-    const ul = qs("#cx-opt-recent");
-    const empty = qs<HTMLElement>("#cx-opt-recent-empty");
-    ul.innerHTML = "";
-
-    const recent = res.recent ?? [];
-    if (!recent.length) {
-      empty.hidden = false;
-    } else {
-      empty.hidden = true;
-      for (const r of recent) {
-        const li = document.createElement("li");
-        const a = document.createElement("a");
-        a.href = r.url;
-        a.target = "_blank";
-        a.rel = "noreferrer";
-        a.textContent = (r.title || r.url).slice(0, 80);
-        const meta = document.createElement("div");
-        meta.className = "cx-recent-meta";
-        meta.textContent = `${r.hostname} · ${new Date(r.visitedAt).toLocaleString()}`;
-        li.appendChild(a);
-        li.appendChild(meta);
-        ul.appendChild(li);
-      }
-    }
+    renderRecentList(res.recent ?? []);
+    statsAnimatedOnce = true;
   } catch {
-    qs("#cx-opt-pages").textContent = "—";
-    qs("#cx-opt-chunks").textContent = "—";
-    qs("#cx-opt-visits").textContent = "—";
+    pagesEl.textContent = "—";
+    chunksEl.textContent = "—";
+    visitsEl.textContent = "—";
+    pagesEl.classList.add("is-loaded");
+    chunksEl.classList.add("is-loaded");
+    visitsEl.classList.add("is-loaded");
     qs("#cx-opt-storage-line").textContent = "Storage: unavailable";
     errEl.hidden = false;
+    renderRecentList([]);
   }
 }
 
@@ -139,12 +278,12 @@ async function fetchHistoryProgress(): Promise<HistoryImportProgress> {
       type: "CORTEX_HISTORY_IMPORT_STATUS",
     })) as { ok?: boolean; progress?: HistoryImportProgress };
     if (res?.ok && res.progress) {
-      return { ...HISTORY_IMPORT_IDLE, ...res.progress };
+      return { ...HISTORY_IDLE, ...res.progress };
     }
   } catch {
     /* ignore */
   }
-  return { ...HISTORY_IMPORT_IDLE };
+  return { ...HISTORY_IDLE };
 }
 
 let historyPollId: number | undefined;
@@ -169,26 +308,44 @@ function readChatModeFromForm():
     : "auto";
 }
 
-async function saveChatSettingsOnly(): Promise<void> {
-  const msg = qs<HTMLElement>("#cx-opt-chat-save-msg");
-  msg.hidden = true;
+async function runSave(
+  btnId: string,
+  msgId: string,
+  idle: string,
+  saveFn: () => Promise<void>
+): Promise<void> {
+  const btn = qs<HTMLButtonElement>(btnId);
+  const feedback = qs<HTMLElement>(msgId);
+  const label = btn.querySelector(".cx-btn-label");
+  feedback.hidden = true;
+  feedback.classList.remove("is-error", "is-success");
+  btn.classList.remove("shake", "is-success");
+  btn.classList.add("is-loading");
+  btn.disabled = true;
+  if (label) label.textContent = "Saving…";
   try {
-    await setUserSettings({
-      chatMode: readChatModeFromForm(),
-      cloudChatEnabled: (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked,
-      geminiApiKey: (qs("#cx-opt-gemini-key") as HTMLInputElement).value.trim(),
-    });
-    msg.textContent = "Chat settings saved.";
-    msg.hidden = false;
+    await saveFn();
+    btn.classList.remove("is-loading");
+    btn.classList.add("is-success");
+    if (label) label.textContent = "Saved";
+    feedback.textContent = "Saved";
+    feedback.classList.add("is-success");
+    feedback.hidden = false;
+    window.setTimeout(() => {
+      btn.classList.remove("is-success");
+      btn.disabled = false;
+      if (label) label.textContent = idle;
+      feedback.hidden = true;
+    }, 2000);
   } catch {
-    msg.textContent = "Could not save chat settings.";
-    msg.hidden = false;
+    btn.classList.remove("is-loading");
+    btn.classList.add("shake");
+    btn.disabled = false;
+    if (label) label.textContent = idle;
+    feedback.textContent = "Could not save. Try again.";
+    feedback.classList.add("is-error");
+    feedback.hidden = false;
   }
-}
-
-function truncateUrl(u: string, max = 72): string {
-  if (u.length <= max) return u;
-  return `${u.slice(0, max - 1)}…`;
 }
 
 function applyHistoryUi(p: HistoryImportProgress): void {
@@ -198,16 +355,16 @@ function applyHistoryUi(p: HistoryImportProgress): void {
   const daysSel = qs<HTMLSelectElement>("#cx-opt-history-days");
   const capSel = qs<HTMLSelectElement>("#cx-opt-history-cap");
 
+  status.classList.remove("is-running");
+
   if (p.running) {
     startBtn.disabled = true;
     cancelBtn.hidden = false;
     daysSel.disabled = true;
     capSel.disabled = true;
-    const pct =
-      p.total > 0 ? Math.min(100, Math.round((p.processed / p.total) * 100)) : 0;
-    let line = `Scanning… ${p.processed} / ${p.total} (${pct}%). Indexed ${p.indexed}, skipped ${p.skipped}, fetch failed ${p.fetchFailed}.`;
-    if (p.lastUrl) line += ` Last: ${truncateUrl(p.lastUrl)}`;
-    status.textContent = line;
+    status.classList.add("is-running");
+    status.textContent = "Scanning…";
+    qs<HTMLElement>("#cx-history-result-card").hidden = true;
   } else {
     startBtn.disabled = false;
     cancelBtn.hidden = true;
@@ -216,9 +373,15 @@ function applyHistoryUi(p: HistoryImportProgress): void {
     if (p.error) {
       status.textContent = `Stopped with error: ${p.error}`;
     } else if (p.finishedAt && p.processed > 0) {
-      status.textContent = `Finished. Attempted ${p.processed}, indexed ${p.indexed}, skipped ${p.skipped}, fetch failed ${p.fetchFailed}.`;
-    } else if (!p.running && p.processed === 0 && !p.error && !p.finishedAt) {
       status.textContent = "";
+      qs<HTMLElement>("#cx-history-result-card").hidden = false;
+      qs("#cx-h-attempted").textContent = String(p.processed);
+      qs("#cx-h-indexed").textContent = String(p.indexed);
+      qs("#cx-h-skipped").textContent = String(p.skipped);
+      qs("#cx-h-failed").textContent = String(p.fetchFailed);
+    } else {
+      status.textContent = "";
+      qs<HTMLElement>("#cx-history-result-card").hidden = true;
     }
   }
 }
@@ -240,9 +403,8 @@ function startHistoryPolling(): void {
 
 async function loadSettingsUi(): Promise<void> {
   const s = await getUserSettings();
-  (qs("#cx-opt-pause") as HTMLInputElement).checked = s.indexingPaused;
-  (qs("#cx-opt-blocklist") as HTMLTextAreaElement).value =
-    s.blocklist.join("\n");
+  syncPauseToggle(s.indexingPaused);
+  qs<HTMLTextAreaElement>("#cx-opt-blocklist").value = s.blocklist.join("\n");
 
   const mode = s.chatMode ?? "auto";
   document
@@ -250,11 +412,32 @@ async function loadSettingsUi(): Promise<void> {
     .forEach((r) => {
       r.checked = r.value === mode;
     });
-  (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked =
-    s.cloudChatEnabled;
+  (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked = s.cloudChatEnabled;
   (qs("#cx-opt-gemini-key") as HTMLInputElement).value = s.geminiApiKey ?? "";
 
   renderBlocklistChips();
+}
+
+function hideDeleteConfirm(): void {
+  qs<HTMLElement>("#cx-delete-confirm").hidden = true;
+  qs<HTMLInputElement>("#cx-delete-input").value = "";
+  qs<HTMLButtonElement>("#cx-delete-confirm-btn").disabled = true;
+  qs<HTMLElement>("#cx-delete-feedback").hidden = true;
+  deleteOpenAt = 0;
+}
+
+function showDeleteConfirm(): void {
+  deleteOpenAt = Date.now();
+  qs<HTMLElement>("#cx-delete-confirm").hidden = false;
+  qs<HTMLInputElement>("#cx-delete-input").focus();
+  updateDeleteConfirmEnabled();
+}
+
+function updateDeleteConfirmEnabled(): void {
+  const input = qs<HTMLInputElement>("#cx-delete-input");
+  const btn = qs<HTMLButtonElement>("#cx-delete-confirm-btn");
+  const typed = input.value.trim().toUpperCase() === "DELETE";
+  btn.disabled = !(typed || (deleteOpenAt > 0 && Date.now() - deleteOpenAt < 5000));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -266,61 +449,75 @@ document.addEventListener("DOMContentLoaded", () => {
     if (p.running) startHistoryPolling();
   })();
 
-  qs("#cx-opt-blocklist").addEventListener("input", () => {
+  qs<HTMLButtonElement>("#cx-opt-pause-toggle").addEventListener("click", () => {
+    const input = qs<HTMLInputElement>("#cx-opt-pause");
+    input.checked = !input.checked;
+    syncPauseToggle(input.checked);
+  });
+
+  qs<HTMLTextAreaElement>("#cx-opt-blocklist").addEventListener("input", () => {
     renderBlocklistChips();
   });
 
-  qs("#cx-opt-retry-stats").addEventListener("click", () => {
+  qs<HTMLButtonElement>("#cx-opt-retry-stats").addEventListener("click", () => {
     void refreshStats();
   });
 
-  qs("#cx-opt-chat-save").addEventListener("click", () => {
-    void saveChatSettingsOnly();
+  qs<HTMLButtonElement>("#cx-opt-chat-save").addEventListener("click", () => {
+    void runSave("#cx-opt-chat-save", "#cx-opt-chat-save-msg", "Save chat settings", () =>
+      setUserSettings({
+        chatMode: readChatModeFromForm(),
+        cloudChatEnabled: (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked,
+        geminiApiKey: (qs("#cx-opt-gemini-key") as HTMLInputElement).value.trim(),
+      })
+    );
   });
 
-  qs("#cx-opt-save").addEventListener("click", async () => {
-    const msg = qs("#cx-opt-save-msg");
-    msg.hidden = true;
-    try {
-      const lines = domainsFromTextarea(qs("#cx-opt-blocklist"));
+  qs<HTMLButtonElement>("#cx-opt-save").addEventListener("click", () => {
+    void runSave("#cx-opt-save", "#cx-opt-save-msg", "Save privacy settings", async () => {
       await setUserSettings({
         indexingPaused: (qs("#cx-opt-pause") as HTMLInputElement).checked,
-        blocklist: lines,
+        blocklist: domainsFromTextarea(qs("#cx-opt-blocklist")),
         chatMode: readChatModeFromForm(),
-        cloudChatEnabled: (qs("#cx-opt-cloud-chat") as HTMLInputElement)
-          .checked,
-        geminiApiKey: (
-          qs("#cx-opt-gemini-key") as HTMLInputElement
-        ).value.trim(),
+        cloudChatEnabled: (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked,
+        geminiApiKey: (qs("#cx-opt-gemini-key") as HTMLInputElement).value.trim(),
       });
-      msg.textContent = "Saved.";
-      msg.hidden = false;
       renderBlocklistChips();
-    } catch {
-      msg.textContent = "Could not save.";
-      msg.hidden = false;
-    }
+    });
   });
 
-  qs("#cx-opt-delete-all").addEventListener("click", async () => {
-    const ok = confirm(
-      "Delete all indexed pages, chunks, and visit history from this browser?\n\nThis cannot be undone. Blocklist and settings are kept."
-    );
-    if (!ok) return;
+  qs<HTMLButtonElement>("#cx-opt-delete-all").addEventListener("click", () => {
+    const panel = qs<HTMLElement>("#cx-delete-confirm");
+    if (!panel.hidden) return;
+    showDeleteConfirm();
+  });
 
+  qs<HTMLInputElement>("#cx-delete-input").addEventListener("input", () => {
+    updateDeleteConfirmEnabled();
+  });
+
+  qs<HTMLButtonElement>("#cx-delete-cancel-btn").addEventListener("click", () => {
+    hideDeleteConfirm();
+  });
+
+  qs<HTMLButtonElement>("#cx-delete-confirm-btn").addEventListener("click", async () => {
+    const feedback = qs<HTMLElement>("#cx-delete-feedback");
+    feedback.hidden = true;
     const res = (await chrome.runtime.sendMessage({
       type: "CORTEX_CLEAR_ALL_DATA",
     })) as { ok?: boolean; error?: string };
 
     if (res?.ok) {
+      hideDeleteConfirm();
       void refreshStats();
-      alert("Indexed data removed.");
     } else {
-      alert(res?.error ?? "Could not delete data.");
+      feedback.textContent = res?.error ?? "Could not delete data.";
+      feedback.classList.add("is-error");
+      feedback.hidden = false;
     }
   });
 
-  qs("#cx-opt-history-start").addEventListener("click", async () => {
+  qs<HTMLButtonElement>("#cx-opt-history-start").addEventListener("click", async () => {
     qs<HTMLElement>("#cx-opt-history-status").textContent = "";
     const days = Number(qs<HTMLSelectElement>("#cx-opt-history-days").value);
     const maxUrls = Number(qs<HTMLSelectElement>("#cx-opt-history-cap").value);
@@ -340,7 +537,7 @@ document.addEventListener("DOMContentLoaded", () => {
     startHistoryPolling();
   });
 
-  qs("#cx-opt-history-cancel").addEventListener("click", () => {
+  qs<HTMLButtonElement>("#cx-opt-history-cancel").addEventListener("click", () => {
     void chrome.runtime.sendMessage({ type: "CORTEX_HISTORY_IMPORT_CANCEL" });
   });
 });

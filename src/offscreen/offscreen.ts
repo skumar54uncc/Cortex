@@ -1,5 +1,9 @@
 /// <reference types="chrome"/>
-import { pipeline, env } from "@xenova/transformers";
+import { pipeline } from "@xenova/transformers";
+import {
+  configureTransformersEnv,
+  setTransformersLocalModelPath,
+} from "../lib/transformers-env";
 import { runAdvancedSearch } from "../lib/search-engine";
 import { CORTEX_EMBED_MODEL_ID } from "../shared/embed-model";
 import { agentDebugLog } from "../lib/agent-debug-log";
@@ -10,19 +14,12 @@ import {
   type CortexBusInbound,
   type CortexBusOutbound,
 } from "../lib/extension-bus";
+import { isPrivilegedExtensionSender } from "../lib/message-security";
+import { SEARCH_LIMITS } from "../lib/limits";
+import type { ChatSettings } from "../lib/chat/types";
 
 /** Bundled weights under dist/models/ — zero CDN/HF fetch after install (see npm run prepare-model). */
-env.allowLocalModels = true;
-env.allowRemoteModels = false;
-
-/**
- * ONNX Runtime Web pthread workers often use blob: URLs, which managed / current Chrome builds
- * reject in MV3 extension_pages CSP. Keep single-thread WASM so workers load from extension
- * origins only (worker-src 'self' in manifest).
- */
-if (env.backends.onnx?.wasm) {
-  env.backends.onnx.wasm.numThreads = 1;
-}
+configureTransformersEnv();
 
 let embeddingEnvReady = false;
 
@@ -30,7 +27,7 @@ async function ensureEmbeddingEnv(): Promise<void> {
   if (embeddingEnvReady) return;
 
   const base = chrome.runtime.getURL("models/");
-  env.localModelPath = base;
+  setTransformersLocalModelPath(base);
 
   const probe = `${base}Xenova/all-MiniLM-L6-v2/tokenizer.json`;
   const r = await fetch(probe);
@@ -90,7 +87,12 @@ async function embedQueryForSearch(text: string): Promise<number[] | null> {
   }
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse): boolean => {
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
+  if (!isPrivilegedExtensionSender(sender)) {
+    return false;
+  }
+
   if (msg?.type === "CORTEX_EMBED_TEXT") {
     void (async () => {
       try {
@@ -139,10 +141,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse): boolean => {
   }
 
   if (msg?.type === "CORTEX_SEARCH_RUN") {
+    const q = String(msg.query ?? "");
+    if (q.length > SEARCH_LIMITS.MAX_QUERY_CHARS) {
+      sendResponse({
+        ok: false as const,
+        error: "query_too_long",
+      });
+      return true;
+    }
     void (async () => {
       try {
         const { hits, evidence } = await runAdvancedSearch(
-          String(msg.query ?? ""),
+          q,
           embedQueryForSearch
         );
         sendResponse({ ok: true as const, hits, evidence });
@@ -169,10 +179,11 @@ cortexExtBus.onmessage = (ev: MessageEvent<CortexBusInbound>) => {
   if (incoming.kind === "chat-run") {
     void (async () => {
       try {
+        const settings = incoming.settings;
         for await (const event of runChat(
           incoming.conversationId,
           incoming.question,
-          incoming.settings,
+          settings,
           embedQueryForSearch
         )) {
           const out: CortexBusOutbound = {
@@ -202,12 +213,13 @@ cortexExtBus.onmessage = (ev: MessageEvent<CortexBusInbound>) => {
   if (incoming.kind === "digest-run") {
     void (async () => {
       try {
+        const settings = incoming.settings;
         const result = await generateDigest(
           {
             range: incoming.range,
             forceRegenerate: incoming.forceRegenerate,
           },
-          incoming.settings
+          settings
         );
         cortexExtBus.postMessage({
           kind: "digest-done",

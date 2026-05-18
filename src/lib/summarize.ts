@@ -25,6 +25,7 @@ export async function summarizeBestEffort(text: string): Promise<string> {
           type: "tl;dr",
           format: "plain-text",
           length: "short",
+          outputLanguage: "en",
         });
         const out = await model.summarize(cleaned.slice(0, 12000));
         if (out?.trim()) return out.trim().slice(0, 400);

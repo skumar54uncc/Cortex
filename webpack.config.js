@@ -17,10 +17,13 @@ module.exports = (env, argv) => {
     popup: "./src/popup/popup.ts",
     options: "./src/options/options.ts",
     onboarding: "./src/onboarding/onboarding.ts",
+    "search-shell": "./src/search/search-shell.ts",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "[name].js",
+    /** style-loader breaks in MV3 pages when left as `auto` */
+    publicPath: "",
     clean: true,
   },
   module: {
@@ -58,9 +61,13 @@ module.exports = (env, argv) => {
         { from: "src/offscreen/offscreen.html", to: "." },
         { from: "src/popup/popup.html", to: "." },
         { from: "src/popup/popup.css", to: "." },
+        { from: "src/styles/cortex-theme.css", to: "." },
         { from: "src/options/options.html", to: "." },
         { from: "src/options/options.css", to: "." },
         { from: "src/onboarding/onboarding.html", to: "." },
+        { from: "src/onboarding/onboarding.css", to: "." },
+        { from: "src/search/search-shell.html", to: "." },
+        { from: "src/search/search-shell.css", to: "." },
         { from: "icons", to: "icons", noErrorOnMissing: true },
         { from: "fonts", to: "fonts", noErrorOnMissing: true },
         { from: "vendor/models", to: "models", noErrorOnMissing: true },

@@ -6,15 +6,20 @@ export interface ConfidenceTier {
   relative: number;
 }
 
-export function confidenceTier(score: number, maxInBatch: number): ConfidenceTier {
+export function confidenceTier(
+  score: number,
+  maxInBatch: number,
+  grounding = 1
+): ConfidenceTier {
   const max = maxInBatch > 0 && Number.isFinite(maxInBatch) ? maxInBatch : 1;
   const s = Number.isFinite(score) ? score : 0;
   const relative = max > 0 ? s / max : 0;
+  const g = Math.min(1, Math.max(0, Number.isFinite(grounding) ? grounding : 1));
 
-  if (relative >= 0.88) {
+  if (relative >= 0.88 && g >= 0.5) {
     return { label: "Strong match", cssClass: "cortex-confidence-strong", relative };
   }
-  if (relative >= 0.62) {
+  if (relative >= 0.65 && g >= 0.32) {
     return { label: "Good match", cssClass: "cortex-confidence-good", relative };
   }
   return { label: "Looser match", cssClass: "cortex-confidence-possible", relative };

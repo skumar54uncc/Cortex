@@ -1,0 +1,98 @@
+/* Onboarding — extends options design system (imported from onboarding.ts) */
+
+.cx-onb-page .cx-opt-page-head {
+  margin-bottom: var(--space-4);
+}
+
+.cx-onb-notice {
+  margin-bottom: var(--section-gap);
+  background: var(--accent-subtle);
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+}
+
+.cx-onb-notice-lead {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-sm);
+  color: var(--text-secondary);
+}
+
+.cx-onb-notice-lead strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.cx-onb-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cx-onb-step {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.cx-onb-step-num {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.cx-onb-step-body {
+  min-width: 0;
+}
+
+.cx-onb-step-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-base);
+  line-height: var(--line-base);
+  font-weight: 600;
+}
+
+.cx-onb-step-desc {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-sm);
+  color: var(--text-secondary);
+}
+
+.cx-onb-shortcuts-hint {
+  margin-bottom: 0;
+}
+
+.cx-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+}
+
+.cx-onb-actions {
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .cx-onb-step {
+    padding: var(--space-3);
+  }
+}

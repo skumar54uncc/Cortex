@@ -1,247 +1,445 @@
 # Cortex — Architecture, UI & ML
 
-This document describes the **implemented** browser extension: layers, data flows, user-facing surfaces, and the retrieval / embedding logic (no remote LLM APIs).
+This document describes the **implemented** Chrome extension (Manifest V3, v1.0.1): runtime layers, data flows, user-facing surfaces, retrieval / embedding logic, and optional chat backends.
 
 ---
 
 ## 1. Product intent
 
-**Cortex** is a **privacy-first, local-only** Chrome extension (Manifest V3) that indexes readable page text into **chunk-level records** with **optional sentence embeddings**, stores everything in **IndexedDB**, and exposes **hybrid search** (semantic + lexical + recency + engagement) plus lightweight **natural-language hints** (time ranges, entities, “LinkedIn-style” boosts)—all **on device**.
+**Cortex** is a **privacy-first** Chrome extension that indexes readable page text into **chunk-level records** with **optional sentence embeddings**, stores everything in **IndexedDB**, and exposes:
+
+- **Search** — hybrid retrieval (semantic + lexical + recency + engagement + query grounding)
+- **Ask** — RAG chat over your library (on-device Chrome AI and/or optional Gemini)
+- **Digest** — reading summaries over time ranges
+
+**By default**, indexing, embeddings, and search run **entirely on device**. Optional **cloud chat** sends only **retrieved snippets** to Google Gemini when you enable it and add an API key in settings.
 
 ---
 
 ## 2. High-level architecture
 
 ```mermaid
-flowchart LR
-  subgraph page["Web page"]
-    CS["Content script\n(main.ts + overlay)"]
-  end
-  subgraph ext["Extension"]
-    SW["Service worker\n(service-worker.ts)"]
-    OS["Offscreen document\n(offscreen.ts)"]
-    POP["Toolbar popup\n(status)"]
-    OPT["Options page\n(settings)"]
-  end
-  subgraph storage["Local storage"]
-    IDB[("IndexedDB\n(Dexie: cortex-db)")]
-    LOC[("chrome.storage.local\n(settings)")]
+flowchart TB
+  subgraph Browser["User browser"]
+    WEB["http(s) pages"]
+    CHROME["chrome:// pages"]
   end
 
+  subgraph Content["Content layer"]
+    CS["content.js\nmain.ts + overlay.ts"]
+  end
+
+  subgraph Extension["Extension runtime"]
+    SW["service-worker.js"]
+    OS["offscreen.js\nTransformers.js + search + chat bus"]
+    SHELL["search-shell.html\nside panel UI"]
+    OPT["options.html"]
+    POP["popup.html\nstats dashboard"]
+    ONB["onboarding.html"]
+  end
+
+  subgraph Storage["Local storage"]
+    IDB[("IndexedDB cortex-db\nDexie v5")]
+    LS[("chrome.storage.local\nsettings")]
+  end
+
+  WEB --> CS
   CS <-->|messages| SW
-  SW <-->|CORTEX_EMBED_TEXT\nCORTEX_SEARCH_RUN| OS
-  SW <-->|read/write| IDB
-  OS <-->|read/write| IDB
-  POP <-->|stats| SW
-  OPT <-->|settings/stats| SW
-  POP --> LOC
-  OPT --> LOC
-  SW --> LOC
-
-  OS -->|"Transformers.js\nMiniLM embeddings"| ML["ML inference\n(WebGPU/WASM in browser"]
+  SW <-->|embed / search / BroadcastChannel| OS
+  SW --> IDB
+  OS --> IDB
+  CHROME -->|toolbar icon / shortcut| SW
+  SW --> SHELL
+  OPT --> SW
+  POP --> SW
+  SW --> LS
 ```
 
 ### Runtime roles
 
 | Piece | Role |
 |--------|------|
-| **Content script** (`content.js`) | Text extraction (sanitized clone for Readability), SPA hooks, indexing requests, **Shadow DOM search overlay**, related-chip UI (global CSS). |
-| **Service worker** | Orchestration: indexing gates (privacy), chunk persistence + **embedding queue** + **`markChunkEmbedFailed`**, relays **search** to offscreen, **popup/options** APIs (`CORTEX_STATS`). |
-| **Toolbar popup** | Minimal **status**: counts, indexing paused/active, button to **open options**. |
-| **Options page** | Privacy controls (pause, blocklist), stats, recent visits, storage placeholder copy. |
-| **Offscreen document** | Long-lived page for **Transformers.js** (`@xenova/transformers`): chunk embeddings, query embeddings, and **`runAdvancedSearch`** (Dexie + BM25 + fusion). Moving search here avoids MV3 service-worker suspension interrupting long `sendMessage` replies. |
-| **IndexedDB (`cortex-db`)** | Documents, chunks (with optional embedding vectors), visit log, legacy `pages` table for migrations. |
-| **chrome.storage.local** | User settings: pause indexing, domain blocklist, etc. (`extension-settings.ts`). |
+| **Content script** (`content.js`) | DOM extraction (Readability + sanitization), SPA hooks, `CORTEX_INDEX`, **Shadow DOM overlay** (Search / Ask / Digest) on http(s) pages. |
+| **Service worker** | Orchestration: privacy gates, indexing, embedding queue, tab/shortcut routing, chat/digest bus relay, stats/history APIs. |
+| **Offscreen document** | **Transformers.js** embeddings, **`runAdvancedSearch`**, **`runChat`**, **`generateDigest`** — avoids MV3 SW suspension on long work. |
+| **search-shell** | Same overlay UI in the **side panel** (or popup fallback) where content scripts cannot run (`chrome://`, etc.). |
+| **Options page** | Privacy, blocklist, history import, chat mode, Gemini API key, shortcuts help, stats overview. |
+| **Popup** | **Stats dashboard** only (opened from options); not the default toolbar action. |
+| **IndexedDB (`cortex-db`)** | Documents, chunks, visit log, conversations, messages, digest cache. |
+| **chrome.storage.local** | User settings (`extension-settings.ts`). |
 
-### Message types (representative)
+### Why multiple runtimes?
 
-- **Content → SW:** `CORTEX_INDEX`, (overlay → SW) `CORTEX_SEARCH`.
-- **SW → Offscreen:** `CORTEX_EMBED_TEXT` (indexing pipeline), `CORTEX_SEARCH_RUN` (execute search + reply).
-- **SW ignores** `CORTEX_EMBED_TEXT` and `CORTEX_SEARCH_RUN` in its own listener so only offscreen answers those broadcasts.
-
----
-
-## 3. Data model (IndexedDB)
-
-Implemented in `src/db/schema.ts` (Dexie **v5**: chunk/embed fields from v4; **v5** adds `conversations`, `messages`, `digestCache` for Ask/Digest — see `docs/CORTEX_HANDOFF_REPORT.md`).
-
-| Store | Purpose |
-|-------|---------|
-| **`documents`** | One row per canonical URL: `url`, `domain`, `title`, `summary`, `lastVisitedAt`, `visitCount`, `importanceScore` (0–1 engagement roll-up). |
-| **`chunks`** | Many rows per document: `documentId`, `ord`, `text`, optional **`embedding`**, optional **`embedState`** (`pending` \| `embedded` \| `failed` \| `skipped`), **`embedModelId`**, **`embedUpdatedAt`**. |
-| **`visitLog`** | Append-only visits for **time filtering** in search (`visitedAt`, `url`, …). Trimmed at a large cap. |
-| **`pages`** | Legacy; migration source for v3. |
+| Runtime | Why |
+|---------|-----|
+| **Service worker** | Must stay small; can suspend — delegates ML and search. |
+| **Offscreen** | ONNX/WASM inference + Dexie reads for search/chat at scale. |
+| **Content script** | Needs live DOM for extract; injects overlay on normal sites. |
+| **search-shell** | Extension page for UI on **restricted URLs** (no content script access). |
 
 ---
 
-## 4. Indexing pipeline
+## 3. Entry points & open-search routing
 
-1. **Extract** article-like text from the DOM (Readability-based path + helpers in `extract`).
-2. **Summarize** locally (`summarize.ts`) for document `summary` field.
-3. **Chunk** full text with a sliding window (`chunking.ts`):
-   - Target **~420 words** per chunk, **~75 words overlap**, max **36 chunks/page** (fallback single slice if tiny).
-4. **Upsert** `documents` + replace `chunks` for that URL.
-5. **Queue embeddings** per chunk in the service worker: **`ensureOffscreen()`** then **`CORTEX_EMBED_TEXT`** with chunk text; offscreen runs the model and SW **`setChunkEmbedding`** on the chunk row.
+### Toolbar icon
 
-**Privacy gates** (before indexing): paused indexing, incognito tab, allowlist-only mode, blocklist, sensitive-hostname heuristics (`privacy.ts`, `shouldSkipIndexing` in SW).
+- **No `default_popup`** — `chrome.action.onClicked` opens Search / Ask / Digest **immediately**.
+- **`http(s)`:** content overlay via `CORTEX_OPEN_SEARCH` (inject + message).
+- **`chrome://`:** side panel (`search-shell.html`) via `openSearchSidePanelReliable()`; popup-window fallback if panel cannot open.
 
-### 4.1 DOM sanitization (trust)
+Implementation: `open-cortex-search.ts`, `side-panel-launcher.ts`, `active-tab-cache.ts` (sync tab snapshot for keyboard shortcuts).
 
-Before running **Readability** on a cloned document, `sanitizeDomForExtraction` in `extract.ts` removes **scripts, styles, noscript, iframes, forms, inputs, textareas, selects, buttons**, and similar nodes so fewer credentials / tokens enter the index. Fallback extraction paths (`innerText` / site helpers) still use the live DOM (future work: optional redaction pass on strings).
-
----
-
-## 5. Search pipeline & ML logic
-
-Search execution lives in **`src/lib/search-engine.ts`**, invoked from **`offscreen.ts`** via `runAdvancedSearch(rawQuery, embedQuery)`.
-
-### 5.1 Embedding model (ML)
-
-- **Library:** `@xenova/transformers` (runs in the **offscreen** page).
-- **Model id:** `Xenova/all-MiniLM-L6-v2` (`CORTEX_EMBED_MODEL_ID` in `src/shared/embed-model.ts`).
-- **Inference:** `pipeline("feature-extraction", …)`, **`pooling: "mean"`**, **`normalize: true`** → **unit-norm** embedding vectors suitable for **cosine similarity ≈ dot product**.
-- **Typical dimension:** **384** floats per vector (stored per chunk; query vector computed the same way).
-- **Cosine similarity:** Standard dot-product formula on equal-length vectors (`similarity.ts`).
-- **Bundled vs remote:** Offscreen **probes** `models/Xenova/all-MiniLM-L6-v2/tokenizer.json`. If packaged (`vendor/models/` → `dist/models/` via webpack), **`env.allowRemoteModels = false`** and **`env.localModelPath`** is set. Otherwise weights may still load from **`cdn.jsdelivr.net`** / **`huggingface.co`** (manifest `host_permissions`). See `vendor/models/README.md`.
-
-### 5.1b Embedding lifecycle (chunks)
-
-New chunks are stored with **`embedState: pending`**. Successful **`setChunkEmbedding`** sets **`embedded`** plus **`embedModelId`** / **`embedUpdatedAt`**; the SW queue calls **`markChunkEmbedFailed`** on failure.
-
-### 5.2 Query embedding
-
-- Offscreen builds **`embedQueryForSearch(text)`** with the **same pipeline** as indexing (truncation ~8k chars, whitespace normalized).
-- If embedding fails or returns null, search **continues with lexical + recency only** (BM25 path); UI may note that embedding was skipped.
-
-### 5.3 Lexical retrieval — BM25 (Okapi-style)
-
-Implemented per **chunk** over a concatenated corpus:
-
-`corpus = title + summary + chunk.text`
-
-- **Tokenization:** lowercase alphanumeric tokens, length ≥ 2 (`/[a-z0-9]{2,}/g`).
-- **Statistics:** Document frequency **per query term** across chunks; **average chunk length** (`avgdl`) for length normalization.
-- **BM25 parameters (code):** `k1 = 1.35`, `b = 0.78`.
-- **IDF:** `log(1 + (N - df + 0.5) / (df + 0.5))` with **N = chunk count**.
-- Raw BM25 scores are **min–max normalized across all chunks** before fusion (`minMaxNorm`), so scale tracks the current index.
-
-### 5.4 Semantic score
-
-- For each chunk with a stored **`embedding`**, compute **cosine similarity** between **query vector** and **chunk vector**.
-- **`hasSemantic`** (for fusion): cosine above a small threshold **and** both vectors present (implementation uses ~**0.025** gate with vectors).
-
-### 5.5 Other signals
-
-- **Title alignment:** `titleMatchScore` — fraction of query words found in title (`ranking.ts`).
-- **Recency:** `recencyBoost(visitedAt)` — exponential decay with **~18-day half-life** (`ranking.ts`).
-- **Engagement:** document `importanceScore` (clamped 0–1), increased on revisits / content length during upsert.
-
-### 5.6 Fusion (`fuseRankScore` in `search-engine.ts`)
-
-Define **`lexicalBlend = 0.72 * bm25Norm + 0.28 * titleMatch`**.
-
-**When `hasSemantic` is true:**
-
-| Component | Weight |
-|-----------|--------|
-| Cosine | **0.48** |
-| Lexical blend | **0.24** |
-| Recency | **0.12** |
-| Engagement | **0.16** |
-
-**When `hasSemantic` is false:**
-
-| Component | Weight |
-|-----------|--------|
-| Lexical blend | **0.52** |
-| Recency | **0.26** |
-| Engagement | **0.22** |
-
-Additional **bonuses** (capped with global score clamp): entity terms from `parseAskQuery`, LinkedIn URL boost when the query looks profile-related.
-
-### 5.7 Aggregation & filtering
-
-- Keep **best chunk score per document** (dedupe by `documentId`).
-- **Adaptive cutoff** vs top score (floor/ceiling clamped in code) instead of a single global threshold.
-- Optional **`parseAskQuery` time range** filters URLs against **`visitLog`**; if no hits in range, search can **relax** time filter (tracked for evidence text).
-
-### 5.8 Natural-language hints (`query-parse.ts`)
-
-**No cloud LLM.** Rules extract:
-
-- **Time phrases:** yesterday / today / last week / last month → `timeRange`.
-- **Quoted strings**, regex patterns (`works at`, CamelCase tokens), **stopword list** for entity cleanup.
-- **`preferLinkedIn`** when wording suggests profiles / LinkedIn.
-
-Outputs feed **`buildEvidenceIntro`** for short explanatory lines in results.
-
----
-
-## 6. UI surfaces
-
-### 6.1 Toolbar popup (`popup.html` + `popup.ts`)
-
-- **Snapshot:** document / chunk / visit counts via `CORTEX_STATS`.
-- **Indexing line:** active vs paused (reads `chrome.storage.local` settings).
-- **“Open settings”** calls `chrome.runtime.openOptionsPage()` for privacy controls.
-- Shortcut hint + link to `chrome://extensions/shortcuts`.
-
-### 6.2 Options page (`options.html` + `options.ts` + `options.css`)
-
-- Full **privacy** UI: pause indexing, blocked domains, save.
-- Same stats + **recent visits** as earlier popup (moved here).
-- Placeholder note for future storage breakdown.
-- Registered in `manifest.json` as **`options_ui`** (`open_in_tab: true`).
-
-### 6.3 In-page overlay (`overlay.ts` + `overlay.shadow.css`)
-
-- Opened via **`chrome.commands`** → SW → **`CORTEX_OPEN_SEARCH`** (open-only).
-- **Shadow DOM** (`attachShadow`) isolates Cortex styles from host pages; styles compiled from **`overlay.shadow.css`** (Webpack `asset/source`).
-- **Confidence labels:** **Strong / Good / Possible match** from relative score vs batch max (`confidence.ts`); raw fusion score on **`title` hover**.
-- Results still render via **`textContent`-safe escaping** (`esc()`).
-
-### 6.4 Evaluation harness (future regression suite)
-
-Example fixtures live under **`eval/`** (`fixtures.example.json`, `README.md`). A production harness should run ranked retrieval against frozen IndexedDB snapshots or headless Chrome CI—see `eval/README.md`.
-
----
-
-## 7. Keyboard shortcuts
-
-Declared in `manifest.json` under **`commands`**:
+### Keyboard shortcuts
 
 | Command ID | Default binding |
-|------------|-------------------|
+|------------|-----------------|
 | `open-cortex-search` | **Ctrl+Shift+K** (Windows/Linux), **Cmd+Shift+K** (macOS) |
 | `open-cortex-search-alt` | **Alt+Shift+C** |
 
-Shortcuts are **handled only via `chrome.commands`** (no duplicate in-page listener for the same chord) so the overlay does not open-then-close.
+Handled in the service worker (`handleSearchCommand` → `openCortexSearchFromShortcut`). A **keydown fallback** in `overlay.ts` also opens the overlay when the chord is not consumed by the page (open-only, idempotent).
+
+Customize bindings at `chrome://extensions/shortcuts`.
+
+### Settings & onboarding
+
+- **Options** (`options_ui`, `open_in_tab: true`): full privacy and chat configuration.
+- **Gear icon** in overlay header → `CORTEX_OPEN_OPTIONS`.
+- **Onboarding** tab on first install; optional **30-day history backfill** with notifications.
 
 ---
 
-## 8. Build / ship notes
+## 4. Data model (IndexedDB)
 
-- Bundled with **Webpack**; outputs live under **`dist/`** (`content.js`, `service-worker.js`, `offscreen.js`, `popup.js`, `options.js`, assets).
-- Load **unpacked** `dist/` in `chrome://extensions` for development.
+Implemented in `src/db/schema.ts` (Dexie **v5**, `CORTEX_DB_SCHEMA_VERSION` in `shared/cortex-constants.ts`).
+
+| Store | Purpose |
+|-------|---------|
+| **`documents`** | One row per canonical URL: `url`, `domain`, `title`, `summary`, `lastVisitedAt`, `visitCount`, `importanceScore` (0–1). |
+| **`chunks`** | Many rows per document: `documentId`, `ord`, `text`, optional **`embedding`**, **`embedState`** (`pending` \| `embedded` \| `failed` \| `skipped`), **`embedModelId`**, **`embedUpdatedAt`**. |
+| **`visitLog`** | Append-only visits for **time-filtered** search. |
+| **`conversations`** | Ask chat threads (`title`, `createdAt`, `updatedAt`). |
+| **`messages`** | User/assistant messages; optional `citedChunksJson`, `provider` (`nano` \| `cloud`). |
+| **`digestCache`** | Cached digest JSON per time range key. |
+| **`pages`** | Legacy; migration source for v3. |
+
+### Settings (`chrome.storage.local`)
+
+Key: `cortex_user_settings` (`extension-settings.ts`).
+
+| Field | Purpose |
+|-------|---------|
+| `indexingPaused` | Stop new indexing (search still works). |
+| `blocklist` / `allowlistOnly` / `allowlist` | Domain indexing controls. |
+| `chatMode` | `auto` \| `on-device-only` \| `cloud-only`. |
+| `cloudChatEnabled` | Gate for Gemini. |
+| `geminiApiKey` | Optional cloud chat API key. |
 
 ---
 
-## 9. File map (core)
+## 5. Indexing pipeline
+
+```mermaid
+sequenceDiagram
+  participant Page as Content script
+  participant SW as Service worker
+  participant OS as Offscreen
+  participant DB as IndexedDB
+
+  Page->>Page: extract + PII redact + summarize
+  Page->>SW: CORTEX_INDEX
+  SW->>SW: shouldSkipIndexing
+  SW->>DB: upsert document + chunks (embedState pending)
+  SW->>OS: CORTEX_EMBED_TEXT
+  OS->>OS: MiniLM embedding
+  OS->>SW: vector
+  SW->>DB: setChunkEmbedding
+```
+
+1. **Extract** article-like text (`extract.ts`; Readability on sanitized DOM clone).
+2. **Summarize** (`summarize.ts`) — Chrome Summarizer API when available, else excerpt.
+3. **Chunk** (`chunking.ts`): ~**420 words** per chunk, ~**75 words** overlap, max **36 chunks/page**.
+4. **Upsert** `documents` + replace `chunks` for that URL.
+5. **Queue embeddings** per chunk: `ensureOffscreen()` → `CORTEX_EMBED_TEXT` → `setChunkEmbedding` / `markChunkEmbedFailed`.
+
+**Privacy gates** (before indexing): paused indexing, incognito tab, allowlist-only mode, blocklist, sensitive-hostname heuristics (`privacy.ts`, `sensitive-domains.ts`, `shouldSkipIndexing` in SW).
+
+**SPA support** (`main.ts`): `pushState` / `replaceState` / `popstate`, debounced `MutationObserver`, scheduled retries for slow SPAs (e.g. LinkedIn).
+
+**History import** (`history-import.ts`): backfill from `chrome.history`; parallel fetches; title+URL indexing when fetch fails.
+
+### DOM sanitization (trust)
+
+`sanitizeDomForExtraction` in `extract.ts` strips scripts, styles, forms, inputs, iframes, etc. before Readability. Fallback paths may still read live DOM text.
+
+---
+
+## 6. Search pipeline & ML logic
+
+Search runs in **`src/lib/search-engine.ts`**, invoked from **`offscreen.ts`** via `runAdvancedSearch(rawQuery, embedQuery)`.
+
+### 6.1 Embedding model (local ML)
+
+- **Library:** `@xenova/transformers` (offscreen page).
+- **Model:** `Xenova/all-MiniLM-L6-v2` (`CORTEX_EMBED_MODEL_ID`).
+- **Inference:** `pipeline("feature-extraction")`, **mean pooling**, **L2 normalize** → 384-d vectors; cosine ≈ dot product (`similarity.ts`).
+- **Bundled weights:** `vendor/models/` → `dist/models/` (`npm run prepare-model`). Offscreen sets `env.allowRemoteModels = false` and `env.useBrowserCache = false` when bundled. See `vendor/models/README.md`.
+
+### 6.2 Query embedding
+
+`embedQueryForSearch` in offscreen (truncation ~8k chars). If embedding fails, search continues on **BM25 + recency** only.
+
+### 6.3 Lexical retrieval — BM25
+
+Corpus per chunk: `title + summary + chunk.text`.
+
+- Tokenization: `/[a-z0-9]{2,}/g`, lowercase.
+- **BM25:** `k1 = 1.35`, `b = 0.78`; IDF over chunk count **N**.
+- Raw scores **min–max normalized** across chunks (`minMaxNorm`).
+
+### 6.4 Semantic score
+
+Cosine similarity per chunk with stored `embedding`. **`hasSemantic`:** cosine > ~0.025 and vectors present.
+
+### 6.5 Other ranking signals
+
+- **Title match** (`ranking.ts`)
+- **Recency** — ~18-day half-life (`recencyBoost`)
+- **Engagement** — `importanceScore` on documents
+
+### 6.6 Fusion (`fuseRankScore`)
+
+`lexicalBlend = 0.72 * bm25Norm + 0.28 * titleMatch`
+
+**With semantic:**
+
+| Component | Weight |
+|-----------|--------|
+| Cosine | 0.48 |
+| Lexical blend | 0.24 |
+| Recency | 0.12 |
+| Engagement | 0.16 |
+
+**Without semantic:**
+
+| Component | Weight |
+|-----------|--------|
+| Lexical blend | 0.52 |
+| Recency | 0.26 |
+| Engagement | 0.22 |
+
+**Additional bonuses:** entity terms from `parseAskQuery`, LinkedIn URL boost when query is profile-like.
+
+### 6.7 Query grounding (`query-relevance.ts`)
+
+Reduces false “strong” matches on **generic words only** (e.g. “career” without “atrium”):
+
+- **Distinctive vs generic** term lists
+- **`relevanceMultiplier`** applied to fused score
+- **`groundingForConfidence`** feeds match badges in UI
+
+### 6.8 Aggregation & filtering
+
+- Best chunk score **per document**
+- **Adaptive cutoff** vs top score
+- Optional **time range** from `parseAskQuery` → filter via `visitLog` (may relax if empty)
+
+### 6.9 Natural-language hints (`query-parse.ts`)
+
+Rule-based (no cloud LLM):
+
+- Time phrases → `timeRange`
+- Quoted strings, CamelCase / Title Case entities (e.g. “Atrium Health”)
+- `preferLinkedIn` for profile-style queries
+- `buildEvidenceIntro` for result evidence lines
+
+---
+
+## 7. Ask (RAG chat)
+
+```mermaid
+sequenceDiagram
+  participant UI as Overlay / search-shell
+  participant SW as Service worker
+  participant OS as Offscreen
+  participant LLM as Nano or Gemini
+
+  UI->>SW: CORTEX_CHAT_START
+  SW->>OS: BroadcastChannel chat-run
+  OS->>OS: runAdvancedSearch + buildChatPrompt
+  OS->>LLM: streamAnswer (llm-router)
+  OS-->>SW: chat-event stream
+  SW-->>UI: CORTEX_CHAT_PUSH
+  OS->>DB: conversation-store
+```
+
+- **`chat-engine.ts`:** parse question → search → select chunks for token budget → stream answer.
+- **`llm-router.ts`:** `auto` / `on-device-only` / `cloud-only`; routes to **Chrome Prompt API** (`nano-client.ts`) or **Gemini** (`gemini-client.ts`).
+- **`nano-client.ts`:** `LanguageModel.create({ outputLanguage: "en", … })` (required on recent Chrome builds).
+- **Conversations** in IndexedDB; sidebar list / load / delete (`CORTEX_CHAT_LIST`, `LOAD`, `DELETE`).
+- Multi-turn context via `selectHistoryForPrompt` (`context-builder.ts`).
+
+---
+
+## 8. Digest
+
+- **`digest-engine.ts`** + **`digest-format.ts`** — narrative over indexed reading for a range (`today`, `yesterday`, `last_7_days`).
+- **`digest-cache.ts`** — avoids regenerating within TTL.
+- UI: topic chips link to Search tab; collapsible sources.
+
+---
+
+## 9. Message API (service worker)
+
+The SW listener **ignores** `CORTEX_EMBED_TEXT` and `CORTEX_SEARCH_RUN` so only offscreen handles them.
+
+| Message | Direction | Role |
+|---------|-----------|------|
+| `CORTEX_INDEX` | Content → SW | Index page |
+| `CORTEX_OPEN_SEARCH` | SW → Content | Open overlay |
+| `CORTEX_OPEN_SEARCH_SHELL` | SW → search-shell | Open overlay in panel |
+| `CORTEX_SEARCH` | Overlay → SW → OS | Hybrid search |
+| `CORTEX_CHAT_START` | UI → SW → OS | Start chat stream |
+| `CORTEX_CHAT_PUSH` | SW → UI | Chat tokens / done / error |
+| `CORTEX_CHAT_LIST` / `LOAD` / `DELETE` | UI → SW | Chat history |
+| `CORTEX_DIGEST_START` / `CORTEX_DIGEST_PUSH` | UI ↔ SW ↔ OS | Digest |
+| `CORTEX_STATS` / `CORTEX_STATS_REFRESH` | Popup/options → SW | Library stats |
+| `CORTEX_HISTORY_IMPORT_*` | Options → SW | History backfill |
+| `CORTEX_CLEAR_ALL_DATA` | Options → SW | Wipe index |
+| `CORTEX_OPEN_OPTIONS` | UI → SW | Open settings tab |
+| `CORTEX_POPUP_OPEN_SEARCH` | Popup → SW | Open search (legacy) |
+| `CORTEX_OPEN_TAB` | UI → SW | Safe http(s) tab open |
+| `CORTEX_EMBED_TEXT` | SW ↔ OS | Chunk embedding |
+| `CORTEX_SEARCH_RUN` | SW ↔ OS | Execute search |
+
+**BroadcastChannel:** `cortex-extension-v1` (`extension-bus.ts`) routes chat/digest events to the originating tab.
+
+---
+
+## 10. UI surfaces
+
+### 10.1 In-page overlay (`overlay.ts` + `overlay.shadow.css`)
+
+- **Shadow DOM** for style isolation; `esc()` for XSS-safe rendering (`docs/INNERHTML_AUDIT.md`).
+- Tabs: **Search**, **Ask**, **Digest**.
+- Header: brand, **gear → settings**, close.
+- **Confidence badges** (`confidence.ts`): Strong / Good / Looser — uses **batch rank + grounding score** (`query-relevance.ts`).
+- Search: hybrid results, keyboard navigation, favicons.
+
+### 10.2 Side panel shell (`search-shell.ts`)
+
+- Mounts same `mountOverlay({ shell: true })` in `search-shell.html`.
+- Used on `chrome://` and other non-injectable URLs.
+- Shell layout CSS: full-height panel, no backdrop dimming.
+
+### 10.3 Options (`options.html`)
+
+- Overview stats, pause/blocklist, **history import**, **chat mode** + Gemini key, **keyboard shortcuts** documentation, data delete, recent visits.
+- **Open stats dashboard** → `popup.html` in a small window.
+
+### 10.4 Popup (`popup.html`)
+
+- Library counts, storage bar, refresh — **not** opened by default toolbar click.
+
+### 10.5 Onboarding (`onboarding.html`)
+
+- First-run copy; opens settings when done.
+
+---
+
+## 11. Privacy & security
+
+| Control | Implementation |
+|---------|----------------|
+| No backend (core) | IndexedDB + local ML only |
+| Optional cloud | User-enabled Gemini; snippets only |
+| Incognito | Not indexed |
+| Blocklist / allowlist | `extension-settings.ts` + SW gates |
+| Sensitive hosts | Heuristics + hard skips (`sensitive-domains.ts`) |
+| PII | `pii-filter.ts` on index path |
+| Storage caps | `storage-eviction.ts` (periodic alarm) |
+| CSP | Extension pages: `script-src 'self' 'wasm-unsafe-eval'` |
+
+---
+
+## 12. Permissions (manifest)
+
+| Permission | Use |
+|------------|-----|
+| `tabs`, `scripting` | Inject content, read active tab, open UI |
+| `offscreen` | ML + search + chat runner |
+| `storage` | Settings |
+| `history` | History import |
+| `notifications` | First-install scan status |
+| `sidePanel` | `chrome://` UI |
+| `host_permissions` `http(s)://*/*` | History page fetch |
+
+---
+
+## 13. Build / ship / CI
+
+```bash
+npm install
+npm run prepare-model   # bundle MiniLM → vendor/models → dist/models
+npm run build           # webpack → dist/
+npm test                # vitest + eval tests
+```
+
+**Webpack entries:** `service-worker`, `content`, `offscreen`, `popup`, `options`, `onboarding`, `search-shell`.
+
+Load unpacked **`dist/`** at `chrome://extensions`.
+
+**CI** (`.github/workflows/ci.yml`): typecheck, unit tests, eval tests, production build.
+
+---
+
+## 14. Evaluation harness
+
+| Command | Purpose |
+|---------|---------|
+| `npm run eval:test` | Vitest eval config (frozen corpus) |
+| `npm run eval` | Full retrieval metrics |
+| `npm run eval:baseline` | Compare to `eval/results/baseline.json` |
+
+See `eval/README.md`, `eval/FINDINGS.md`.
+
+---
+
+## 15. File map (core)
 
 | Area | Files |
 |------|--------|
 | Background | `src/background/service-worker.ts` |
-| Offscreen ML + search runner | `src/offscreen/offscreen.ts` |
-| Retrieval | `src/lib/search-engine.ts`, `src/lib/similarity.ts`, `src/lib/ranking.ts`, `src/lib/query-parse.ts` |
-| Chunking | `src/lib/chunking.ts` |
+| Offscreen | `src/offscreen/offscreen.ts` |
+| Retrieval | `src/lib/search-engine.ts`, `similarity.ts`, `ranking.ts`, `query-parse.ts`, `query-relevance.ts` |
+| Open search routing | `src/lib/open-cortex-search.ts`, `side-panel-launcher.ts`, `active-tab-cache.ts`, `injectable-url.ts` |
+| Chat / digest | `src/lib/chat/*`, `extension-bus.ts` |
+| Chunking / index helpers | `src/lib/chunking.ts`, `history-import.ts`, `summarize.ts` |
 | DB | `src/db/schema.ts` |
 | Content / UI | `src/content/main.ts`, `overlay.ts`, `overlay.shadow.css`, `confidence.ts`, `extract.ts` |
-| Popup | `src/popup/popup.html`, `popup.ts`, `popup.css` |
-| Options | `src/options/options.html`, `options.ts`, `options.css` |
-| Vendor ML | `vendor/models/README.md` (optional bundled weights) |
-| Eval | `eval/README.md`, `eval/fixtures.example.json` |
+| Side panel | `src/search/search-shell.ts`, `search-shell.html` |
+| Popup / options / onboarding | `src/popup/*`, `src/options/*`, `src/onboarding/*` |
+| Settings | `src/shared/extension-settings.ts` |
+| Vendor ML | `vendor/models/README.md` |
+| Eval | `eval/README.md` |
 | Manifest | `manifest.json` |
 
 ---
 
-*Shadow DOM overlay, confidence labels, options split, extraction sanitization, chunk embed lifecycle fields, and bundled-model probe are documented above; iteration continues on storage caps and ANN indexing.*
+## 16. Known limitations
+
+1. **Restricted URLs** (`chrome://`, etc.) — no content scripts; side panel or popup fallback only.
+2. **Linear search** — scans all chunks (no ANN index yet); suitable for personal libraries.
+3. **Service worker** — must delegate long work to offscreen.
+4. **On-device chat** — requires Chrome Prompt API support and model availability.
+5. **Cloud chat** — requires user-supplied Gemini API key.
+
+---
+
+## Related docs
+
+| File | Contents |
+|------|----------|
+| `README.md` | Build, usage, shortcuts |
+| `docs/CORTEX_HANDOFF_REPORT.md` | Feature handoff inventory |
+| `docs/PRIVACY_POLICY.md` | Privacy policy |
+| `docs/INNERHTML_AUDIT.md` | Overlay XSS review |

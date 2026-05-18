@@ -14,7 +14,6 @@ declare global {
   interface Window {
     __cortexMainLoaded?: boolean;
     __cortexInstallKickListener?: boolean;
-    __cortex_injected?: boolean;
   }
 }
 
@@ -152,8 +151,6 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") scheduleIndex(600);
 });
 
-window.__cortex_injected = true;
-
 if (!window.__cortexInstallKickListener) {
   window.__cortexInstallKickListener = true;
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -169,8 +166,7 @@ if (!window.__cortexInstallKickListener) {
   });
 }
 
-// Ctrl+Shift+K / Alt+Shift+C are handled via chrome.commands only — do not also listen here
-// or the same keypress toggles twice (open then close).
+// Ctrl+Shift+K / Alt+Shift+C: handled by chrome.commands in the service worker.
 
 }
 

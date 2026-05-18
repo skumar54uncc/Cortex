@@ -3,215 +3,324 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cortex — Privacy & data</title>
+    <title>Cortex — Settings</title>
+    <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <main class="cx-opt">
-      <header class="cx-opt-head">
-        <h1 class="cx-brand">
-          <span class="cx-brand-mark-wrap" aria-hidden="true">
-            <img
-              src="icons/icon-48.png"
-              alt=""
-              width="28"
-              height="28"
-              class="cx-brand-mark"
-            />
-          </span>
-          <span class="cx-brand-wordmark">Cortex</span>
-        </h1>
-        <p class="cx-opt-lead">
-          Cortex keeps indexed content on your device. Indexing makes no network calls—the embedding
-          model ships bundled under <code>dist/models/</code> (run <code>npm run prepare-model</code>
-          before building). Optional Cloud Chat may send retrieved snippets to Google Gemini only when
-          you enable it and add an API key.
-        </p>
+    <div class="cx-opt-page">
+      <header class="cx-opt-topbar">
+        <div class="cx-opt-brand" aria-label="Cortex">
+          <img
+            class="cx-opt-brand-mark"
+            src="icons/icon-48.png"
+            alt=""
+            width="28"
+            height="28"
+          />
+          <span class="cx-opt-brand-wordmark">Cortex</span>
+        </div>
       </header>
 
-      <section class="cx-opt-section" aria-labelledby="cx-overview-h">
-        <h2 id="cx-overview-h">Overview</h2>
-        <p id="cx-opt-storage-line" class="cx-overview-line">Storage: …</p>
-        <p class="cx-overview-meta">
-          MiniLM embeddings run locally from the packaged ONNX snapshot—no Hugging Face or CDN fetch
-          at runtime.
-        </p>
-        <dl class="cx-stats">
-          <div class="cx-row">
-            <dt>Pages indexed</dt>
-            <dd id="cx-opt-pages">—</dd>
-          </div>
-          <div class="cx-row">
-            <dt>Chunks</dt>
-            <dd id="cx-opt-chunks">—</dd>
-          </div>
-          <div class="cx-row">
-            <dt>Visits logged</dt>
-            <dd id="cx-opt-visits">—</dd>
-          </div>
-        </dl>
-        <p id="cx-opt-stats-error" class="cx-alert cx-alert-error" hidden>
-          Couldn’t load overview.
-          <button type="button" id="cx-opt-retry-stats" class="cx-btn-inline">
-            Retry
-          </button>
-        </p>
-      </section>
+      <main class="cx-opt-main">
+        <header class="cx-opt-page-head">
+          <h1 class="cx-opt-title">Settings</h1>
+          <p class="cx-opt-subtitle">
+            Configure how Cortex indexes and answers from your browsing.
+          </p>
+        </header>
 
-      <section class="cx-opt-section" aria-labelledby="cx-chat-h">
-        <h2 id="cx-chat-h">Chat with your library</h2>
-        <p class="cx-opt-note">
-          Answers use retrieved snippets from pages Cortex indexed. On-device mode uses Chrome&apos;s
-          built-in AI when available; optional cloud mode sends only those snippets to Google Gemini.
-        </p>
-        <fieldset class="cx-chat-fieldset">
-          <legend class="cx-label-strong">Default chat mode</legend>
-          <label class="cx-check cx-chat-radio">
-            <input type="radio" name="cx-chat-mode" value="auto" checked />
-            <span>
-              Auto (recommended)
-              <span class="cx-opt-note cx-chat-radio-sub">On-device when possible; cloud for heavier prompts if enabled.</span>
-            </span>
+        <section class="cx-card cx-card-elevated cx-library-card" aria-labelledby="cx-library-h">
+          <h2 id="cx-library-h" class="cx-section-label cx-library-label">Library overview</h2>
+          <p id="cx-opt-storage-line" class="cx-library-storage">Storage: …</p>
+          <div class="cx-stats-row" id="cx-stats-row">
+            <div class="cx-stat">
+              <span class="cx-stat-label">Pages indexed</span>
+              <span class="cx-stat-value" id="cx-opt-pages" data-stat>
+                <span class="cx-stat-skeleton" aria-hidden="true"></span>
+              </span>
+            </div>
+            <div class="cx-stat">
+              <span class="cx-stat-label">Chunks</span>
+              <span class="cx-stat-value" id="cx-opt-chunks" data-stat>
+                <span class="cx-stat-skeleton" aria-hidden="true"></span>
+              </span>
+            </div>
+            <div class="cx-stat">
+              <span class="cx-stat-label">Visits logged</span>
+              <span class="cx-stat-value" id="cx-opt-visits" data-stat>
+                <span class="cx-stat-skeleton" aria-hidden="true"></span>
+              </span>
+            </div>
+          </div>
+          <p id="cx-opt-stats-error" class="cx-alert" hidden>
+            Couldn’t load overview.
+            <button type="button" id="cx-opt-retry-stats" class="cx-btn cx-btn-ghost cx-btn-sm">
+              Retry
+            </button>
+          </p>
+        </section>
+
+        <details class="cx-disclosure" id="cx-about-disclosure">
+          <summary class="cx-disclosure-summary">
+            <span>About Cortex</span>
+            <svg class="cx-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </summary>
+          <div class="cx-disclosure-body cx-prose">
+            <p>
+              Cortex helps you search and ask questions about pages you have visited. Your library
+              of saved pages stays on this computer—indexing does not upload your browsing history.
+            </p>
+            <p>
+              If you turn on Cloud Chat and add a Google API key, Cortex can use Google’s Gemini
+              service to answer harder questions. In that case, only the short passages needed to
+              answer your question are sent—not your full library.
+            </p>
+          </div>
+        </details>
+
+        <section class="cx-opt-section" aria-labelledby="cx-shortcuts-h">
+          <h2 id="cx-shortcuts-h" class="cx-section-heading">Keyboard shortcuts</h2>
+          <p class="cx-section-desc">
+            Open Search, Ask, or Digest from anywhere while you browse.
+          </p>
+          <div class="cx-shortcuts-grid">
+            <div class="cx-shortcut-block">
+              <span class="cx-field-label">Primary</span>
+              <div class="cx-kbd-row">
+                <kbd>Ctrl</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>K</kbd>
+                <span class="cx-kbd-meta">Windows / Linux</span>
+              </div>
+              <div class="cx-kbd-row">
+                <kbd>⌘</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>K</kbd>
+                <span class="cx-kbd-meta">macOS</span>
+              </div>
+            </div>
+            <div class="cx-shortcut-block">
+              <span class="cx-field-label">Alternate</span>
+              <div class="cx-kbd-row">
+                <kbd>Alt</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>C</kbd>
+              </div>
+            </div>
+          </div>
+          <p class="cx-section-desc cx-shortcuts-customize">
+            Customize in Chrome: open a new tab, paste
+            <code>chrome://extensions/shortcuts</code> in the address bar, press
+            <strong>Enter</strong>, find <strong>Cortex</strong>, then edit the command.
+          </p>
+        </section>
+
+        <section class="cx-opt-section" aria-labelledby="cx-chat-h">
+          <h2 id="cx-chat-h" class="cx-section-heading">Chat</h2>
+
+          <h3 class="cx-subheading">Default chat mode</h3>
+          <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-chat-h">
+            <label class="cx-radio-card">
+              <input type="radio" name="cx-chat-mode" value="auto" checked />
+              <span class="cx-radio-card-inner">
+                <span class="cx-radio-card-title">Auto <span class="cx-badge">Recommended</span></span>
+                <span class="cx-radio-card-desc">On-device when possible; cloud for heavier prompts if enabled.</span>
+                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                  <path d="M20 6L9 17l-5-5"></path>
+                </svg>
+              </span>
+            </label>
+            <label class="cx-radio-card">
+              <input type="radio" name="cx-chat-mode" value="on-device-only" />
+              <span class="cx-radio-card-inner">
+                <span class="cx-radio-card-title">On-device only</span>
+                <span class="cx-radio-card-desc">Strict privacy. Requires Chrome built-in AI.</span>
+                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                  <path d="M20 6L9 17l-5-5"></path>
+                </svg>
+              </span>
+            </label>
+            <label class="cx-radio-card">
+              <input type="radio" name="cx-chat-mode" value="cloud-only" />
+              <span class="cx-radio-card-inner">
+                <span class="cx-radio-card-title">Cloud only</span>
+                <span class="cx-radio-card-desc">Uses Gemini when an API key is set.</span>
+                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                  <path d="M20 6L9 17l-5-5"></path>
+                </svg>
+              </span>
+            </label>
+          </div>
+
+          <h3 class="cx-subheading">Cloud chat (Gemini)</h3>
+          <label class="cx-check-row" for="cx-opt-cloud-chat">
+            <input type="checkbox" id="cx-opt-cloud-chat" class="cx-check-native" />
+            <span class="cx-check-label">Enable cloud chat</span>
           </label>
-          <label class="cx-check cx-chat-radio">
-            <input type="radio" name="cx-chat-mode" value="on-device-only" />
-            <span>
-              On-device only
-              <span class="cx-opt-note cx-chat-radio-sub">Strict privacy. Requires Chrome built-in AI.</span>
-            </span>
-          </label>
-          <label class="cx-check cx-chat-radio">
-            <input type="radio" name="cx-chat-mode" value="cloud-only" />
-            <span>
-              Cloud only
-              <span class="cx-opt-note cx-chat-radio-sub">Uses Gemini when an API key is set.</span>
-            </span>
-          </label>
-        </fieldset>
-        <fieldset class="cx-chat-fieldset">
-          <legend class="cx-label-strong">Cloud chat (Gemini API)</legend>
-          <label class="cx-check">
-            <input type="checkbox" id="cx-opt-cloud-chat" />
-            Enable cloud chat
-          </label>
-          <label class="cx-label" for="cx-opt-gemini-key">Gemini API key</label>
-          <input
-            type="password"
-            id="cx-opt-gemini-key"
-            class="cx-chat-key"
-            spellcheck="false"
-            autocomplete="off"
-            placeholder="AIza…"
-          />
-          <p class="cx-opt-note">
-            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer"
-              >Get a free API key from Google AI Studio</a
+
+          <div class="cx-field">
+            <label class="cx-field-label" for="cx-opt-gemini-key">Gemini API key</label>
+            <input
+              type="password"
+              id="cx-opt-gemini-key"
+              class="cx-input"
+              spellcheck="false"
+              autocomplete="off"
+            />
+            <p class="cx-field-hint">
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"
+                >Get a free API key from Google AI Studio</a
+              >
+            </p>
+          </div>
+
+          <div class="cx-actions-row">
+            <button type="button" id="cx-opt-chat-save" class="cx-btn cx-btn-primary">
+              <span class="cx-btn-label">Save chat settings</span>
+            </button>
+          </div>
+          <p id="cx-opt-chat-save-msg" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+          <p class="cx-section-desc">
+            Cloud chat sends retrieved passages only. Your library stays on this device.
+          </p>
+        </section>
+
+        <section class="cx-opt-section" aria-labelledby="cx-history-h">
+          <h2 id="cx-history-h" class="cx-section-heading">History import</h2>
+          <p class="cx-section-desc">
+            Backfill pages you already visited. Runs locally; embeddings stay on-device. Blocklist
+            and privacy skips still apply.
+          </p>
+          <div class="cx-field-row">
+            <div class="cx-field">
+              <label class="cx-field-label" for="cx-opt-history-days">Time range</label>
+              <select id="cx-opt-history-days" class="cx-input cx-select">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+              </select>
+            </div>
+            <div class="cx-field">
+              <label class="cx-field-label" for="cx-opt-history-cap">Max URLs to try</label>
+              <select id="cx-opt-history-cap" class="cx-input cx-select">
+                <option value="50">50</option>
+                <option value="150">150</option>
+                <option value="300" selected>300</option>
+                <option value="500">500</option>
+              </select>
+            </div>
+          </div>
+          <div class="cx-actions-row">
+            <button type="button" id="cx-opt-history-start" class="cx-btn cx-btn-secondary">
+              <span class="cx-btn-label">Scan history</span>
+            </button>
+            <button type="button" id="cx-opt-history-cancel" class="cx-btn cx-btn-ghost" hidden>
+              Stop
+            </button>
+          </div>
+          <div id="cx-opt-history-status" class="cx-history-status" aria-live="polite"></div>
+          <div id="cx-history-result-card" class="cx-card cx-history-result" hidden>
+            <div class="cx-history-result-grid">
+              <div class="cx-history-metric">
+                <strong id="cx-h-attempted">0</strong><span>Attempted</span>
+              </div>
+              <div class="cx-history-metric">
+                <strong id="cx-h-indexed">0</strong><span>Indexed</span>
+              </div>
+              <div class="cx-history-metric">
+                <strong id="cx-h-skipped">0</strong><span>Skipped</span>
+              </div>
+              <div class="cx-history-metric">
+                <strong id="cx-h-failed">0</strong><span>Fetch failed</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="cx-opt-section" aria-labelledby="cx-privacy-h">
+          <h2 id="cx-privacy-h" class="cx-section-heading">Privacy</h2>
+
+          <div class="cx-toggle-row">
+            <div class="cx-toggle-copy">
+              <span class="cx-field-label">Pause indexing</span>
+              <span class="cx-field-hint">Search still works on existing content.</span>
+            </div>
+            <button
+              type="button"
+              id="cx-opt-pause-toggle"
+              class="cx-toggle"
+              role="switch"
+              aria-checked="false"
+              aria-labelledby="cx-privacy-h"
             >
+              <span class="cx-toggle-thumb"></span>
+            </button>
+            <input type="checkbox" id="cx-opt-pause" class="cx-visually-hidden" tabindex="-1" />
+          </div>
+
+          <div class="cx-field">
+            <label class="cx-field-label" for="cx-opt-blocklist">Blocked domains</label>
+            <p class="cx-field-hint">One domain per line. Click × on a chip to remove.</p>
+            <div id="cx-opt-blocklist-chips" class="cx-chip-row" aria-label="Blocked domains"></div>
+            <textarea id="cx-opt-blocklist" class="cx-input cx-textarea" rows="4" spellcheck="false"></textarea>
+          </div>
+
+          <div class="cx-actions-row">
+            <button type="button" id="cx-opt-save" class="cx-btn cx-btn-primary">
+              <span class="cx-btn-label">Save privacy settings</span>
+            </button>
+          </div>
+          <p id="cx-opt-save-msg" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="cx-opt-section cx-section-muted" aria-labelledby="cx-data-h">
+          <h2 id="cx-data-h" class="cx-section-heading">Data</h2>
+          <p class="cx-section-desc">
+            Deletes all indexed pages, text chunks, and visit history from this browser. Your
+            extension settings (blocklist, chat mode) are kept.
           </p>
-        </fieldset>
-        <button type="button" id="cx-opt-chat-save" class="cx-save">
-          Save chat settings
-        </button>
-        <p id="cx-opt-chat-save-msg" class="cx-msg" hidden role="status" aria-live="polite"></p>
-        <p class="cx-privacy-note cortex-privacy-note">
-          When cloud chat is enabled, only the retrieved passages needed to answer are sent to Gemini.
-          Your full library stays on this device.
-        </p>
-      </section>
-
-      <section class="cx-opt-section" aria-labelledby="cx-history-h">
-        <h2 id="cx-history-h">Import from browser history</h2>
-        <p class="cx-opt-note cx-history-lead">
-          Backfill pages you already visited. Cortex requests each URL over the network (static HTML
-          only — many single-page apps won’t fully render). Your blocklist, allowlist, and sensitive
-          URL rules still apply. Runs locally except for those fetches; embeddings stay on-device.
-          <strong class="cx-history-speed-note">Multiple URLs are fetched in parallel</strong>
-          so scans finish much faster; indexing and embeddings still run locally afterward.
-        </p>
-        <div class="cx-history-controls">
-          <label class="cx-history-field">
-            <span class="cx-history-label">Time range</span>
-            <select id="cx-opt-history-days" class="cx-history-select">
-              <option value="7">Last 7 days</option>
-              <option value="30" selected>Last 30 days</option>
-              <option value="90">Last 90 days</option>
-              <option value="365">Last year</option>
-            </select>
-          </label>
-          <label class="cx-history-field">
-            <span class="cx-history-label">Max URLs to try</span>
-            <select id="cx-opt-history-cap" class="cx-history-select">
-              <option value="50">50</option>
-              <option value="150">150</option>
-              <option value="300" selected>300</option>
-              <option value="500">500</option>
-            </select>
-          </label>
-        </div>
-        <div class="cx-history-actions">
-          <button type="button" id="cx-opt-history-start" class="cx-btn-secondary">
-            Scan history
+          <button type="button" id="cx-opt-delete-all" class="cx-btn cx-btn-danger">
+            Delete all indexed data
           </button>
-          <button type="button" id="cx-opt-history-cancel" class="cx-btn-inline" hidden>
-            Stop
-          </button>
-        </div>
-        <p id="cx-opt-history-status" class="cx-opt-note" aria-live="polite"></p>
-      </section>
+          <div id="cx-delete-confirm" class="cx-delete-confirm" hidden>
+            <p class="cx-delete-confirm-text">
+              This cannot be undone. Type <strong>DELETE</strong> to confirm, or click Confirm
+              again within 5 seconds.
+            </p>
+            <label class="cx-visually-hidden" for="cx-delete-input">Confirmation</label>
+            <input type="text" id="cx-delete-input" class="cx-input" autocomplete="off" spellcheck="false" />
+            <div class="cx-actions-row">
+              <button type="button" id="cx-delete-confirm-btn" class="cx-btn cx-btn-danger" disabled>
+                Confirm delete
+              </button>
+              <button type="button" id="cx-delete-cancel-btn" class="cx-btn cx-btn-ghost">
+                Cancel
+              </button>
+            </div>
+            <p id="cx-delete-feedback" class="cx-form-feedback" hidden role="alert"></p>
+          </div>
+        </section>
 
-      <section class="cx-opt-section" aria-labelledby="cx-privacy-h">
-        <h2 id="cx-privacy-h">Indexing &amp; privacy</h2>
-        <div class="cx-privacy">
-          <label class="cx-check">
-            <input type="checkbox" id="cx-opt-pause" />
-            Pause indexing (search still works)
-          </label>
+        <details class="cx-disclosure" id="cx-recent-disclosure">
+          <summary class="cx-disclosure-summary">
+            <span>Recent activity</span>
+            <span id="cx-recent-count" class="cx-count-badge">(0)</span>
+            <svg class="cx-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </summary>
+          <div class="cx-disclosure-body">
+            <ul id="cx-opt-recent" class="cx-recent-list" role="list"></ul>
+            <p id="cx-opt-recent-empty" class="cx-section-desc" hidden>No visits logged yet.</p>
+          </div>
+        </details>
 
-          <p class="cx-label-strong">Blocked domains</p>
-          <p class="cx-chip-help">
-            Click × to remove. Add domains below or type one per line.
-          </p>
-          <div id="cx-opt-blocklist-chips" class="cx-chip-row" aria-label="Blocked domains"></div>
-
-          <label class="cx-label" for="cx-opt-blocklist">Advanced — one domain per line</label>
-          <textarea id="cx-opt-blocklist" rows="4" spellcheck="false" placeholder="facebook.com&#10;news.example.com"></textarea>
-          <button type="button" id="cx-opt-save" class="cx-save">Save privacy settings</button>
-          <p id="cx-opt-save-msg" class="cx-msg" hidden></p>
-        </div>
-      </section>
-
-      <section class="cx-opt-section cx-opt-danger-zone" aria-labelledby="cx-data-h">
-        <h2 id="cx-data-h">Data management</h2>
-        <p class="cx-danger-lead">
-          Deletes all indexed pages, text chunks, and visit history from this browser.
-          Your extension settings (like blocklist) are kept.
-        </p>
-        <button type="button" id="cx-opt-delete-all" class="cx-btn-danger">
-          Delete all indexed data…
-        </button>
-      </section>
-
-      <section class="cx-opt-section">
-        <h2>Recent visits</h2>
-        <ul id="cx-opt-recent" class="cx-recent"></ul>
-        <p id="cx-opt-recent-empty" class="cx-opt-note" hidden>No visits logged yet.</p>
-      </section>
-
-      <p class="cx-opt-builder">
-        Solely built by
-        <a
-          href="https://www.linkedin.com/in/shailesh-entrant/"
-          target="_blank"
-          rel="noopener noreferrer"
-          >Shailesh Kumar</a
-        >.
-      </p>
-      <p class="cx-opt-footer">
-        Technical details: see <code>ARCHITECTURE.md</code> in the repo. Shortcuts:
-        <kbd>Cmd/Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> or
-        <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> ·
-        <code>chrome://extensions/shortcuts</code>
-      </p>
-    </main>
+        <footer class="cx-opt-footer">
+          Built by
+          <a href="https://www.linkedin.com/in/shailesh-entrant/" target="_blank" rel="noopener noreferrer"
+            >Shailesh Kumar</a
+          >
+          · Version 1.0.1
+        </footer>
+      </main>
+    </div>
     <script src="options.js"></script>
   </body>
 </html>

@@ -4,7 +4,9 @@ import {
   buildChatPrompt,
   CHAT_SYSTEM_PROMPT,
   selectChunksForBudget,
+  selectHistoryForPrompt,
 } from "./context-builder";
+import { addMessageToConversation, createConversation, getConversationMessages } from "./conversation-store";
 import {
   decideRoute,
   streamAnswer,
@@ -12,7 +14,6 @@ import {
   type RouteDecision,
 } from "./llm-router";
 import { CortexError } from "../errors";
-import { addMessageToConversation, createConversation } from "./conversation-store";
 import type { ChatSettings } from "./types";
 export interface ChatStreamEvent {
   type:
@@ -40,6 +41,12 @@ export async function* runChat(
       convId = await createConversation(question);
       yield { type: "conversation", data: { id: convId } };
     }
+
+    const priorMessages =
+      convId != null ? await getConversationMessages(convId) : [];
+    const history = selectHistoryForPrompt(
+      priorMessages.map((m) => ({ role: m.role, content: m.content }))
+    );
 
     const forceTimeRange = parsed.timeRange
       ? {
@@ -97,6 +104,7 @@ export async function* runChat(
       question: parsed.rawQuery,
       chunks: selectedChunks,
       timeContext: parsed.timeRange?.label,
+      history,
     });
 
     const route: RouteDecision = await decideRoute(prompt, parsed, settings);

@@ -6,6 +6,7 @@ import {
 } from "./llm-router";
 import { getDigestFromCache, saveDigestToCache } from "./digest-cache";
 import type { ChunkWithDoc } from "../search-engine";
+import { personalizeDigestNarrative } from "./digest-format";
 import type { DigestRequest, DigestResult } from "./digest-types";
 import type { ChatSettings } from "./types";
 import type { ParsedQuestion } from "./question-parser";
@@ -16,7 +17,7 @@ You will be given the titles, summaries, and key passages from webpages a user
 visited during a specific time period. Your job is to produce a structured digest
 in this exact format:
 
-NARRATIVE: [2-3 sentences describing the user's reading focus during this period]
+NARRATIVE: [2-3 sentences in second person, starting with "Your recent reading focused on…" — never say "The user"]
 
 TOPICS:
 - [Topic name] ([N] pages)
@@ -163,10 +164,12 @@ export function parseDigestOutput(raw: string, chunks: ChunkWithDoc[]): ParsedDi
     sourceTitle: string;
   }>;
 
+  const narrativeRaw =
+    narrativeMatch?.[1]?.trim().replace(/\s+/g, " ") ||
+    "No summary generated.";
+
   return {
-    narrative:
-      narrativeMatch?.[1]?.trim().replace(/\s+/g, " ") ||
-      "No summary generated.",
+    narrative: personalizeDigestNarrative(narrativeRaw),
     topics,
     insights,
   };

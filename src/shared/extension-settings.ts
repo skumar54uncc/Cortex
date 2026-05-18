@@ -1,6 +1,7 @@
 /** chrome.storage.local — fast reads from SW + popup */
 
 import type { ChatSettings } from "../lib/chat/types";
+import { storageLocalGet, storageLocalSet } from "./storage-local";
 
 export type ChatMode = ChatSettings["mode"];
 
@@ -28,35 +29,57 @@ export const DEFAULT_USER_SETTINGS: CortexUserSettings = {
   geminiApiKey: "",
 };
 
-export async function getUserSettings(): Promise<CortexUserSettings> {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([KEY], (r) => {
-      if (chrome.runtime.lastError) {
-        resolve({ ...DEFAULT_USER_SETTINGS });
-        return;
-      }
-      const raw = r[KEY] as Partial<CortexUserSettings> | undefined;
-      resolve({
-        ...DEFAULT_USER_SETTINGS,
-        ...raw,
-        blocklist: Array.isArray(raw?.blocklist) ? raw!.blocklist : [],
-        allowlist: Array.isArray(raw?.allowlist) ? raw!.allowlist : [],
-        chatMode:
-          raw?.chatMode === "on-device-only" ||
-          raw?.chatMode === "cloud-only" ||
-          raw?.chatMode === "auto"
-            ? raw.chatMode
-            : DEFAULT_USER_SETTINGS.chatMode,
-        cloudChatEnabled: Boolean(raw?.cloudChatEnabled),
-        geminiApiKey:
-          typeof raw?.geminiApiKey === "string" ? raw.geminiApiKey : "",
-      });
+let memorySettings: CortexUserSettings | null = null;
+
+function normalizeSettings(
+  raw: Partial<CortexUserSettings> | undefined
+): CortexUserSettings {
+  return {
+    ...DEFAULT_USER_SETTINGS,
+    ...raw,
+    blocklist: Array.isArray(raw?.blocklist) ? raw!.blocklist : [],
+    allowlist: Array.isArray(raw?.allowlist) ? raw!.allowlist : [],
+    chatMode:
+      raw?.chatMode === "on-device-only" ||
+      raw?.chatMode === "cloud-only" ||
+      raw?.chatMode === "auto"
+        ? raw.chatMode
+        : DEFAULT_USER_SETTINGS.chatMode,
+    cloudChatEnabled: Boolean(raw?.cloudChatEnabled),
+    geminiApiKey:
+      typeof raw?.geminiApiKey === "string" ? raw.geminiApiKey : "",
+  };
+}
+
+async function loadUserSettingsFromStorage(): Promise<CortexUserSettings> {
+  const r = await storageLocalGet([KEY]);
+  return normalizeSettings(r[KEY] as Partial<CortexUserSettings> | undefined);
+}
+
+try {
+  const c = (globalThis as { chrome?: typeof chrome }).chrome;
+  c?.storage?.onChanged?.addListener((changes, area) => {
+    if (area !== "local" || !changes[KEY]) return;
+    void loadUserSettingsFromStorage().then((s) => {
+      memorySettings = s;
     });
   });
+} catch {
+  /* ignore */
+}
+
+export async function getUserSettings(): Promise<CortexUserSettings> {
+  if (memorySettings) {
+    return { ...memorySettings };
+  }
+  const loaded = await loadUserSettingsFromStorage();
+  memorySettings = loaded;
+  return { ...loaded };
 }
 
 export async function getChatSettings(): Promise<ChatSettings> {
-  const s = await getUserSettings();
+  const s = await loadUserSettingsFromStorage();
+  memorySettings = s;
   return {
     mode: s.chatMode,
     cloudEnabled: s.cloudChatEnabled,
@@ -69,11 +92,6 @@ export async function setUserSettings(
 ): Promise<void> {
   const cur = await getUserSettings();
   const next = { ...cur, ...partial };
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.set({ [KEY]: next }, () => {
-      const err = chrome.runtime.lastError;
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  memorySettings = next;
+  await storageLocalSet({ [KEY]: next });
 }

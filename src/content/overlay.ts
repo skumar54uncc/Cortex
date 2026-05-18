@@ -8,16 +8,19 @@ import {
   sendRuntimeMessage,
 } from "../shared/extension-runtime";
 import type { ChatStreamEvent } from "../lib/chat/chat-engine";
-import type { DigestResult } from "../lib/chat/digest-types";
+import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
 import type { ChunkWithDoc } from "../lib/search-engine";
 import { CHAT_LIMITS } from "../lib/limits";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { ERROR_CODES } from "../lib/errors";
 
 let overlayHost: HTMLDivElement | null = null;
+let overlayShadowRoot: ShadowRoot | null = null;
 
 /** Prevent duplicate chrome.runtime / window listeners if mountOverlay ever runs twice */
 let overlayListenersInstalled = false;
+/** Side-panel / extension shell: fill panel instead of page modal */
+let overlayShellMode = false;
 
 let chatEventSink: ((ev: ChatStreamEvent) => void) | null = null;
 let digestResultSink:
@@ -125,15 +128,30 @@ function pageHostname(u: string): string {
   }
 }
 
-export function mountOverlay(): void {
+function focusExistingOverlaySearch(): void {
+  const input = overlayShadowRoot?.querySelector<HTMLInputElement>(
+    ".cortex-search-input"
+  );
+  input?.focus({ preventScroll: true });
+}
+
+export type MountOverlayOptions = {
+  /** True when running in search-shell.html (chrome:// fallback side panel). */
+  shell?: boolean;
+};
+
+export function mountOverlay(opts?: MountOverlayOptions): void {
+  overlayShellMode = Boolean(opts?.shell);
   if (overlayListenersInstalled) return;
   overlayListenersInstalled = true;
 
-  window.addEventListener("cortex-open-search", () => openSearchOverlay());
-
   chrome.runtime.onMessage.addListener((msg) => {
-    if (msg?.type === "CORTEX_OPEN_SEARCH") {
-      openSearchOverlay();
+    if (msg?.type === "CORTEX_OPEN_SEARCH" && !overlayShellMode) {
+      openCortexOverlay();
+      return undefined;
+    }
+    if (msg?.type === "CORTEX_OPEN_SEARCH_SHELL" && overlayShellMode) {
+      openCortexOverlay();
       return undefined;
     }
     if (msg?.type === "CORTEX_CHAT_PUSH") {
@@ -157,22 +175,32 @@ function faviconUrlForHost(hostname: string): string {
 type OverlayMode = "search" | "ask" | "digest";
 
 /** Opens the panel if closed. Idempotent — avoids double Ctrl+Shift+K (command + key handler). */
-function openSearchOverlay(): void {
+export function openCortexOverlay(): void {
   if (!isExtensionRuntimeAlive()) return;
 
   const existingRoot = document.getElementById("cortex-overlay-root");
-  if (existingRoot?.isConnected) return;
+  if (existingRoot?.isConnected) {
+    focusExistingOverlaySearch();
+    return;
+  }
 
   existingRoot?.remove();
   overlayHost = null;
+  overlayShadowRoot = null;
 
   const previousFocus =
     document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
   const host = document.createElement("div");
   host.id = "cortex-overlay-root";
+  if (overlayShellMode) {
+    host.classList.add("cortex-overlay-host--shell");
+  }
 
-  const shadow = host.attachShadow({ mode: "open" });
+  const shadow = host.attachShadow({
+    mode: __CORTEX_DEBUG__ ? "open" : "closed",
+  });
+  overlayShadowRoot = shadow;
 
   const iconUrl = chrome.runtime.getURL("icons/icon-48.png");
 
@@ -188,36 +216,54 @@ function openSearchOverlay(): void {
       <div id="cortex-announcer" class="cortex-sr-only" aria-live="polite" aria-atomic="true"></div>
       <div class="cortex-head">
         <div class="cx-brand">
-          <a class="cx-brand-link" href="#" role="link" title="Open Cortex settings" data-cortex-open-options>
+          <span class="cx-brand-link" aria-hidden="true">
             <img class="cx-brand-mark" src="${iconUrl}" alt="" width="26" height="26" />
-          </a>
+          </span>
           <div class="cx-brand-text">
             <span id="cortex-overlay-title" class="cx-brand-wordmark">Cortex</span>
             <span id="cortex-overlay-tagline" class="cx-brand-tagline">Private memory from pages you read</span>
           </div>
         </div>
-        <button type="button" class="cortex-x" data-act="close" aria-label="Close">×</button>
+        <div class="cortex-head-actions">
+          <button
+            type="button"
+            class="cortex-icon-btn"
+            data-cortex-open-options
+            aria-label="Privacy and settings"
+            title="Privacy and settings"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button type="button" class="cortex-x" data-act="close" aria-label="Close">×</button>
+        </div>
       </div>
       <div class="cortex-tabs" role="tablist"></div>
       <div class="cortex-body"></div>
-      <footer class="cortex-attribution">
-        Solely built by
-        <a
-          href="https://www.linkedin.com/in/shailesh-entrant/"
-          target="_blank"
-          rel="noopener noreferrer"
-          >Shailesh Kumar</a
-        >
+      <footer class="cortex-footer">
+        <p class="cortex-attribution">
+          Solely built by
+          <a
+            href="https://www.linkedin.com/in/shailesh-entrant/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Shailesh Kumar</a
+          >
+        </p>
       </footer>
     </div>
   `;
   shadow.appendChild(shell);
 
   try {
-    document.documentElement.appendChild(host);
+    const mountParent = overlayShellMode ? document.body : document.documentElement;
+    mountParent.appendChild(host);
     overlayHost = host;
   } catch {
     overlayHost = null;
+    overlayShadowRoot = null;
     return;
   }
 
@@ -254,13 +300,25 @@ function openSearchOverlay(): void {
   const getSearchInput = (): HTMLInputElement | null =>
     shell.querySelector<HTMLInputElement>(".cortex-search-input");
 
+  const getAskInput = (): HTMLTextAreaElement | null =>
+    shell.querySelector<HTMLTextAreaElement>(".cortex-ask-input");
+
+  const focusAskInput = (ta: HTMLTextAreaElement): void => {
+    ta.focus({ preventScroll: true });
+    const end = ta.value.length;
+    try {
+      ta.setSelectionRange(end, end);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const focusPrimaryField = (): void => {
     if (currentMode === "search") {
       getSearchInput()?.focus({ preventScroll: true });
     } else if (currentMode === "ask") {
-      shell.querySelector<HTMLTextAreaElement>(".cortex-ask-input")?.focus({
-        preventScroll: true,
-      });
+      const ta = getAskInput();
+      if (ta) focusAskInput(ta);
     }
   };
 
@@ -350,10 +408,22 @@ function openSearchOverlay(): void {
   };
 
   const onFocusInCapturePage = (ev: FocusEvent): void => {
-    const t = ev.target as Node | null;
-    if (!t || !document.documentElement.contains(t)) return;
     const sr = host.shadowRoot;
-    if (!sr || sr.contains(t)) return;
+    if (!sr) return;
+
+    const path = ev.composedPath();
+    if (path.includes(host)) {
+      if (currentMode === "ask") {
+        const t = ev.target as HTMLElement | null;
+        if (t?.classList.contains("cortex-tab")) {
+          queueMicrotask(() => {
+            const ta = getAskInput();
+            if (ta) focusAskInput(ta);
+          });
+        }
+      }
+      return;
+    }
 
     queueMicrotask(() => {
       if (!overlayHost) return;
@@ -458,8 +528,147 @@ function openSearchOverlay(): void {
     }
   }
 
+  let askSidebarListEl: HTMLElement | null = null;
+
+  async function deleteChatConversation(convId: number): Promise<void> {
+    const res = (await sendRuntimeMessage({
+      type: "CORTEX_CHAT_DELETE",
+      conversationId: convId,
+    })) as { ok?: boolean } | undefined;
+    if (!res?.ok) return;
+
+    if (currentConversationId === convId) {
+      currentConversationId = null;
+      if (askMessagesEl) renderChatThread(askMessagesEl, []);
+    }
+    void refreshChatSidebar();
+    if (askTextareaEl) focusAskInput(askTextareaEl);
+  }
+
+  async function refreshChatSidebar(): Promise<void> {
+    if (!askSidebarListEl) return;
+    askSidebarListEl.innerHTML = "";
+
+    const res = (await sendRuntimeMessage({
+      type: "CORTEX_CHAT_LIST",
+    })) as
+      | {
+          ok?: boolean;
+          conversations?: Array<{
+            id?: number;
+            title: string;
+            updatedAt: number;
+          }>;
+        }
+      | undefined;
+
+    const list = res?.ok ? res.conversations ?? [] : [];
+    if (list.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "cortex-chat-sidebar-empty cortex-muted";
+      empty.textContent = "No past chats yet.";
+      askSidebarListEl.appendChild(empty);
+      return;
+    }
+
+    for (const conv of list) {
+      if (conv.id == null) continue;
+      const label = conv.title || "Untitled chat";
+
+      const row = document.createElement("div");
+      row.className = "cortex-chat-history-row";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cortex-chat-history-item";
+      if (conv.id === currentConversationId) {
+        btn.classList.add("cortex-chat-history-item--active");
+      }
+      const title = document.createElement("span");
+      title.className = "cortex-chat-history-title";
+      title.textContent = label;
+      const when = document.createElement("span");
+      when.className = "cortex-chat-history-when";
+      when.textContent = new Date(conv.updatedAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      });
+      btn.appendChild(title);
+      btn.appendChild(when);
+      btn.addEventListener("click", () => {
+        currentConversationId = conv.id!;
+        void loadChatConversation(conv.id!, askMessagesEl!);
+        void refreshChatSidebar();
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "cortex-chat-history-delete";
+      delBtn.setAttribute("aria-label", `Delete chat: ${label}`);
+      delBtn.innerHTML =
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
+      delBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void deleteChatConversation(conv.id!);
+      });
+
+      row.appendChild(btn);
+      row.appendChild(delBtn);
+      askSidebarListEl.appendChild(row);
+    }
+  }
+
+  async function loadChatConversation(
+    convId: number,
+    messagesContainer: HTMLElement
+  ): Promise<void> {
+    const res = (await sendRuntimeMessage({
+      type: "CORTEX_CHAT_LOAD",
+      conversationId: convId,
+    })) as
+      | {
+          ok?: boolean;
+          messages?: StoredChatMessage[];
+        }
+      | undefined;
+
+    if (!res?.ok || !res.messages) {
+      renderChatThread(messagesContainer, []);
+      return;
+    }
+
+    renderChatThread(messagesContainer, res.messages);
+    scrollChatToBottom(messagesContainer);
+  }
+
+  let askMessagesEl: HTMLElement | null = null;
+  let askTextareaEl: HTMLTextAreaElement | null = null;
+
+  let activeDigestRange: DigestRange = "yesterday";
+  let digestRangeButtons: HTMLButtonElement[] = [];
+
+  function openSearchWithQuery(query: string): void {
+    const q = query.trim();
+    if (!q) return;
+    currentMode = "search";
+    panel.classList.toggle("cortex-panel--chat", false);
+    panel.classList.toggle("cortex-panel--digest", false);
+    rebuildTabs();
+    renderMode();
+    window.setTimeout(() => {
+      const input = getSearchInput();
+      if (!input) return;
+      input.value = q;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.focus({ preventScroll: true });
+    }, 0);
+  }
+
   function switchMode(mode: OverlayMode): void {
     currentMode = mode;
+    panel.classList.toggle("cortex-panel--chat", mode === "ask");
+    panel.classList.toggle("cortex-panel--digest", mode === "digest");
     rebuildTabs();
     renderMode();
     scheduleFocusRetries();
@@ -522,12 +731,52 @@ function openSearchOverlay(): void {
     return root;
   }
 
+  type StoredCited = {
+    chunkId: number;
+    documentId: number;
+    url: string;
+    title: string;
+  };
+
+  type StoredChatMessage = {
+    role: "user" | "assistant";
+    content: string;
+    citedChunks?: StoredCited[];
+  };
+
+  function chunksFromCited(cited: StoredCited[] | undefined): ChunkWithDoc[] {
+    if (!cited?.length) return [];
+    return cited.map((c, ord) => ({
+      id: c.chunkId,
+      documentId: c.documentId,
+      ord,
+      text: "",
+      document: {
+        id: c.documentId,
+        url: c.url,
+        domain: pageHostname(c.url),
+        title: c.title,
+        summary: "",
+        lastVisitedAt: Date.now(),
+        visitCount: 1,
+        importanceScore: 0,
+      },
+    })) as ChunkWithDoc[];
+  }
+
   function renderSources(container: Element, chunks: ChunkWithDoc[]): void {
     container.innerHTML = "";
-    const heading = document.createElement("div");
-    heading.className = "cortex-sources-heading";
-    heading.textContent = `Sources (${chunks.length})`;
-    container.appendChild(heading);
+    if (!chunks.length) return;
+
+    const details = document.createElement("details");
+    details.className = "cortex-sources-details";
+
+    const summary = document.createElement("summary");
+    summary.className = "cortex-sources-toggle";
+    summary.textContent = `Show sources (${chunks.length})`;
+
+    const list = document.createElement("div");
+    list.className = "cortex-sources-list";
 
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i]!;
@@ -552,7 +801,49 @@ function openSearchOverlay(): void {
       item.appendChild(num);
       item.appendChild(titleEl);
       item.appendChild(domain);
-      container.appendChild(item);
+      list.appendChild(item);
+    }
+
+    details.appendChild(summary);
+    details.appendChild(list);
+    container.appendChild(details);
+  }
+
+  function renderChatThread(
+    messagesContainer: HTMLElement,
+    messages: StoredChatMessage[]
+  ): void {
+    messagesContainer.innerHTML = "";
+    if (messages.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "cortex-chat-empty";
+      empty.innerHTML =
+        '<p class="cortex-chat-empty-title">What would you like to know?</p><p class="cortex-chat-empty-hint cortex-muted">Ask about pages you’ve read — answers stay grounded in your local library with citations.</p>';
+      messagesContainer.appendChild(empty);
+      return;
+    }
+
+    for (const m of messages) {
+      if (m.role === "user") {
+        const userEl = document.createElement("div");
+        userEl.className = "cortex-msg cortex-msg--user";
+        userEl.textContent = m.content;
+        messagesContainer.appendChild(userEl);
+        continue;
+      }
+
+      const cited = chunksFromCited(m.citedChunks);
+      const assistantMsgEl = document.createElement("div");
+      assistantMsgEl.className = "cortex-msg cortex-msg--assistant";
+      const contentEl = document.createElement("div");
+      contentEl.className = "cortex-msg-content cortex-msg-rich";
+      contentEl.appendChild(renderAnswerWithCitations(m.content, cited));
+      assistantMsgEl.appendChild(contentEl);
+      const sourcesEl = document.createElement("div");
+      sourcesEl.className = "cortex-msg-sources";
+      renderSources(sourcesEl, cited);
+      assistantMsgEl.appendChild(sourcesEl);
+      messagesContainer.appendChild(assistantMsgEl);
     }
   }
 
@@ -631,12 +922,11 @@ function openSearchOverlay(): void {
       chatEventSink = (ev: ChatStreamEvent): void => {
         if (ev.type === "conversation") {
           currentConversationId = ev.data.id as number;
+          void refreshChatSidebar();
           return;
         }
         if (ev.type === "sources") {
           citedChunks = ev.data.chunks as ChunkWithDoc[];
-          renderSources(sourcesEl, citedChunks);
-          scrollChatIfFollowing(messagesContainer);
           return;
         }
         if (ev.type === "token") {
@@ -651,8 +941,10 @@ function openSearchOverlay(): void {
           cursor.remove();
           contentEl.textContent = "";
           contentEl.appendChild(renderAnswerWithCitations(fullText, citedChunks));
+          renderSources(sourcesEl, citedChunks);
           announcePolite("Answer ready.");
           scrollChatIfFollowing(messagesContainer);
+          void refreshChatSidebar();
           finish();
           return;
         }
@@ -671,6 +963,7 @@ function openSearchOverlay(): void {
           type: "CORTEX_CHAT_START",
           question,
           conversationId: currentConversationId,
+          shell: overlayShellMode,
         },
         (
           resp:
@@ -742,90 +1035,175 @@ function openSearchOverlay(): void {
     });
   }
 
+  function digestRangeLabel(range: DigestRange): string {
+    if (range === "today") return "Today";
+    if (range === "yesterday") return "Yesterday";
+    return "Last 7 days";
+  }
+
   function renderDigestUI(digest: DigestResult): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "cortex-digest";
 
     if (digest.pageCount === 0) {
       const empty = document.createElement("div");
-      empty.className = "cortex-digest-empty";
-      empty.textContent = digest.narrative;
+      empty.className = "cortex-digest-empty-card";
+      empty.innerHTML = `<p class="cortex-digest-empty-title">Nothing indexed for ${esc(digestRangeLabel(digest.range as DigestRange))}</p><p class="cortex-digest-empty-hint">${esc(digest.narrative)}</p>`;
       wrapper.appendChild(empty);
       return wrapper;
     }
 
-    const stats = document.createElement("div");
-    stats.className = "cortex-digest-stats";
-    stats.textContent = `${digest.pageCount} pages across ${digest.domainsCount} sites`;
-    wrapper.appendChild(stats);
+    const meta = document.createElement("div");
+    meta.className = "cortex-digest-meta";
+    const badgePages = document.createElement("span");
+    badgePages.className = "cortex-digest-badge";
+    badgePages.textContent = `${digest.pageCount} pages`;
+    const badgeSites = document.createElement("span");
+    badgeSites.className = "cortex-digest-badge";
+    badgeSites.textContent = `${digest.domainsCount} sites`;
+    const badgeWhen = document.createElement("span");
+    badgeWhen.className = "cortex-digest-badge cortex-digest-badge--muted";
+    badgeWhen.textContent = digestRangeLabel(digest.range as DigestRange);
+    meta.append(badgePages, badgeSites, badgeWhen);
+    wrapper.appendChild(meta);
 
+    const hero = document.createElement("section");
+    hero.className = "cortex-digest-hero";
+    const heroLabel = document.createElement("p");
+    heroLabel.className = "cortex-digest-section-label";
+    heroLabel.textContent = "Your reading focus";
     const narrative = document.createElement("p");
     narrative.className = "cortex-digest-narrative";
     narrative.textContent = digest.narrative;
-    wrapper.appendChild(narrative);
+    hero.append(heroLabel, narrative);
+    wrapper.appendChild(hero);
 
     if (digest.topics.length > 0) {
+      const topicsSection = document.createElement("section");
+      topicsSection.className = "cortex-digest-section";
       const topicsHeading = document.createElement("h3");
+      topicsHeading.className = "cortex-digest-section-label";
       topicsHeading.textContent = "Top topics";
-      wrapper.appendChild(topicsHeading);
+      const topicsHint = document.createElement("p");
+      topicsHint.className = "cortex-digest-section-hint cortex-muted";
+      topicsHint.textContent = "Click a topic to search your library.";
+      const topicsGrid = document.createElement("div");
+      topicsGrid.className = "cortex-digest-topic-grid";
+      topicsGrid.setAttribute("role", "list");
 
-      const topicsList = document.createElement("ul");
-      topicsList.className = "cortex-digest-topics";
       for (const topic of digest.topics) {
-        const li = document.createElement("li");
-        li.textContent = `${topic.topic} (${topic.pageCount} ${topic.pageCount === 1 ? "page" : "pages"})`;
-        topicsList.appendChild(li);
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "cortex-digest-topic-chip";
+        chip.setAttribute("role", "listitem");
+        chip.title = `Search your library for “${topic.topic}”`;
+
+        const label = document.createElement("span");
+        label.className = "cortex-digest-topic-label";
+        label.textContent = topic.topic;
+
+        const count = document.createElement("span");
+        count.className = "cortex-digest-topic-count";
+        count.textContent = `${topic.pageCount} ${topic.pageCount === 1 ? "page" : "pages"}`;
+
+        chip.append(label, count);
+        chip.addEventListener("click", () => openSearchWithQuery(topic.topic));
+        topicsGrid.appendChild(chip);
       }
-      wrapper.appendChild(topicsList);
+
+      topicsSection.append(topicsHeading, topicsHint, topicsGrid);
+      wrapper.appendChild(topicsSection);
     }
 
     if (digest.insights.length > 0) {
+      const insightsSection = document.createElement("section");
+      insightsSection.className = "cortex-digest-section";
       const insightsHeading = document.createElement("h3");
+      insightsHeading.className = "cortex-digest-section-label";
       insightsHeading.textContent = "Notable findings";
-      wrapper.appendChild(insightsHeading);
 
       const insightsList = document.createElement("ul");
       insightsList.className = "cortex-digest-insights";
+
       for (const insight of digest.insights) {
         const li = document.createElement("li");
-        li.append(document.createTextNode(`${insight.text} `));
+        li.className = "cortex-digest-insight-card";
+
+        const text = document.createElement("p");
+        text.className = "cortex-digest-insight-text";
+        text.textContent = insight.text;
+
         const link = document.createElement("a");
         link.href = safeHttpUrl(insight.sourceUrl);
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.className = "cortex-citation";
-        link.textContent = "↗";
-        link.title = insight.sourceTitle;
-        li.appendChild(link);
+        link.className = "cortex-digest-insight-source";
+        link.textContent = `${insight.sourceTitle} · ${pageHostname(insight.sourceUrl)}`;
+
+        li.append(text, link);
         insightsList.appendChild(li);
       }
-      wrapper.appendChild(insightsList);
+
+      insightsSection.append(insightsHeading, insightsList);
+      wrapper.appendChild(insightsSection);
     }
 
     if (digest.sources.length > 0) {
-      const srcH = document.createElement("h3");
-      srcH.textContent = "Sources";
-      wrapper.appendChild(srcH);
-      const ul = document.createElement("ul");
-      ul.className = "cortex-digest-sources";
+      const details = document.createElement("details");
+      details.className = "cortex-digest-sources-details";
+
+      const summary = document.createElement("summary");
+      summary.className = "cortex-digest-sources-toggle";
+      summary.textContent = `Show all pages (${digest.sources.length})`;
+
+      const list = document.createElement("ul");
+      list.className = "cortex-digest-sources";
+
       for (const s of digest.sources) {
         const li = document.createElement("li");
+        li.className = "cortex-digest-source-row";
+
+        const fav = faviconUrlForHost(s.domain);
+        if (fav) {
+          const img = document.createElement("img");
+          img.className = "cortex-digest-source-favicon";
+          img.src = fav;
+          img.alt = "";
+          img.width = 16;
+          img.height = 16;
+          li.appendChild(img);
+        }
+
+        const main = document.createElement("div");
+        main.className = "cortex-digest-source-main";
         const a = document.createElement("a");
         a.href = safeHttpUrl(s.url);
         a.target = "_blank";
         a.rel = "noopener noreferrer";
+        a.className = "cortex-digest-source-title";
         a.textContent = s.title || s.domain;
-        li.appendChild(a);
-        const meta = document.createElement("span");
-        meta.className = "cortex-digest-source-meta";
-        meta.textContent = ` · ${s.domain}`;
-        li.appendChild(meta);
-        ul.appendChild(li);
+        const metaLine = document.createElement("span");
+        metaLine.className = "cortex-digest-source-meta";
+        metaLine.textContent = `${s.domain} · ${new Date(s.visitedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
+        main.append(a, metaLine);
+        li.appendChild(main);
+        list.appendChild(li);
       }
-      wrapper.appendChild(ul);
+
+      details.append(summary, list);
+      wrapper.appendChild(details);
     }
 
     return wrapper;
+  }
+
+  function updateDigestRangeButtons(active: DigestRange): void {
+    activeDigestRange = active;
+    for (const btn of digestRangeButtons) {
+      const key = btn.getAttribute("data-digest-range") as DigestRange | null;
+      btn.classList.toggle("cortex-digest-range-btn--active", key === active);
+      btn.setAttribute("aria-pressed", String(key === active));
+    }
   }
 
   function renderLoading(msg: string): HTMLElement {
@@ -836,9 +1214,10 @@ function openSearchOverlay(): void {
   }
 
   async function loadDigest(
-    range: "today" | "yesterday" | "last_7_days",
+    range: DigestRange,
     content: HTMLElement
   ): Promise<void> {
+    updateDigestRangeButtons(range);
     content.innerHTML = "";
     content.appendChild(renderLoading("Generating your digest…"));
 
@@ -852,9 +1231,21 @@ function openSearchOverlay(): void {
             if (msg.ok && msg.result) resolve(msg.result);
             else reject(new Error(msg.error ?? "Digest failed"));
           };
-          chrome.runtime.sendMessage({ type: "CORTEX_DIGEST_START", range }, () => {
-            void chrome.runtime.lastError;
-          });
+          chrome.runtime.sendMessage(
+            { type: "CORTEX_DIGEST_START", range, shell: overlayShellMode },
+            (resp) => {
+              if (chrome.runtime.lastError) {
+                digestResultSink = null;
+                reject(new Error(chrome.runtime.lastError.message ?? "Digest failed"));
+                return;
+              }
+              if (resp && (resp as { ok?: boolean }).ok === false) {
+                digestResultSink = null;
+                const err = (resp as { error?: string }).error ?? "Digest failed";
+                reject(new Error(err));
+              }
+            }
+          );
         }),
         new Promise<never>((_, reject) => {
           window.setTimeout(
@@ -924,6 +1315,7 @@ function openSearchOverlay(): void {
               visitedAt: number;
               snippet: string;
               score: number;
+              grounding?: number;
               matchReason?: string;
               scoreBreakdown: string;
             }[];
@@ -980,8 +1372,12 @@ function openSearchOverlay(): void {
               });
               const hostName = pageHostname(h.url);
               const scoreNum = scores[i] ?? 0;
-              const tier = confidenceTier(scoreNum, maxScore);
-              const titleAttr = `Blend score ${scoreNum.toFixed(3)} · batch-relative ${tier.relative.toFixed(2)}`;
+              const ground =
+                typeof h.grounding === "number" && Number.isFinite(h.grounding)
+                  ? h.grounding
+                  : 1;
+              const tier = confidenceTier(scoreNum, maxScore, ground);
+              const titleAttr = `Blend score ${scoreNum.toFixed(3)} · batch-relative ${tier.relative.toFixed(2)} · term alignment ${(ground * 100).toFixed(0)}%`;
 
               const fav = faviconUrlForHost(hostName);
               const favHtml = fav
@@ -1068,24 +1464,36 @@ function openSearchOverlay(): void {
       const wrap = document.createElement("div");
       wrap.className = "cortex-ask-layout";
 
-      const toolbar = document.createElement("div");
-      toolbar.className = "cortex-ask-toolbar";
+      const sidebar = document.createElement("aside");
+      sidebar.className = "cortex-chat-sidebar";
+      sidebar.setAttribute("aria-label", "Chat history");
+
       const newBtn = document.createElement("button");
       newBtn.type = "button";
-      newBtn.className = "cortex-ask-new";
-      newBtn.textContent = "New chat";
+      newBtn.className = "cortex-chat-new";
+      newBtn.textContent = "+ New chat";
+
+      const sidebarList = document.createElement("div");
+      sidebarList.className = "cortex-chat-sidebar-list";
+      askSidebarListEl = sidebarList;
+
       const messagesContainer = document.createElement("div");
       messagesContainer.className = "cortex-chat-messages";
       messagesContainer.setAttribute("role", "log");
       messagesContainer.setAttribute("aria-relevant", "additions");
+      askMessagesEl = messagesContainer;
+
       newBtn.addEventListener("click", () => {
         currentConversationId = null;
-        messagesContainer.innerHTML = "";
+        renderChatThread(messagesContainer, []);
+        void refreshChatSidebar();
+        if (askTextareaEl) focusAskInput(askTextareaEl);
       });
-      toolbar.appendChild(newBtn);
-      wrap.appendChild(toolbar);
+      sidebar.appendChild(newBtn);
+      sidebar.appendChild(sidebarList);
 
-      wrap.appendChild(messagesContainer);
+      const main = document.createElement("div");
+      main.className = "cortex-chat-main";
 
       const composer = document.createElement("div");
       composer.className = "cortex-ask-composer";
@@ -1093,11 +1501,17 @@ function openSearchOverlay(): void {
       const inputInner = document.createElement("div");
       inputInner.className = "cortex-ask-input-inner";
       const ta = document.createElement("textarea");
-      ta.className = "cortex-ask-input cortex-input";
+      ta.className = "cortex-ask-input";
       ta.placeholder = "Ask anything about what you've read…";
-      ta.rows = 3;
+      ta.rows = 2;
       ta.maxLength = CHAT_LIMITS.MAX_QUESTION_CHARS;
       ta.setAttribute("aria-label", "Your question");
+      askTextareaEl = ta;
+      inputInner.addEventListener("mousedown", (e) => {
+        if (e.target === ta) return;
+        e.preventDefault();
+        focusAskInput(ta);
+      });
       inputInner.appendChild(ta);
 
       const sendRow = document.createElement("div");
@@ -1114,11 +1528,15 @@ function openSearchOverlay(): void {
 
       composer.appendChild(inputInner);
       composer.appendChild(sendRow);
-      wrap.appendChild(composer);
+      main.appendChild(messagesContainer);
+      main.appendChild(composer);
+      wrap.appendChild(sidebar);
+      wrap.appendChild(main);
 
       const submitAsk = (): void => {
         const question = ta.value.trim();
         if (!question) return;
+        messagesContainer.querySelector(".cortex-chat-empty")?.remove();
         ta.value = "";
         void handleAskSubmit(question, messagesContainer);
       };
@@ -1133,33 +1551,46 @@ function openSearchOverlay(): void {
       });
 
       bodyEl.appendChild(wrap);
+      renderChatThread(messagesContainer, []);
+      void refreshChatSidebar();
+      if (currentConversationId != null) {
+        void loadChatConversation(currentConversationId, messagesContainer);
+      }
+      requestAnimationFrame(() => focusAskInput(ta));
       return;
     }
 
     if (currentMode === "digest") {
       const rangeBar = document.createElement("div");
       rangeBar.className = "cortex-digest-range";
-      const ranges = [
+      rangeBar.setAttribute("role", "tablist");
+      rangeBar.setAttribute("aria-label", "Digest time range");
+      const ranges: Array<[DigestRange, string]> = [
         ["today", "Today"],
         ["yesterday", "Yesterday"],
         ["last_7_days", "Last 7 days"],
-      ] as const;
+      ];
 
       const content = document.createElement("div");
       content.className = "cortex-digest-content";
 
+      digestRangeButtons = [];
       for (const [key, label] of ranges) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "cortex-digest-range-btn";
         btn.textContent = label;
+        btn.setAttribute("data-digest-range", key);
+        btn.setAttribute("role", "tab");
         btn.addEventListener("click", () => void loadDigest(key, content));
         rangeBar.appendChild(btn);
+        digestRangeButtons.push(btn);
       }
 
       bodyEl.appendChild(rangeBar);
       bodyEl.appendChild(content);
-      void loadDigest("yesterday", content);
+      updateDigestRangeButtons(activeDigestRange);
+      void loadDigest(activeDigestRange, content);
     }
   }
 
@@ -1173,6 +1604,7 @@ function openSearchOverlay(): void {
     panel.classList.remove("is-visible");
     host.remove();
     overlayHost = null;
+    overlayShadowRoot = null;
     try {
       previousFocus?.focus({ preventScroll: true });
     } catch {

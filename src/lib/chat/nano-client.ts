@@ -1,7 +1,33 @@
+/** Chrome Prompt API — required on availability() and create() (en | es | ja). */
+export type NanoOutputLanguage = "en" | "es" | "ja";
+
+export const NANO_OUTPUT_LANGUAGE: NanoOutputLanguage = "en";
+
+const NANO_AVAILABILITY_CACHE_MS = 60_000;
+
+let nanoAvailabilityCache: {
+  at: number;
+  result: Awaited<ReturnType<typeof isNanoAvailableUncached>>;
+} | null = null;
+
+type LanguageModelRequestOptions = {
+  outputLanguage?: NanoOutputLanguage;
+  language?: NanoOutputLanguage;
+  initialPrompts?: Array<{
+    role: "system" | "user" | "assistant";
+    content: string;
+  }>;
+  temperature?: number;
+  topK?: number;
+  monitor?: (m: unknown) => void;
+};
+
 declare global {
   interface Window {
     LanguageModel?: {
-      availability(): Promise<
+      availability(
+        options?: Pick<LanguageModelRequestOptions, "outputLanguage">
+      ): Promise<
         "unavailable" | "downloadable" | "downloading" | "available"
       >;
       params(): Promise<{
@@ -10,15 +36,9 @@ declare global {
         defaultTemperature: number;
         maxTemperature: number;
       }>;
-      create(options?: {
-        initialPrompts?: Array<{
-          role: "system" | "user" | "assistant";
-          content: string;
-        }>;
-        temperature?: number;
-        topK?: number;
-        monitor?: (m: unknown) => void;
-      }): Promise<LanguageModelSession>;
+      create(
+        options?: LanguageModelRequestOptions
+      ): Promise<LanguageModelSession>;
     };
   }
 
@@ -31,7 +51,7 @@ declare global {
   }
 }
 
-export async function isNanoAvailable(): Promise<{
+async function isNanoAvailableUncached(): Promise<{
   available: boolean;
   status: "unavailable" | "downloadable" | "downloading" | "available";
   reason?: string;
@@ -45,23 +65,58 @@ export async function isNanoAvailable(): Promise<{
     };
   }
 
+  const lmOptions = { outputLanguage: NANO_OUTPUT_LANGUAGE } as const;
+  const diskHint =
+    "Free disk space or use Cloud mode with a Gemini API key in Settings.";
+
   try {
-    const status = await window.LanguageModel.availability();
+    const status = await window.LanguageModel.availability(lmOptions);
     return {
       available: status === "available",
       status,
       reason:
         status === "downloadable"
-          ? "Model needs to be downloaded (one-time, large download)."
+          ? `On-device model is not installed yet. ${diskHint}`
           : status === "downloading"
             ? "Model is currently downloading."
             : status === "unavailable"
-              ? "Built-in AI not available on this device."
+              ? `Built-in AI is not available on this device. ${diskHint}`
               : undefined,
     };
   } catch (e) {
-    return { available: false, status: "unavailable", reason: String(e) };
+    const msg = e instanceof Error ? e.message : String(e);
+    const disk =
+      /not enough space|insufficient storage|disk full/i.test(msg);
+    return {
+      available: false,
+      status: "unavailable",
+      reason: disk
+        ? `Not enough disk space for the on-device model. ${diskHint}`
+        : msg,
+    };
   }
+}
+
+export async function isNanoAvailable(): Promise<{
+  available: boolean;
+  status: "unavailable" | "downloadable" | "downloading" | "available";
+  reason?: string;
+}> {
+  const now = Date.now();
+  if (
+    nanoAvailabilityCache &&
+    now - nanoAvailabilityCache.at < NANO_AVAILABILITY_CACHE_MS
+  ) {
+    return nanoAvailabilityCache.result;
+  }
+  const result = await isNanoAvailableUncached();
+  nanoAvailabilityCache = { at: now, result };
+  return result;
+}
+
+/** Vitest — reset availability cache between cases. */
+export function resetNanoAvailabilityCacheForTests(): void {
+  nanoAvailabilityCache = null;
 }
 
 export interface NanoSession {
@@ -79,6 +134,8 @@ export async function createNanoSession(
   }
 
   const session = await window.LanguageModel.create({
+    outputLanguage: NANO_OUTPUT_LANGUAGE,
+    language: NANO_OUTPUT_LANGUAGE,
     initialPrompts: systemPrompt
       ? [{ role: "system", content: systemPrompt }]
       : undefined,

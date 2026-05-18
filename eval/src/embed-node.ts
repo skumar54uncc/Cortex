@@ -8,7 +8,8 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { pipeline, env } from "@xenova/transformers";
+import { pipeline } from "@xenova/transformers";
+import { configureTransformersEnv } from "../../src/lib/transformers-env.js";
 import { CORTEX_EMBED_MODEL_ID } from "../../src/shared/embed-model.js";
 
 const CACHE_VERSION = "v1";
@@ -62,12 +63,9 @@ async function ensurePipeline(): Promise<FeaturePipeline> {
   if (!pipeReady) {
     pipeReady = (async () => {
       const modelRoot = join(projectRoot(), "vendor", "models");
-      env.allowLocalModels = true;
-      env.allowRemoteModels = false;
-      env.localModelPath = modelRoot.endsWith("/") ? modelRoot : `${modelRoot}/`;
-      if (env.backends.onnx?.wasm) {
-        env.backends.onnx.wasm.numThreads = 1;
-      }
+      configureTransformersEnv({
+        localModelPath: modelRoot.endsWith("/") ? modelRoot : `${modelRoot}/`,
+      });
       const pipe = await pipeline("feature-extraction", CORTEX_EMBED_MODEL_ID, {
         quantized: true,
       });

@@ -2,78 +2,125 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Welcome to Cortex</title>
-    <style>
-      body {
-        font-family: system-ui, Segoe UI, Roboto, sans-serif;
-        max-width: 40rem;
-        margin: 2rem auto;
-        padding: 0 1rem;
-        line-height: 1.5;
-        color: #1c1917;
-      }
-      h1 {
-        font-size: 1.5rem;
-      }
-      ol {
-        padding-left: 1.25rem;
-      }
-      button {
-        margin-top: 1rem;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        border: 1px solid #c72a09;
-        background: #fff5f3;
-        color: #c72a09;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      button:hover {
-        filter: brightness(0.97);
-      }
-      .onb-builder {
-        margin-top: 1.25rem;
-        font-size: 13px;
-        color: #57534e;
-      }
-      .onb-builder a {
-        color: #c72a09;
-        font-weight: 600;
-      }
-      code {
-        font-size: 0.9em;
-        background: #f5f5f4;
-        padding: 0.1em 0.35em;
-        border-radius: 4px;
-      }
-    </style>
+    <link rel="stylesheet" href="options.css" />
+    <link rel="stylesheet" href="onboarding.css" />
   </head>
   <body>
-    <main>
-      <h1>Welcome to Cortex</h1>
-      <p>
-        Cortex keeps a <strong>private, on-device</strong> memory of readable pages you visit so you can search and ask questions over what you actually read.
-      </p>
-      <p style="font-size: 14px; color: #444">
-        Right now Cortex is also <strong>scanning the last 7 days of your browser history</strong> (same behavior as Settings → History scan) and <strong>indexing open tabs</strong> in the background. Pause/blocklist and sensitive-site skips still apply.
-      </p>
-      <ol>
-        <li>Browse normally — pages are chunked and indexed locally (respecting your pause/blocklist).</li>
-        <li>
-          Press <code>Ctrl+Shift+K</code> (Windows/Linux) or <code>Cmd+Shift+K</code> (Mac), or
-          <code>Alt+Shift+C</code>, to open Search / Ask / Digest on any page.
-        </li>
-        <li>Use the toolbar icon for stats and <strong>Open settings</strong> for privacy and optional cloud chat.</li>
-      </ol>
-      <button type="button" id="cx-onb-done">Got it — open settings</button>
-      <p class="onb-builder">
-        Solely built by
-        <a href="https://www.linkedin.com/in/shailesh-entrant/" target="_blank" rel="noopener noreferrer"
-          >Shailesh Kumar</a
-        >.
-      </p>
-    </main>
+    <div class="cx-opt-page cx-onb-page">
+      <header class="cx-opt-topbar">
+        <div class="cx-opt-brand" aria-label="Cortex">
+          <img
+            class="cx-opt-brand-mark"
+            src="icons/icon-48.png"
+            alt=""
+            width="28"
+            height="28"
+          />
+          <span class="cx-opt-brand-wordmark">Cortex</span>
+        </div>
+      </header>
+
+      <main>
+        <header class="cx-opt-page-head">
+          <h1 class="cx-opt-title">Welcome to Cortex</h1>
+          <p class="cx-opt-subtitle">
+            Search and ask questions about pages you have visited—private, on this device.
+          </p>
+        </header>
+
+        <section class="cx-card cx-onb-notice" aria-label="Background setup">
+          <p class="cx-onb-notice-lead">
+            <strong>Getting ready.</strong> Cortex is saving your recent browsing and open tabs in
+            the background. You will get a notification when the first scan finishes.
+          </p>
+        </section>
+
+        <section class="cx-opt-section" aria-labelledby="cx-onb-steps-h">
+          <h2 id="cx-onb-steps-h" class="cx-section-heading">How it works</h2>
+          <ol class="cx-onb-steps">
+            <li class="cx-onb-step">
+              <span class="cx-onb-step-num" aria-hidden="true">1</span>
+              <div class="cx-onb-step-body">
+                <h3 class="cx-onb-step-title">Browse as usual</h3>
+                <p class="cx-onb-step-desc">
+                  Cortex remembers readable pages as you go. Pause indexing or block sites anytime
+                  in Settings.
+                </p>
+              </div>
+            </li>
+            <li class="cx-onb-step">
+              <span class="cx-onb-step-num" aria-hidden="true">2</span>
+              <div class="cx-onb-step-body">
+                <h3 class="cx-onb-step-title">Open Search or Ask</h3>
+                <p class="cx-onb-step-desc">
+                  Use a shortcut or the toolbar icon. On regular websites the panel opens over the
+                  page; on Chrome settings pages it opens in the side panel.
+                </p>
+              </div>
+            </li>
+            <li class="cx-onb-step">
+              <span class="cx-onb-step-num" aria-hidden="true">3</span>
+              <div class="cx-onb-step-body">
+                <h3 class="cx-onb-step-title">Find what you read</h3>
+                <p class="cx-onb-step-desc">
+                  Search by meaning or chat with your library. Optional Cloud Chat uses Google
+                  Gemini only if you turn it on in Settings.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="cx-opt-section" aria-labelledby="cx-onb-shortcuts-h">
+          <h2 id="cx-onb-shortcuts-h" class="cx-section-heading">Keyboard shortcuts</h2>
+          <div class="cx-shortcuts-grid">
+            <div class="cx-shortcut-block">
+              <span class="cx-field-label">Primary</span>
+              <div class="cx-kbd-row">
+                <kbd>Ctrl</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd
+                ><span class="cx-kbd-plus">+</span><kbd>K</kbd>
+                <span class="cx-kbd-meta">Windows / Linux</span>
+              </div>
+              <div class="cx-kbd-row">
+                <kbd>⌘</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd
+                ><span class="cx-kbd-plus">+</span><kbd>K</kbd>
+                <span class="cx-kbd-meta">macOS</span>
+              </div>
+            </div>
+            <div class="cx-shortcut-block">
+              <span class="cx-field-label">Alternate</span>
+              <div class="cx-kbd-row">
+                <kbd>Alt</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd
+                ><span class="cx-kbd-plus">+</span><kbd>C</kbd>
+              </div>
+            </div>
+          </div>
+          <p class="cx-section-desc cx-onb-shortcuts-hint">
+            To change shortcuts: open a new tab, paste
+            <code class="cx-inline-code">chrome://extensions/shortcuts</code> in the address bar,
+            press <strong>Enter</strong>, find <strong>Cortex</strong>, then edit the command.
+          </p>
+        </section>
+
+        <div class="cx-onb-actions">
+          <button type="button" id="cx-onb-done" class="cx-btn cx-btn-primary">
+            Continue to settings
+          </button>
+        </div>
+
+        <footer class="cx-opt-footer">
+          Built by
+          <a
+            href="https://www.linkedin.com/in/shailesh-entrant/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Shailesh Kumar</a
+          >
+        </footer>
+      </main>
+    </div>
     <script src="onboarding.js"></script>
   </body>
 </html>

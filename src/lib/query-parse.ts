@@ -99,6 +99,20 @@ export function parseAskQuery(raw: string): ParsedAskQuery {
     entityTerms.push(m[0]);
   }
 
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  for (let i = 0; i < words.length; i++) {
+    const run: string[] = [];
+    for (let j = i; j < words.length && run.length < 5; j++) {
+      const w = words[j]!;
+      if (!/^[A-Z][a-z]{2,}$/.test(w) && !/^[A-Z]{2,}$/.test(w)) break;
+      run.push(w);
+    }
+    if (run.length >= 2) {
+      entityTerms.push(run.join(" "));
+      i += run.length - 1;
+    }
+  }
+
   const uniq = [...new Set(entityTerms.map((t) => t.trim()))].filter((t) => {
     if (t.length < 2) return false;
     return !STOP.has(t.toLowerCase());

@@ -46,7 +46,10 @@ export const ALWAYS_SKIP_PATH_PATTERNS: readonly RegExp[] = [
   /\/oauth/i,
 ];
 
-export function shouldAlwaysSkipUrl(urlStr: string): boolean {
+export function shouldAlwaysSkipUrl(
+  urlStr: string,
+  opts?: { applyPathPatterns?: boolean }
+): boolean {
   let url: URL;
   try {
     url = new URL(urlStr);
@@ -59,6 +62,8 @@ export function shouldAlwaysSkipUrl(urlStr: string): boolean {
     const dom = d.toLowerCase();
     if (host === dom || host.endsWith(`.${dom}`)) return true;
   }
+
+  if (opts?.applyPathPatterns === false) return false;
 
   const pathAndQuery = `${url.pathname}${url.search}`;
   for (const re of ALWAYS_SKIP_PATH_PATTERNS) {
