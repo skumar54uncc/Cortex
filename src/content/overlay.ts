@@ -6,6 +6,13 @@ import { confidenceTier } from "./confidence";
 import { observePanelLayout } from "./layout-mode";
 import { createChatDrawerToggle, type ChatDrawerToggle } from "./chat-drawer";
 import {
+  createPendingDelete,
+  filterConversations,
+  groupConversationsByRecency,
+  type ConversationSummary,
+  type PendingDelete,
+} from "./chat-history";
+import {
   isExtensionRuntimeAlive,
   sendRuntimeMessage,
 } from "../shared/extension-runtime";
@@ -529,96 +536,206 @@ ${shadowCss}`;
 
   let askSidebarListEl: HTMLElement | null = null;
   let askDrawerToggle: ChatDrawerToggle | null = null;
+  let askSidebarFilterEl: HTMLInputElement | null = null;
+  let askUndoToastEl: HTMLElement | null = null;
+  let sidebarConvs: ConversationSummary[] = [];
+  let sidebarFilter = "";
+  const pendingDeletes = new Map<number, PendingDelete>();
 
-  async function deleteChatConversation(convId: number): Promise<void> {
+  async function commitDeleteConversation(convId: number): Promise<void> {
+    pendingDeletes.delete(convId);
     const res = (await sendRuntimeMessage({
       type: "CORTEX_CHAT_DELETE",
       conversationId: convId,
     })) as { ok?: boolean } | undefined;
     if (!res?.ok) return;
-
+    sidebarConvs = sidebarConvs.filter((c) => c.id !== convId);
     if (currentConversationId === convId) {
       currentConversationId = null;
       if (askMessagesEl) renderChatThread(askMessagesEl, []);
     }
-    void refreshChatSidebar();
-    if (askTextareaEl) focusAskInput(askTextareaEl);
+  }
+
+  function hideUndoToast(): void {
+    askUndoToastEl?.remove();
+    askUndoToastEl = null;
+  }
+
+  function showUndoToast(label: string, onUndo: () => void): void {
+    hideUndoToast();
+    const toast = document.createElement("div");
+    toast.className = "cortex-undo-toast";
+    toast.setAttribute("role", "status");
+    const text = document.createElement("span");
+    text.className = "cortex-undo-toast-text";
+    text.textContent = `Deleted "${label}"`;
+    const undo = document.createElement("button");
+    undo.type = "button";
+    undo.className = "cortex-undo-toast-btn";
+    undo.textContent = "Undo";
+    undo.addEventListener("click", () => {
+      onUndo();
+      hideUndoToast();
+    });
+    toast.append(text, undo);
+    askSidebarListEl?.parentElement?.appendChild(toast);
+    askUndoToastEl = toast;
+    undo.focus({ preventScroll: true });
+  }
+
+  /** Hides the row now, deletes after 5s unless undone (Phase 2.7). */
+  function deleteChatConversation(convId: number, label: string): void {
+    pendingDeletes.get(convId)?.flush();
+    const pd = createPendingDelete(convId, async (id) => {
+      await commitDeleteConversation(id);
+      if (askUndoToastEl && pendingDeletes.size === 0) hideUndoToast();
+      renderChatSidebarList();
+    });
+    pendingDeletes.set(convId, pd);
+    renderChatSidebarList();
+    showUndoToast(label, () => {
+      pd.undo();
+      pendingDeletes.delete(convId);
+      renderChatSidebarList();
+    });
+    if (askTextareaEl && !askUndoToastEl) focusAskInput(askTextareaEl);
+  }
+
+  function flushPendingDeletes(): void {
+    for (const pd of pendingDeletes.values()) pd.flush();
+    pendingDeletes.clear();
+  }
+
+  function sidebarRows(): HTMLElement[] {
+    return askSidebarListEl
+      ? [...askSidebarListEl.querySelectorAll<HTMLElement>(".cortex-chat-history-item")]
+      : [];
+  }
+
+  function onSidebarKey(ev: KeyboardEvent): void {
+    const rows = sidebarRows();
+    if (!rows.length) return;
+    const active = (ev.target as HTMLElement | null)?.closest<HTMLElement>(
+      ".cortex-chat-history-item"
+    );
+    const idx = active ? rows.indexOf(active) : -1;
+    let next: number | null = null;
+    if (ev.key === "ArrowDown") next = Math.min(rows.length - 1, idx + 1);
+    else if (ev.key === "ArrowUp") next = Math.max(0, idx - 1);
+    else if (ev.key === "Home") next = 0;
+    else if (ev.key === "End") next = rows.length - 1;
+    else if ((ev.key === "Delete" || ev.key === "Backspace") && active) {
+      ev.preventDefault();
+      const id = Number(active.getAttribute("data-conversation-id"));
+      const label = active.getAttribute("title") || "chat";
+      if (Number.isFinite(id)) deleteChatConversation(id, label);
+      return;
+    } else return;
+    ev.preventDefault();
+    for (const r of rows) r.tabIndex = -1;
+    const target = rows[next];
+    target.tabIndex = 0;
+    target.focus({ preventScroll: true });
+  }
+
+  function renderChatSidebarList(): void {
+    const list = askSidebarListEl;
+    if (!list) return;
+    list.innerHTML = "";
+
+    const visible = filterConversations(
+      sidebarConvs.filter((c) => !pendingDeletes.has(c.id)),
+      sidebarFilter
+    );
+    askDrawerToggle?.setCount(sidebarConvs.length);
+
+    if (visible.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "cortex-chat-sidebar-empty cortex-muted";
+      empty.textContent = sidebarFilter.trim()
+        ? "No chats match your filter."
+        : "No past chats yet.";
+      list.appendChild(empty);
+      return;
+    }
+
+    const groups = groupConversationsByRecency(visible, Date.now());
+    let firstRow: HTMLButtonElement | null = null;
+    for (const group of groups) {
+      const heading = document.createElement("div");
+      heading.className = "cortex-chat-group-label";
+      heading.setAttribute("role", "presentation");
+      heading.textContent = group.label;
+      list.appendChild(heading);
+
+      for (const conv of group.items) {
+        const label = conv.title || "Untitled chat";
+        const row = document.createElement("div");
+        row.className = "cortex-chat-history-row";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cortex-chat-history-item";
+        btn.setAttribute("role", "option");
+        btn.setAttribute("data-conversation-id", String(conv.id));
+        btn.title = label;
+        btn.tabIndex = -1;
+        const isActive = conv.id === currentConversationId;
+        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+        if (isActive) btn.classList.add("cortex-chat-history-item--active");
+        const title = document.createElement("span");
+        title.className = "cortex-chat-history-title";
+        title.textContent = label;
+        const when = document.createElement("span");
+        when.className = "cortex-chat-history-when";
+        when.textContent = new Date(conv.updatedAt).toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        });
+        btn.append(title, when);
+        btn.addEventListener("click", () => {
+          currentConversationId = conv.id;
+          void loadChatConversation(conv.id, askMessagesEl!);
+          renderChatSidebarList();
+          askDrawerToggle?.close();
+        });
+        if (!firstRow || isActive) firstRow = btn;
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "cortex-chat-history-delete";
+        delBtn.setAttribute("aria-label", `Delete chat: ${label}`);
+        delBtn.title = "Delete chat";
+        delBtn.innerHTML =
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
+        delBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          deleteChatConversation(conv.id, label);
+        });
+
+        row.append(btn, delBtn);
+        list.appendChild(row);
+      }
+    }
+    if (firstRow) firstRow.tabIndex = 0;
   }
 
   async function refreshChatSidebar(): Promise<void> {
     if (!askSidebarListEl) return;
-    askSidebarListEl.innerHTML = "";
-
     const res = (await sendRuntimeMessage({
       type: "CORTEX_CHAT_LIST",
     })) as
       | {
           ok?: boolean;
-          conversations?: Array<{
-            id?: number;
-            title: string;
-            updatedAt: number;
-          }>;
+          conversations?: Array<{ id?: number; title: string; updatedAt: number }>;
         }
       | undefined;
-
     const list = res?.ok ? res.conversations ?? [] : [];
-    askDrawerToggle?.setCount(list.length);
-    if (list.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "cortex-chat-sidebar-empty cortex-muted";
-      empty.textContent = "No past chats yet.";
-      askSidebarListEl.appendChild(empty);
-      return;
-    }
-
-    for (const conv of list) {
-      if (conv.id == null) continue;
-      const label = conv.title || "Untitled chat";
-
-      const row = document.createElement("div");
-      row.className = "cortex-chat-history-row";
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "cortex-chat-history-item";
-      if (conv.id === currentConversationId) {
-        btn.classList.add("cortex-chat-history-item--active");
-      }
-      const title = document.createElement("span");
-      title.className = "cortex-chat-history-title";
-      title.textContent = label;
-      const when = document.createElement("span");
-      when.className = "cortex-chat-history-when";
-      when.textContent = new Date(conv.updatedAt).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-      });
-      btn.appendChild(title);
-      btn.appendChild(when);
-      btn.addEventListener("click", () => {
-        currentConversationId = conv.id!;
-        void loadChatConversation(conv.id!, askMessagesEl!);
-        void refreshChatSidebar();
-        askDrawerToggle?.close();
-      });
-
-      const delBtn = document.createElement("button");
-      delBtn.type = "button";
-      delBtn.className = "cortex-chat-history-delete";
-      delBtn.setAttribute("aria-label", `Delete chat: ${label}`);
-      delBtn.innerHTML =
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
-      delBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void deleteChatConversation(conv.id!);
-      });
-
-      row.appendChild(btn);
-      row.appendChild(delBtn);
-      askSidebarListEl.appendChild(row);
-    }
+    sidebarConvs = list
+      .filter((c): c is { id: number; title: string; updatedAt: number } => c.id != null)
+      .map((c) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt }));
+    renderChatSidebarList();
   }
 
   async function loadChatConversation(
@@ -1483,8 +1600,27 @@ ${shadowCss}`;
       newBtn.className = "cortex-chat-new";
       newBtn.textContent = "+ New chat";
 
+      const filterWrap = document.createElement("div");
+      filterWrap.className = "cortex-chat-filter-wrap";
+      const filterInput = document.createElement("input");
+      filterInput.type = "search";
+      filterInput.className = "cortex-chat-filter";
+      filterInput.placeholder = "Filter chats";
+      filterInput.setAttribute("aria-label", "Filter chats by title");
+      filterInput.autocomplete = "off";
+      filterInput.value = sidebarFilter;
+      filterInput.addEventListener("input", () => {
+        sidebarFilter = filterInput.value;
+        renderChatSidebarList();
+      });
+      filterWrap.appendChild(filterInput);
+      askSidebarFilterEl = filterInput;
+
       const sidebarList = document.createElement("div");
       sidebarList.className = "cortex-chat-sidebar-list";
+      sidebarList.setAttribute("role", "listbox");
+      sidebarList.setAttribute("aria-label", "Past chats");
+      sidebarList.addEventListener("keydown", onSidebarKey);
       askSidebarListEl = sidebarList;
 
       const messagesContainer = document.createElement("div");
@@ -1501,6 +1637,7 @@ ${shadowCss}`;
         if (askTextareaEl) focusAskInput(askTextareaEl);
       });
       sidebar.appendChild(newBtn);
+      sidebar.appendChild(filterWrap);
       sidebar.appendChild(sidebarList);
 
       const main = document.createElement("div");
@@ -1620,6 +1757,8 @@ ${shadowCss}`;
   }
 
   function closeOverlay(): void {
+    flushPendingDeletes();
+    hideUndoToast();
     stopTheme();
     if (chatController?.isStreaming) chatController.abort();
     chatController?.dispose();
