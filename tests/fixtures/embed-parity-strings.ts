@@ -1,0 +1,23 @@
+/** 20 fixture strings for embedding parity between transformers library versions. */
+export const EMBED_PARITY_STRINGS: string[] = [
+  "The quick brown fox jumps over the lazy dog.",
+  "How do I configure a Chrome extension manifest v3 service worker?",
+  "Quarterly revenue grew 12 percent year over year driven by subscriptions.",
+  "Photosynthesis converts light energy into chemical energy in plants.",
+  "Senior software engineer at Atrium Health, Charlotte, North Carolina.",
+  "Bake at 180 degrees for 25 minutes until golden brown.",
+  "IndexedDB transactions auto commit when the event loop is idle.",
+  "The Treaty of Westphalia ended the Thirty Years War in 1648.",
+  "Our return policy allows refunds within 30 days of purchase.",
+  "Rust ownership rules prevent data races at compile time.",
+  "A transformer model uses self attention over token embeddings.",
+  "Tokyo is the most populous metropolitan area in the world.",
+  "Please find attached the invoice for last month's consulting work.",
+  "Mitochondria are the powerhouse of the cell.",
+  "YouTube transcript: welcome back to the channel, today we cover tables in SQL.",
+  "Column: Name, Value: Widget A. Column: Price, Value: 19.99.",
+  "Product manager with ten years of experience in fintech and payments.",
+  "The recipe calls for two cups of flour and one teaspoon of salt.",
+  "Kubernetes schedules pods onto nodes based on resource requests.",
+  "Empty strings are skipped; this is the twentieth string.",
+];

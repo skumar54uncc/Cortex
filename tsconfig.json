@@ -8,7 +8,19 @@
     "noEmitOnError": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ]
   },
-  "include": ["src/**/*", "tests/**/*", "eval/**/*", "vitest.config.ts", "vitest.config.eval.ts"]
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "eval/**/*",
+    "e2e/**/*",
+    "vitest.config.ts",
+    "vitest.config.eval.ts",
+    "playwright.config.ts"
+  ]
 }

@@ -8,11 +8,15 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { pipeline } from "@xenova/transformers";
+import { pipeline } from "@huggingface/transformers";
 import { configureTransformersEnv } from "../../src/lib/transformers-env.js";
-import { CORTEX_EMBED_MODEL_ID } from "../../src/shared/embed-model.js";
+import {
+  CORTEX_EMBED_MODEL_ID,
+  embedPipelineOptions,
+} from "../../src/shared/embed-model.js";
 
-const CACHE_VERSION = "v1";
+/** v2: @huggingface/transformers (cosine >= 0.999 vs v1, see tests/embed-parity.test.ts) */
+const CACHE_VERSION = "v2";
 const MAX_EMBED_CHARS = 8000;
 
 let pipeReady: Promise<FeaturePipeline> | null = null;
@@ -66,9 +70,11 @@ async function ensurePipeline(): Promise<FeaturePipeline> {
       configureTransformersEnv({
         localModelPath: modelRoot.endsWith("/") ? modelRoot : `${modelRoot}/`,
       });
-      const pipe = await pipeline("feature-extraction", CORTEX_EMBED_MODEL_ID, {
-        quantized: true,
-      });
+      const pipe = await pipeline(
+        "feature-extraction",
+        CORTEX_EMBED_MODEL_ID,
+        embedPipelineOptions("node")
+      );
       return pipe as FeaturePipeline;
     })();
   }

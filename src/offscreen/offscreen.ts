@@ -1,11 +1,15 @@
 /// <reference types="chrome"/>
-import { pipeline } from "@xenova/transformers";
+import { pipeline } from "@huggingface/transformers";
 import {
   configureTransformersEnv,
   setTransformersLocalModelPath,
 } from "../lib/transformers-env";
 import { runAdvancedSearch } from "../lib/search-engine";
-import { CORTEX_EMBED_MODEL_ID } from "../shared/embed-model";
+import {
+  CORTEX_EMBED_MODEL_ID,
+  embedPipelineOptions,
+  CORTEX_ORT_WASM_FILE,
+} from "../shared/embed-model";
 import { agentDebugLog } from "../lib/agent-debug-log";
 import { runChat } from "../lib/chat/chat-engine";
 import { generateDigest } from "../lib/chat/digest-engine";
@@ -18,8 +22,10 @@ import { isPrivilegedExtensionSender } from "../lib/message-security";
 import { SEARCH_LIMITS } from "../lib/limits";
 import type { ChatSettings } from "../lib/chat/types";
 
-/** Bundled weights under dist/models/ — zero CDN/HF fetch after install (see npm run prepare-model). */
-configureTransformersEnv();
+/** Bundled weights under dist/models/ and ORT binary under dist/wasm/: zero CDN or Hub fetch. */
+configureTransformersEnv({
+  wasmBinaryUrl: chrome.runtime.getURL(CORTEX_ORT_WASM_FILE),
+});
 
 let embeddingEnvReady = false;
 
@@ -56,9 +62,11 @@ async function getPipe(): Promise<any> {
 
   await ensureEmbeddingEnv();
 
-  pipeFn = await pipeline("feature-extraction", CORTEX_EMBED_MODEL_ID, {
-    quantized: true,
-  });
+  pipeFn = await pipeline(
+    "feature-extraction",
+    CORTEX_EMBED_MODEL_ID,
+    embedPipelineOptions("browser")
+  );
   return pipeFn;
 }
 

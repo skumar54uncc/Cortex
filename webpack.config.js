@@ -44,6 +44,14 @@ module.exports = (env, argv) => {
   },
   resolve: {
     extensions: [".ts", ".js"],
+    alias: {
+      /**
+       * Transformers.js imports the WebGPU+WASM ORT bundle (28 MB binary).
+       * Cortex ships int8 weights that only run on the WASM execution
+       * provider, so use the CPU-only bundle (14 MB binary, no WebGPU code).
+       */
+      "onnxruntime-web/webgpu": "onnxruntime-web/wasm",
+    },
     fallback: {
       fs: false,
       path: false,
@@ -71,6 +79,10 @@ module.exports = (env, argv) => {
         { from: "icons", to: "icons", noErrorOnMissing: true },
         { from: "fonts", to: "fonts", noErrorOnMissing: true },
         { from: "vendor/models", to: "models", noErrorOnMissing: true },
+        {
+          from: "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
+          to: "wasm/ort-wasm-simd-threaded.wasm",
+        },
       ],
     }),
   ],
