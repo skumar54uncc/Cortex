@@ -15,6 +15,7 @@ import {
   type ChatErrorData,
   type ChatStreamState,
 } from "./chat-stream-controller";
+import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
 import type { ChunkWithDoc } from "../lib/search-engine";
 import { CHAT_LIMITS } from "../lib/limits";
@@ -892,7 +893,7 @@ export function openCortexOverlay(): void {
     contentEl: HTMLElement;
     sourcesEl: HTMLElement;
     cursor: HTMLElement;
-    fullText: string;
+    renderer: StreamRenderer;
     citedChunks: ChunkWithDoc[];
   };
   let activeStream: ActiveStream | null = null;
@@ -953,7 +954,7 @@ export function openCortexOverlay(): void {
   function showStreamError(data: ChatErrorData): void {
     const st = activeStream;
     if (!st) return;
-    st.cursor.remove();
+    st.renderer.cancel();
     st.contentEl.textContent = "";
     st.contentEl.appendChild(renderErrorBlock(data));
     scrollChatIfFollowing(st.messagesContainer);
@@ -974,20 +975,13 @@ export function openCortexOverlay(): void {
           if (activeStream) activeStream.citedChunks = chunks as ChunkWithDoc[];
         },
         onToken: (text) => {
-          const st = activeStream;
-          if (!st) return;
-          const stick = chatNearBottom(st.messagesContainer);
-          st.fullText += text;
-          st.contentEl.textContent = st.fullText;
-          st.contentEl.appendChild(st.cursor);
-          if (stick) scrollChatToBottom(st.messagesContainer);
+          activeStream?.renderer.push(text);
         },
         onDone: () => {
           const st = activeStream;
           if (!st) return;
-          st.cursor.remove();
-          st.contentEl.textContent = "";
-          st.contentEl.appendChild(renderAnswerWithCitations(st.fullText, st.citedChunks));
+          // Final rich render happens in the same frame as the last flush: no jump.
+          st.renderer.finish((full) => renderAnswerWithCitations(full, st.citedChunks));
           renderSources(st.sourcesEl, st.citedChunks);
           announcePolite("Answer ready.");
           scrollChatIfFollowing(st.messagesContainer);
@@ -998,11 +992,9 @@ export function openCortexOverlay(): void {
         onAborted: () => {
           const st = activeStream;
           if (!st) return;
-          st.cursor.remove();
-          st.contentEl.textContent = "";
-          if (st.fullText) {
-            st.contentEl.appendChild(renderAnswerWithCitations(st.fullText, st.citedChunks));
-          }
+          st.renderer.finish((full) =>
+            full ? renderAnswerWithCitations(full, st.citedChunks) : document.createTextNode("")
+          );
           const note = document.createElement("p");
           note.className = "cortex-muted cortex-chat-stopped";
           note.textContent = "Stopped.";
@@ -1054,12 +1046,19 @@ export function openCortexOverlay(): void {
     cursor.textContent = "▎";
     contentEl.appendChild(cursor);
 
+    let stickToBottom = true;
+    const renderer = createStreamRenderer(contentEl, cursor, {
+      onFlush: () => {
+        if (stickToBottom) scrollChatToBottom(messagesContainer);
+        stickToBottom = chatNearBottom(messagesContainer);
+      },
+    });
     activeStream = {
       messagesContainer,
       contentEl,
       sourcesEl,
       cursor,
-      fullText: "",
+      renderer,
       citedChunks: [],
     };
     ctl.submit(question, currentConversationId);
