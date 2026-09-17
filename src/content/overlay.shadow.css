@@ -1497,3 +1497,19 @@
     transition: none;
   }
 }
+
+/* Ask: Send becomes Stop while streaming (Phase 2.3) */
+.cortex-ask-send--stop {
+  background: var(--cx-surface-input);
+  color: var(--cx-accent);
+  border: 1px solid var(--cx-accent);
+}
+
+.cortex-ask-send--stop:hover {
+  background: var(--cx-accent-soft);
+}
+
+.cortex-chat-stopped {
+  margin: 6px 0 0;
+  font-size: 11px;
+}

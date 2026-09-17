@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   decideRoute,
+  streamAnswer,
   ChatUnavailableError,
 } from "./llm-router";
 import type { ParsedQuestion } from "./question-parser";
@@ -118,5 +119,35 @@ describe("decideRoute", () => {
     };
     const r = await decideRoute("hello", lowQ("hello"), settings);
     expect(r.provider).toBe("cloud");
+  });
+});
+
+describe("streamAnswer abort (nano)", () => {
+  it("destroys the Nano session and stops yielding when the signal aborts", async () => {
+    const destroy = vi.fn();
+    let pulled = 0;
+    const session = {
+      prompt: async function* (): AsyncIterable<string> {
+        while (true) {
+          pulled += 1;
+          yield `t${pulled}`;
+        }
+      },
+      destroy,
+      tokensUsed: () => 0,
+      tokensRemaining: () => 100,
+    };
+    vi.mocked(nanoClient.createNanoSession).mockResolvedValue(session);
+    const ac = new AbortController();
+    const settings: ChatSettings = { mode: "on-device-only", cloudEnabled: false, geminiApiKey: "" };
+    const out: string[] = [];
+    for await (const tok of streamAnswer("p", "sys", { provider: "nano", reason: "forced_on_device" }, settings, {
+      signal: ac.signal,
+    })) {
+      out.push(tok);
+      if (out.length === 2) ac.abort();
+    }
+    expect(out).toEqual(["t1", "t2"]);
+    expect(destroy).toHaveBeenCalledTimes(1);
   });
 });

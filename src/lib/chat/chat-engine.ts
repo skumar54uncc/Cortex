@@ -22,17 +22,29 @@ export interface ChatStreamEvent {
     | "sources"
     | "token"
     | "done"
-    | "error";
+    | "error"
+    | "aborted";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
+}
+
+export interface RunChatOptions {
+  /** CORTEX_CHAT_ABORT: stop streaming, do not store the partial answer. */
+  signal?: AbortSignal;
+}
+
+function isAbortError(e: unknown): boolean {
+  return e instanceof Error && e.name === "AbortError";
 }
 
 export async function* runChat(
   conversationId: number | null,
   question: string,
   settings: ChatSettings,
-  embedQuery: (text: string) => Promise<number[] | null>
+  embedQuery: (text: string) => Promise<number[] | null>,
+  opts: RunChatOptions = {}
 ): AsyncIterable<ChatStreamEvent> {
+  const signal = opts.signal;
   try {
     const parsed = parseQuestion(question);
 
@@ -121,10 +133,18 @@ export async function* runChat(
       prompt,
       CHAT_SYSTEM_PROMPT,
       route,
-      settings
+      settings,
+      { signal }
     )) {
+      if (signal?.aborted) break;
       fullAnswer += token;
       yield { type: "token", data: token };
+      if (signal?.aborted) break;
+    }
+
+    if (signal?.aborted) {
+      yield { type: "aborted", data: { provider: route.provider } };
+      return;
     }
 
     const citedChunks = selectedChunks
@@ -146,6 +166,10 @@ export async function* runChat(
 
     yield { type: "done", data: { provider: route.provider } };
   } catch (e) {
+    if (signal?.aborted || isAbortError(e)) {
+      yield { type: "aborted", data: {} };
+      return;
+    }
     if (e instanceof ChatUnavailableError) {
       yield {
         type: "error",

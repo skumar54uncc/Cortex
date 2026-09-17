@@ -6,6 +6,8 @@ export interface GeminiOptions {
   systemPrompt?: string;
   temperature?: number;
   maxOutputTokens?: number;
+  /** Cancels the request and the SSE read (CORTEX_CHAT_ABORT). */
+  signal?: AbortSignal;
 }
 
 function sanitizeGeminiErrorBody(body: string, maxLen = 240): string {
@@ -39,6 +41,7 @@ export async function* geminiStream(
       "x-goog-api-key": options.apiKey,
     },
     body: JSON.stringify(body),
+    signal: options.signal,
   });
 
   if (!response.ok) {
@@ -51,8 +54,16 @@ export async function* geminiStream(
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  const onAbort = (): void => {
+    void reader.cancel().catch(() => undefined);
+  };
+  options.signal?.addEventListener("abort", onAbort, { once: true });
 
+  try {
   while (true) {
+    if (options.signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
     const { done, value } = await reader.read();
     if (done) break;
 
@@ -76,5 +87,8 @@ export async function* geminiStream(
         /* skip malformed SSE chunks */
       }
     }
+  }
+  } finally {
+    options.signal?.removeEventListener("abort", onAbort);
   }
 }

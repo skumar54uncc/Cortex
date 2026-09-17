@@ -81,20 +81,43 @@ export async function decideRoute(
   throw cloudKeyMissingOrDisabled(settings);
 }
 
+export interface StreamAnswerOptions {
+  /** Aborting destroys the Nano session or cancels the Gemini fetch. */
+  signal?: AbortSignal;
+}
+
 export async function* streamAnswer(
   prompt: string,
   systemPrompt: string,
   decision: RouteDecision,
-  settings: ChatSettings
+  settings: ChatSettings,
+  opts: StreamAnswerOptions = {}
 ): AsyncIterable<string> {
+  const signal = opts.signal;
+  if (signal?.aborted) return;
+
   if (decision.provider === "nano") {
     const session = await createNanoSession(systemPrompt);
+    if (signal?.aborted) {
+      session.destroy();
+      return;
+    }
+    let destroyed = false;
+    const destroyOnce = (): void => {
+      if (destroyed) return;
+      destroyed = true;
+      session.destroy();
+    };
+    signal?.addEventListener("abort", destroyOnce, { once: true });
     try {
       for await (const chunk of session.prompt(prompt)) {
+        if (signal?.aborted) return;
         yield chunk;
+        if (signal?.aborted) return;
       }
     } finally {
-      session.destroy();
+      signal?.removeEventListener("abort", destroyOnce);
+      destroyOnce();
     }
   } else {
     yield* geminiStream(prompt, {
@@ -102,6 +125,7 @@ export async function* streamAnswer(
       systemPrompt,
       temperature: 0.3,
       maxOutputTokens: 2048,
+      signal,
     });
   }
 }

@@ -10,6 +10,11 @@ import {
   sendRuntimeMessage,
 } from "../shared/extension-runtime";
 import type { ChatStreamEvent } from "../lib/chat/chat-engine";
+import {
+  ChatStreamController,
+  type ChatErrorData,
+  type ChatStreamState,
+} from "./chat-stream-controller";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
 import type { ChunkWithDoc } from "../lib/search-engine";
 import { CHAT_LIMITS } from "../lib/limits";
@@ -24,7 +29,8 @@ let overlayListenersInstalled = false;
 /** Side-panel / extension shell: fill panel instead of page modal */
 let overlayShellMode = false;
 
-let chatEventSink: ((ev: ChatStreamEvent) => void) | null = null;
+/** One controller per mounted overlay; routes CORTEX_CHAT_PUSH by requestId. */
+let chatController: ChatStreamController | null = null;
 let digestResultSink:
   | ((msg: {
       ok?: boolean;
@@ -158,7 +164,10 @@ export function mountOverlay(opts?: MountOverlayOptions): void {
       return undefined;
     }
     if (msg?.type === "CORTEX_CHAT_PUSH") {
-      chatEventSink?.(msg.event as ChatStreamEvent);
+      chatController?.handleEvent(
+        msg.event as ChatStreamEvent,
+        typeof msg.requestId === "number" ? msg.requestId : undefined
+      );
       return undefined;
     }
     if (msg?.type === "CORTEX_DIGEST_PUSH") {
@@ -877,7 +886,153 @@ export function openCortexOverlay(): void {
     return wrap;
   }
 
-  async function handleAskSubmit(question: string, messagesContainer: HTMLElement): Promise<void> {
+  /** DOM targets for the assistant message currently being streamed. */
+  type ActiveStream = {
+    messagesContainer: HTMLElement;
+    contentEl: HTMLElement;
+    sourcesEl: HTMLElement;
+    cursor: HTMLElement;
+    fullText: string;
+    citedChunks: ChunkWithDoc[];
+  };
+  let activeStream: ActiveStream | null = null;
+
+  function startFailureFromResponse(resp: {
+    ok?: boolean;
+    error?: string;
+    code?: string;
+    message?: string;
+    userAction?: string;
+    maxLen?: number;
+  }): ChatErrorData {
+    let msg: string;
+    if (
+      resp.code === ERROR_CODES.RATE_LIMITED ||
+      resp.error === ERROR_CODES.RATE_LIMITED
+    ) {
+      msg = resp.message ?? "Too many chat requests. Wait a moment and try again.";
+    } else if (
+      resp.code === ERROR_CODES.QUESTION_TOO_LONG ||
+      resp.error === ERROR_CODES.QUESTION_TOO_LONG
+    ) {
+      msg =
+        resp.message ??
+        `Your question is too long (maximum ${resp.maxLen ?? CHAT_LIMITS.MAX_QUESTION_CHARS} characters). Trim the text and try again.`;
+    } else if (resp.message) {
+      msg = resp.message;
+    } else {
+      msg = String(resp.error ?? "Could not start chat.");
+    }
+    const hint =
+      resp.userAction ??
+      (resp.error === ERROR_CODES.QUESTION_TOO_LONG ||
+      resp.code === ERROR_CODES.QUESTION_TOO_LONG
+        ? undefined
+        : "Try again or open Cortex settings.");
+    return { message: msg, userAction: hint, recoverable: true };
+  }
+
+  function sendChatMessage(payload: unknown): void {
+    const ctl = chatController;
+    chrome.runtime.sendMessage(payload, (resp?: { ok?: boolean }) => {
+      if (!ctl || (payload as { type?: string }).type !== "CORTEX_CHAT_START") return;
+      if (chrome.runtime.lastError) {
+        ctl.failStart({
+          message: chrome.runtime.lastError.message ?? "Extension error.",
+          userAction: "Reload the extension from chrome://extensions.",
+          recoverable: true,
+        });
+        return;
+      }
+      if (resp && resp.ok === false) {
+        ctl.failStart(startFailureFromResponse(resp));
+      }
+    });
+  }
+
+  function showStreamError(data: ChatErrorData): void {
+    const st = activeStream;
+    if (!st) return;
+    st.cursor.remove();
+    st.contentEl.textContent = "";
+    st.contentEl.appendChild(renderErrorBlock(data));
+    scrollChatIfFollowing(st.messagesContainer);
+    activeStream = null;
+  }
+
+  function ensureChatController(): ChatStreamController {
+    if (chatController) return chatController;
+    chatController = new ChatStreamController({
+      send: sendChatMessage,
+      shell: overlayShellMode,
+      callbacks: {
+        onConversation: (id) => {
+          currentConversationId = id;
+          void refreshChatSidebar();
+        },
+        onSources: (chunks) => {
+          if (activeStream) activeStream.citedChunks = chunks as ChunkWithDoc[];
+        },
+        onToken: (text) => {
+          const st = activeStream;
+          if (!st) return;
+          const stick = chatNearBottom(st.messagesContainer);
+          st.fullText += text;
+          st.contentEl.textContent = st.fullText;
+          st.contentEl.appendChild(st.cursor);
+          if (stick) scrollChatToBottom(st.messagesContainer);
+        },
+        onDone: () => {
+          const st = activeStream;
+          if (!st) return;
+          st.cursor.remove();
+          st.contentEl.textContent = "";
+          st.contentEl.appendChild(renderAnswerWithCitations(st.fullText, st.citedChunks));
+          renderSources(st.sourcesEl, st.citedChunks);
+          announcePolite("Answer ready.");
+          scrollChatIfFollowing(st.messagesContainer);
+          void refreshChatSidebar();
+          activeStream = null;
+        },
+        onError: (data) => showStreamError(data),
+        onAborted: () => {
+          const st = activeStream;
+          if (!st) return;
+          st.cursor.remove();
+          st.contentEl.textContent = "";
+          if (st.fullText) {
+            st.contentEl.appendChild(renderAnswerWithCitations(st.fullText, st.citedChunks));
+          }
+          const note = document.createElement("p");
+          note.className = "cortex-muted cortex-chat-stopped";
+          note.textContent = "Stopped.";
+          st.contentEl.appendChild(note);
+          announcePolite("Answer stopped.");
+          scrollChatIfFollowing(st.messagesContainer);
+          activeStream = null;
+        },
+        onStateChange: (state) => updateSendButton(state),
+      },
+    });
+    return chatController;
+  }
+
+  let askSendBtn: HTMLButtonElement | null = null;
+
+  function updateSendButton(state: ChatStreamState): void {
+    const btn = askSendBtn;
+    if (!btn) return;
+    const streaming = state === "streaming";
+    btn.textContent = streaming ? "Stop" : "Send";
+    btn.setAttribute("aria-label", streaming ? "Stop answering" : "Send question");
+    btn.classList.toggle("cortex-ask-send--stop", streaming);
+    btn.setAttribute("data-state", state);
+  }
+
+  function handleAskSubmit(question: string, messagesContainer: HTMLElement): void {
+    const ctl = ensureChatController();
+    if (ctl.isStreaming) return;
+
     const userEl = document.createElement("div");
     userEl.className = "cortex-msg cortex-msg--user";
     userEl.textContent = question;
@@ -899,149 +1054,15 @@ export function openCortexOverlay(): void {
     cursor.textContent = "▎";
     contentEl.appendChild(cursor);
 
-    let fullText = "";
-    let citedChunks: ChunkWithDoc[] = [];
-
-    await new Promise<void>((resolve) => {
-      let settled = false;
-      let timeoutId = window.setTimeout(() => {
-        if (!settled && chatEventSink) {
-          cursor.remove();
-          contentEl.textContent = "";
-          contentEl.appendChild(
-            renderErrorBlock({
-              message: "No response from Cortex.",
-              userAction: "Try again or reload the extension.",
-              recoverable: true,
-            })
-          );
-          scrollChatIfFollowing(messagesContainer);
-          finish();
-        }
-      }, 120_000);
-
-      const finish = (): void => {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timeoutId);
-        chatEventSink = null;
-        resolve();
-      };
-
-      chatEventSink = (ev: ChatStreamEvent): void => {
-        if (ev.type === "conversation") {
-          currentConversationId = ev.data.id as number;
-          void refreshChatSidebar();
-          return;
-        }
-        if (ev.type === "sources") {
-          citedChunks = ev.data.chunks as ChunkWithDoc[];
-          return;
-        }
-        if (ev.type === "token") {
-          const stick = chatNearBottom(messagesContainer);
-          fullText += ev.data as string;
-          contentEl.textContent = fullText;
-          contentEl.appendChild(cursor);
-          if (stick) scrollChatToBottom(messagesContainer);
-          return;
-        }
-        if (ev.type === "done") {
-          cursor.remove();
-          contentEl.textContent = "";
-          contentEl.appendChild(renderAnswerWithCitations(fullText, citedChunks));
-          renderSources(sourcesEl, citedChunks);
-          announcePolite("Answer ready.");
-          scrollChatIfFollowing(messagesContainer);
-          void refreshChatSidebar();
-          finish();
-          return;
-        }
-        if (ev.type === "error") {
-          cursor.remove();
-          contentEl.textContent = "";
-          contentEl.appendChild(renderErrorBlock(ev.data));
-          scrollChatIfFollowing(messagesContainer);
-          finish();
-          return;
-        }
-      };
-
-      chrome.runtime.sendMessage(
-        {
-          type: "CORTEX_CHAT_START",
-          question,
-          conversationId: currentConversationId,
-          shell: overlayShellMode,
-        },
-        (
-          resp:
-            | {
-                ok?: boolean;
-                error?: string;
-                code?: string;
-                message?: string;
-                userAction?: string;
-                maxLen?: number;
-              }
-            | undefined
-        ) => {
-          if (chrome.runtime.lastError) {
-            cursor.remove();
-            contentEl.textContent = "";
-            contentEl.appendChild(
-              renderErrorBlock({
-                message: chrome.runtime.lastError.message ?? "Extension error.",
-                userAction: "Reload the extension from chrome://extensions.",
-                recoverable: true,
-              })
-            );
-            scrollChatIfFollowing(messagesContainer);
-            finish();
-            return;
-          }
-          if (resp && resp.ok === false) {
-            cursor.remove();
-            contentEl.textContent = "";
-            let msg: string;
-            if (
-              resp.code === ERROR_CODES.RATE_LIMITED ||
-              resp.error === ERROR_CODES.RATE_LIMITED
-            ) {
-              msg =
-                resp.message ??
-                "Too many chat requests. Wait a moment and try again.";
-            } else if (
-              resp.code === ERROR_CODES.QUESTION_TOO_LONG ||
-              resp.error === ERROR_CODES.QUESTION_TOO_LONG
-            ) {
-              msg =
-                resp.message ??
-                `Your question is too long (maximum ${resp.maxLen ?? CHAT_LIMITS.MAX_QUESTION_CHARS} characters). Trim the text and try again.`;
-            } else if (resp.message) {
-              msg = resp.message;
-            } else {
-              msg = String(resp.error ?? "Could not start chat.");
-            }
-            const hint =
-              resp.userAction ??
-              (resp.error === ERROR_CODES.QUESTION_TOO_LONG ||
-              resp.code === ERROR_CODES.QUESTION_TOO_LONG
-                ? undefined
-                : "Try again or open Cortex settings.");
-            contentEl.appendChild(
-              renderErrorBlock({
-                message: msg,
-                userAction: hint,
-                recoverable: true,
-              })
-            );
-            scrollChatIfFollowing(messagesContainer);
-            finish();
-          }
-        }
-      );
-    });
+    activeStream = {
+      messagesContainer,
+      contentEl,
+      sourcesEl,
+      cursor,
+      fullText: "",
+      citedChunks: [],
+    };
+    ctl.submit(question, currentConversationId);
   }
 
   function digestRangeLabel(range: DigestRange): string {
@@ -1537,6 +1558,9 @@ export function openCortexOverlay(): void {
       sendBtn.type = "button";
       sendBtn.className = "cortex-ask-send";
       sendBtn.textContent = "Send";
+      sendBtn.setAttribute("aria-label", "Send question");
+      askSendBtn = sendBtn;
+      updateSendButton(chatController?.state ?? "idle");
       sendRow.appendChild(hint);
       sendRow.appendChild(sendBtn);
 
@@ -1548,14 +1572,21 @@ export function openCortexOverlay(): void {
       wrap.appendChild(main);
 
       const submitAsk = (): void => {
+        if (chatController?.isStreaming) return;
         const question = ta.value.trim();
         if (!question) return;
         messagesContainer.querySelector(".cortex-chat-empty")?.remove();
         ta.value = "";
-        void handleAskSubmit(question, messagesContainer);
+        handleAskSubmit(question, messagesContainer);
       };
 
-      sendBtn.addEventListener("click", () => submitAsk());
+      sendBtn.addEventListener("click", () => {
+        if (chatController?.isStreaming) {
+          chatController.abort();
+          return;
+        }
+        submitAsk();
+      });
 
       ta.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -1609,7 +1640,11 @@ export function openCortexOverlay(): void {
   }
 
   function closeOverlay(): void {
-    chatEventSink = null;
+    if (chatController?.isStreaming) chatController.abort();
+    chatController?.dispose();
+    chatController = null;
+    activeStream = null;
+    askSendBtn = null;
     digestResultSink = null;
     stopLayoutObserver();
     document.removeEventListener("keydown", onDocKey, true);

@@ -12,6 +12,7 @@ import {
 } from "../shared/embed-model";
 import { agentDebugLog } from "../lib/agent-debug-log";
 import { runChat } from "../lib/chat/chat-engine";
+import { ChatRunRegistry } from "../lib/chat/chat-run-registry";
 import { generateDigest } from "../lib/chat/digest-engine";
 import {
   CORTEX_EXTENSION_BUS_CHANNEL,
@@ -179,12 +180,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
 });
 
 const cortexExtBus = new BroadcastChannel(CORTEX_EXTENSION_BUS_CHANNEL);
+const chatRuns = new ChatRunRegistry();
 
 cortexExtBus.onmessage = (ev: MessageEvent<CortexBusInbound>) => {
   const incoming = ev.data;
   if (!incoming?.kind) return;
 
+  if (incoming.kind === "chat-abort") {
+    chatRuns.abort(incoming.tabId, incoming.requestId);
+    return;
+  }
+
   if (incoming.kind === "chat-run") {
+    const { tabId, requestId } = incoming;
+    const signal = chatRuns.start(tabId, requestId);
     void (async () => {
       try {
         const settings = incoming.settings;
@@ -192,19 +201,22 @@ cortexExtBus.onmessage = (ev: MessageEvent<CortexBusInbound>) => {
           incoming.conversationId,
           incoming.question,
           settings,
-          embedQueryForSearch
+          embedQueryForSearch,
+          { signal }
         )) {
           const out: CortexBusOutbound = {
             kind: "chat-event",
-            tabId: incoming.tabId,
+            tabId,
+            requestId,
             event,
           };
           cortexExtBus.postMessage(out);
         }
       } catch (e: unknown) {
-        cortexExtBus.postMessage({
+        const errOut: CortexBusOutbound = {
           kind: "chat-event",
-          tabId: incoming.tabId,
+          tabId,
+          requestId,
           event: {
             type: "error",
             data: {
@@ -212,7 +224,10 @@ cortexExtBus.onmessage = (ev: MessageEvent<CortexBusInbound>) => {
               recoverable: false,
             },
           },
-        });
+        };
+        cortexExtBus.postMessage(errOut);
+      } finally {
+        chatRuns.finish(tabId, requestId);
       }
     })();
     return;

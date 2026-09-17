@@ -8,10 +8,13 @@ export type CortexBusInbound =
   | {
       kind: "chat-run";
       tabId: number;
+      /** Correlates events and aborts with one overlay submit. */
+      requestId: number;
       conversationId: number | null;
       question: string;
       settings: ChatSettings;
     }
+  | { kind: "chat-abort"; tabId: number; requestId: number }
   | {
       kind: "digest-run";
       tabId: number;
@@ -21,6 +24,6 @@ export type CortexBusInbound =
     };
 
 export type CortexBusOutbound =
-  | { kind: "chat-event"; tabId: number; event: ChatStreamEvent }
+  | { kind: "chat-event"; tabId: number; requestId: number; event: ChatStreamEvent }
   | { kind: "digest-done"; tabId: number; result: DigestResult }
   | { kind: "digest-error"; tabId: number; message: string };

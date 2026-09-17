@@ -145,6 +145,7 @@ cortexBus.onmessage = (ev: MessageEvent<CortexBusOutbound>) => {
     deliverOverlayMessage(d.tabId, {
       type: "CORTEX_CHAT_PUSH",
       event: d.event,
+      requestId: d.requestId,
     });
     return;
   }
@@ -1026,9 +1027,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           Number.isFinite(conversationIdRaw)
             ? conversationIdRaw
             : null;
+        const requestIdRaw = (msg as { requestId?: unknown }).requestId;
+        const requestId =
+          typeof requestIdRaw === "number" && Number.isFinite(requestIdRaw)
+            ? requestIdRaw
+            : 0;
         const inbound: CortexBusInbound = {
           kind: "chat-run",
           tabId,
+          requestId,
           conversationId,
           question,
           settings,
@@ -1042,6 +1049,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
         });
       }
     })();
+    return true;
+  }
+
+  if (type === "CORTEX_CHAT_ABORT") {
+    const tabId = resolveOverlayTabId(
+      sender,
+      Boolean((msg as { shell?: boolean }).shell)
+    );
+    const requestIdRaw = (msg as { requestId?: unknown }).requestId;
+    if (
+      tabId == null ||
+      typeof requestIdRaw !== "number" ||
+      !Number.isFinite(requestIdRaw)
+    ) {
+      sendResponse({ ok: false, error: "bad_abort" });
+      return true;
+    }
+    const abortMsg: CortexBusInbound = {
+      kind: "chat-abort",
+      tabId,
+      requestId: requestIdRaw,
+    };
+    cortexBus.postMessage(abortMsg);
+    sendResponse({ ok: true });
     return true;
   }
 
