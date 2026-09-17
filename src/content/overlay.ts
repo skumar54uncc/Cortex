@@ -1,4 +1,4 @@
-/** XSS / sinks: see docs/INNERHTML_AUDIT.md — escape user- or page-derived text via esc() before HTML interpolation. */
+/** XSS / sinks: see docs/INNERHTML_AUDIT.md: escape user- or page-derived text via esc() before HTML interpolation. */
 import shadowCss from "./overlay.shadow.css";
 import { getBrandFontFaceCss } from "../styles/brand-fonts";
 
@@ -198,7 +198,7 @@ function faviconUrlForHost(hostname: string): string {
 
 type OverlayMode = "search" | "ask" | "digest";
 
-/** Opens the panel if closed. Idempotent — avoids double Ctrl+Shift+K (command + key handler). */
+/** Opens the panel if closed. Idempotent: avoids double Ctrl+Shift+K (command + key handler). */
 export function openCortexOverlay(): void {
   if (!isExtensionRuntimeAlive()) return;
 
@@ -290,17 +290,6 @@ ${shadowCss}`;
       </div>
       <div class="cortex-tabs" role="tablist"></div>
       <div class="cortex-body"></div>
-      <footer class="cortex-footer">
-        <p class="cortex-attribution">
-          Solely built by
-          <a
-            href="https://www.linkedin.com/in/shailesh-entrant/"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Shailesh Kumar</a
-          >
-        </p>
-      </footer>
     </div>
   `;
   shadow.appendChild(shell);
@@ -1418,7 +1407,7 @@ ${shadowCss}`;
         }),
         new Promise<never>((_, reject) => {
           window.setTimeout(
-            () => reject(new Error("Digest timed out — try again.")),
+            () => reject(new Error("Digest timed out. Try again.")),
             timeoutMs
           );
         }),
@@ -1443,7 +1432,7 @@ ${shadowCss}`;
 
     if (currentMode === "search") {
       bodyEl.innerHTML = `
-        <input type="search" class="cortex-input cortex-search-input" placeholder="Search your memory — topics, sites, phrases…" autocomplete="off" aria-label="Search your saved pages" />
+        <input type="search" class="cortex-input cortex-search-input" placeholder="Search your memory: topics, sites, phrases" autocomplete="off" aria-label="Search your saved pages" />
         <div class="cortex-hint" aria-label="Shortcuts">
           <span class="cortex-hint-main">Local-only recall</span>
           <span class="cortex-hint-sep" aria-hidden="true">·</span>
@@ -1456,7 +1445,7 @@ ${shadowCss}`;
       const input = bodyEl.querySelector<HTMLInputElement>(".cortex-search-input")!;
       const results = bodyEl.querySelector<HTMLElement>(".cortex-results")!;
 
-      results.innerHTML = `<div class="cortex-results-idle cortex-muted" role="status">Type to search your saved pages — titles and passages stay local.</div>`;
+      results.innerHTML = `<div class="cortex-results-idle cortex-muted" role="status">Type to search your saved pages. Titles and passages stay local.</div>`;
 
       results.addEventListener("click", (e) => {
         const t = e.target as HTMLElement | null;
@@ -1517,7 +1506,7 @@ ${shadowCss}`;
               <ul class="cortex-empty-tips">
                 <li>Try fewer words or a phrase you remember.</li>
                 <li>Include a site or topic.</li>
-                <li>Visit more pages—your index grows as you read.</li>
+                <li>Visit more pages. Your index grows as you read.</li>
               </ul>`;
             results.innerHTML = `<div class="cortex-empty cortex-muted">${evidenceNote}${tips}</div>`;
             announcePolite("No matching pages found.");
@@ -1620,7 +1609,7 @@ ${shadowCss}`;
         window.clearTimeout(searchTimer);
         const q = input.value.trim();
         if (!q) {
-          results.innerHTML = `<div class="cortex-results-idle cortex-muted" role="status">Type to search your saved pages — titles and passages stay local.</div>`;
+          results.innerHTML = `<div class="cortex-results-idle cortex-muted" role="status">Type to search your saved pages. Titles and passages stay local.</div>`;
           selectedHitIndex = -1;
           return;
         }

@@ -10,7 +10,7 @@ export interface RouteDecision {
 
 const NANO_MAX_PROMPT_CHARS = 18_000;
 
-/** Public Google AI Studio URL — safe to show in UI copy */
+/** Public Google AI Studio URL: safe to show in UI copy */
 export const GEMINI_API_KEY_HELP_URL = "https://aistudio.google.com/apikey";
 
 export class ChatUnavailableError extends Error {

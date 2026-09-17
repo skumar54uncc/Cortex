@@ -11,7 +11,7 @@ body {
   color: var(--cx-text);
 }
 
-/* Toolbar popup only — options.html must not inherit a narrow body width */
+/* Toolbar popup only: options.html must not inherit a narrow body width */
 .cx-popup {
   box-sizing: border-box;
   max-width: 380px;
@@ -75,7 +75,7 @@ h1.cx-brand {
 }
 
 /**
- * Plain sentence — not buttons. Older “pill” styles looked like toggles and confused users.
+ * Plain sentence: not buttons. Older “pill” styles looked like toggles and confused users.
  */
 .cx-status-line {
   margin: 0;

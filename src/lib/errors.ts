@@ -1,5 +1,5 @@
 /**
- * Typed errors for SW ↔ UI — prefer codes over raw exception strings.
+ * Typed errors for SW ↔ UI: prefer codes over raw exception strings.
  */
 
 export const ERROR_CODES = {
@@ -96,7 +96,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, CortexErrorShape> = {
   },
   [ERROR_CODES.RATE_LIMITED]: {
     code: ERROR_CODES.RATE_LIMITED,
-    userMessage: "Too many requests — slow down for a minute.",
+    userMessage: "Too many requests. Slow down for a minute.",
     userAction: "Wait briefly, then try again.",
     recoverable: true,
   },
@@ -147,7 +147,7 @@ export function payloadFromCode(code: ErrorCode): {
   };
 }
 
-/** Typed throwable — prefer over bare `Error` for user-facing flows. */
+/** Typed throwable: prefer over bare `Error` for user-facing flows. */
 export class CortexError extends Error {
   readonly code: ErrorCode;
 

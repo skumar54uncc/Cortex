@@ -33,7 +33,7 @@ function qs<T extends HTMLElement>(sel: string): T {
 }
 
 function fmtBytes(n?: number): string {
-  if (n == null || !Number.isFinite(n)) return "—";
+  if (n == null || !Number.isFinite(n)) return "-";
   const u = ["B", "KB", "MB", "GB"];
   let v = n;
   let i = 0;
@@ -80,7 +80,7 @@ function animateStat(el: HTMLElement, target: number): void {
   el.querySelector(".cx-stat-skeleton")?.remove();
   el.classList.add("is-loaded");
   if (!Number.isFinite(target)) {
-    el.textContent = "—";
+    el.textContent = "-";
     return;
   }
   const n = Math.round(target);
@@ -253,16 +253,16 @@ async function refreshStats(): Promise<void> {
     const used = fmtBytes(res.storageBytes);
     const cap = fmtBytes(res.storageQuotaBytes);
     qs("#cx-opt-storage-line").textContent =
-      cap !== "—"
+      cap !== "-"
         ? `Approximate storage (browser quota): ${used} of ${cap}`
         : `Approximate storage in use: ${used}`;
 
     renderRecentList(res.recent ?? []);
     statsAnimatedOnce = true;
   } catch {
-    pagesEl.textContent = "—";
-    chunksEl.textContent = "—";
-    visitsEl.textContent = "—";
+    pagesEl.textContent = "-";
+    chunksEl.textContent = "-";
+    visitsEl.textContent = "-";
     pagesEl.classList.add("is-loaded");
     chunksEl.classList.add("is-loaded");
     visitsEl.classList.add("is-loaded");
@@ -402,6 +402,13 @@ function startHistoryPolling(): void {
 }
 
 async function loadSettingsUi(): Promise<void> {
+  try {
+    const v = chrome.runtime.getManifest().version;
+    const el = document.getElementById("cx-about-version");
+    if (el && v) el.textContent = v;
+  } catch {
+    /* not in an extension context */
+  }
   const s = await getUserSettings();
   syncPauseToggle(s.indexingPaused);
   qs<HTMLTextAreaElement>("#cx-opt-blocklist").value = s.blocklist.join("\n");

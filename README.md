@@ -1,54 +1,54 @@
-# Cortex — local second brain (Chrome extension)
+# Cortex: Private Memory for Everything You Read
 
-Cortex extracts **readable page text** (Mozilla **Readability**), **chunks** it for retrieval (not one blob per page), stores rows in **IndexedDB** (Dexie), and embeds chunks locally with **Transformers.js** (`Xenova/all-MiniLM-L6-v2`). Search blends **semantic similarity**, **keyword/title** signals, **recency**, and a simple **importance** score from visits — without sending data to a backend (there is none).
+Cortex is a Chrome extension (Manifest V3) that remembers what you read and lets you search it and ask questions about it. Everything runs on your device: page text is extracted with Mozilla Readability, chunked, embedded with a bundled MiniLM model through Transformers.js and stored in IndexedDB. There is no backend, no analytics and no telemetry.
 
-Indexing aims at **meaningful text the user encounters**, with pause/blocklist controls — not “record everything forever.”
+- **Search**: hybrid retrieval (semantic, keyword, title, recency, engagement) with confidence badges.
+- **Ask**: answers grounded in your library with citations, on device through Chrome built-in AI, or optionally through Gemini with your own API key (only the retrieved snippets are sent).
+- **Digest**: a narrative of what you read today, yesterday or over the last 7 days.
 
-## Build
+## Install from source
 
 ```bash
-cd cortex
 npm install
 npm run build
-npm run test
 ```
 
-### CI
+Then open `chrome://extensions`, turn on Developer mode, choose Load unpacked and select the `dist` folder.
 
-Workflow **`.github/workflows/ci.yml`** runs `npm ci`, typecheck, tests (including eval), and production build with **`working-directory: cortex`**. If your Git repo root **is** the extension directory only, remove that `working-directory` block and fix `cache-dependency-path`.
+The embedding model (`vendor/models/Xenova/all-MiniLM-L6-v2`, about 22 MB) and the ONNX Runtime WASM binary are part of the package. Nothing is downloaded at runtime. If the model folder is missing, run `npm run prepare-model` once before building.
 
-Load **`cortex/dist`** via **chrome://extensions → Developer mode → Load unpacked**.
+## Using Cortex
+
+- Browse normally. Readable pages are indexed after a short idle delay. Incognito tabs, blocklisted domains and sensitive sites (banking, health, government patterns) are skipped.
+- Open Cortex with the toolbar icon, `Ctrl+Shift+K` (`Cmd+Shift+K` on macOS) or `Alt+Shift+C`. On pages where extensions cannot inject scripts (`chrome://` and similar) Cortex opens in the side panel.
+- Ask questions in plain language, for example "what did I read about Kubernetes yesterday". Time phrases filter by visit date.
+- Settings (gear icon or `chrome://extensions`): pause indexing, blocklist, chat mode, Gemini key, theme (light, dark, system), history import, delete all data.
+
+## Development
+
+```bash
+npm run typecheck      # tsc --noEmit
+npm test               # vitest unit tests + eval tests
+npm run build          # production bundle into dist/
+npm run check:budget   # bundle size budgets (content.js under 45 KB)
+npm run eval           # retrieval quality against eval/corpus
+npm run e2e            # Playwright with the unpacked extension (build first)
+npm run sbom           # CycloneDX SBOM of shipped dependencies
+```
+
+CI (`.github/workflows/ci.yml`) runs the audit gate (`npm audit --omit=dev --audit-level=high`), typecheck, unit and eval tests, build, bundle budget, SBOM, Playwright e2e and the retrieval eval on every pull request.
 
 ### Toolbar icons
 
-1. Put your square brand PNG at **`cortex/icons/cortex-brand.png`** (the halftone mark).
-2. Run **`npm run icons`** — this uses Sharp to write **`icons/icon-16.png`**, **`icon-48.png`**, **`icon-128.png`**.
-3. **`manifest.json`** already points **`action.default_icon`** and **`icons`** at those paths (copied to **`dist/icons`** on build).
+Put a square brand PNG at `icons/cortex-brand.png` and run `npm run icons` to regenerate `icons/icon-16.png`, `icon-48.png` and `icon-128.png`.
 
-First semantic indexing downloads ONNX/model weights (~22 MB + wasm/caches) from Hugging Face / jsDelivr — **`manifest.json` includes those hosts** unless you bundle weights under **`vendor/models/`** (see **`vendor/models/README.md`**).
+## Architecture
 
-## Usage
+See [ARCHITECTURE.md](ARCHITECTURE.md) for runtimes (content script, service worker, offscreen document, side panel), the data model and the retrieval pipeline. Security and privacy notes live in [SECURITY.md](SECURITY.md), [docs/PRIVACY_POLICY.md](docs/PRIVACY_POLICY.md) and [docs/INNERHTML_AUDIT.md](docs/INNERHTML_AUDIT.md). Release 1.2.0 work is documented under `docs/release-1.2.0/`.
 
-- **Browse normally** — after idle time per navigation, readable text is chunked and queued for embeddings (service worker + offscreen document).
-- **Cmd + Shift + K** (Mac) / **Ctrl + Shift + K** (Windows/Linux), or **Alt + Shift + C** as an alternate — toggles the in-page overlay. If nothing fires, fix bindings under **`chrome://extensions/shortcuts`**. The extension also **injects `content.js`** the first time you use the shortcut on a tab that never ran Cortex (e.g. opened before install); internal Chrome URLs (`chrome://`, PDF viewer, etc.) cannot be scripted.
-- **Ask in plain language** — e.g. `who works at Afterquery`, `works in Afterquery yesterday`, or `"Afterquery"` with **yesterday / today / last week**. Parsing boosts company-like phrases, optionally prefers LinkedIn profiles, and can **filter by visit-log time**. Results are **snippets from your index with sources** (extractive recall), not cloud ChatGPT.
-Popup shows **documents**, **chunks**, **visit log size**, **recent visits**, and **privacy** toggles (pause indexing, domain blocklist).
+## Privacy
 
-## Privacy / limits
-
-- No screenshots, no keylogging — **extracted text only** (same class of data as Readability).
-- **Incognito tabs are not indexed** by default (guard in the service worker).
-- Heuristic **sensitive-site skip** (banking/health/gov patterns, etc.) reduces accidental capture; refine with the blocklist.
-- Heavy ML runs in an **offscreen document** (`offscreen.js` ~750 KB minified); the service worker stays smaller.
-
-### SPA sites (LinkedIn, etc.)
-
-Cortex intercepts **`pushState` / `replaceState` / `popstate`**, debounces **`MutationObserver`** updates, and schedules **retries** so dynamic pages can be captured after content loads.
-
-### Pipeline (MVP)
-
-Content script → extract → **chunk** → background queues embeddings → **IndexedDB** (`documents` + `chunks`) → hybrid search → overlay.
-
-## Deleted GhostWriter
-
-The previous **`ghostwriter`** folder could not be removed automatically because Windows reported it “in use”. Close anything locking it (Chrome holding unpacked extension, terminals, editors), then delete **`ghostwriter`** manually if it still exists — **`cortex`** is the replacement project under **`project/cortex`**.
+- Extracted text only. No screenshots, no keylogging.
+- Incognito tabs are never indexed.
+- Cloud chat is off by default. When enabled, only the retrieved snippets for a question are sent to Gemini with your key.
+- All data can be deleted from Settings.

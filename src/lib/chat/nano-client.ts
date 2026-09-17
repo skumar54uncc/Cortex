@@ -1,4 +1,4 @@
-/** Chrome Prompt API — required on availability() and create() (en | es | ja). */
+/** Chrome Prompt API: required on availability() and create() (en | es | ja). */
 export type NanoOutputLanguage = "en" | "es" | "ja";
 
 export const NANO_OUTPUT_LANGUAGE: NanoOutputLanguage = "en";
@@ -114,7 +114,7 @@ export async function isNanoAvailable(): Promise<{
   return result;
 }
 
-/** Vitest — reset availability cache between cases. */
+/** Vitest: reset availability cache between cases. */
 export function resetNanoAvailabilityCacheForTests(): void {
   nanoAvailabilityCache = null;
 }

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cortex — Settings</title>
+    <title>Cortex Settings</title>
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
@@ -70,12 +70,12 @@
           <div class="cx-disclosure-body cx-prose">
             <p>
               Cortex helps you search and ask questions about pages you have visited. Your library
-              of saved pages stays on this computer—indexing does not upload your browsing history.
+              of saved pages stays on this computer. Indexing does not upload your browsing history.
             </p>
             <p>
               If you turn on Cloud Chat and add a Google API key, Cortex can use Google’s Gemini
               service to answer harder questions. In that case, only the short passages needed to
-              answer your question are sent—not your full library.
+              answer your question are sent, not your full library.
             </p>
           </div>
         </details>
@@ -350,13 +350,19 @@
           </div>
         </details>
 
-        <footer class="cx-opt-footer">
-          Built by
-          <a href="https://www.linkedin.com/in/shailesh-entrant/" target="_blank" rel="noopener noreferrer"
-            >Shailesh Kumar</a
-          >
-          · Version 1.0.1
-        </footer>
+        <section class="cx-opt-section" aria-labelledby="cx-about-h">
+          <h2 id="cx-about-h" class="cx-section-heading">About</h2>
+          <p class="cx-section-desc">
+            Cortex <span id="cx-about-version">1.2.0</span>. Private memory for everything you read: indexing,
+            embeddings and search run on this device.
+          </p>
+          <p class="cx-section-desc">
+            Built by
+            <a href="https://www.linkedin.com/in/shailesh-entrant/" target="_blank" rel="noopener noreferrer"
+              >Shailesh Kumar</a
+            >.
+          </p>
+        </section>
       </main>
     </div>
     <script src="options.js"></script>

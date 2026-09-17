@@ -1,4 +1,4 @@
-/* Overlay runs in Shadow DOM — duplicate theme tokens on :host */
+/* Overlay runs in Shadow DOM: duplicate theme tokens on :host */
 :host {
   /* Colour tokens are injected from src/shared/theme.ts (light + dark) */
   --cx-brand-font:
@@ -15,7 +15,7 @@
     Roboto,
     sans-serif;
   display: block;
-  /* Host sits in the page DOM — reset inherited user-select so inputs show a caret */
+  /* Host sits in the page DOM: reset inherited user-select so inputs show a caret */
   user-select: none;
   -webkit-user-select: none;
 }
@@ -65,7 +65,7 @@
   transform: translate(-50%, -50%);
 }
 
-/* Extension side panel (chrome:// pages — content scripts cannot run there) */
+/* Extension side panel (chrome:// pages: content scripts cannot run there) */
 :host(.cortex-overlay-host--shell) {
   position: relative;
   inset: auto;

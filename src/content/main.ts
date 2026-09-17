@@ -34,7 +34,7 @@ function scheduleIndex(delayMs: number): void {
   indexTimer = window.setTimeout(() => guardedIndexPage(), delayMs);
 }
 
-/** LinkedIn / heavy SPAs paint profile chrome after first paint — retry captures */
+/** LinkedIn / heavy SPAs paint profile chrome after first paint: retry captures */
 function scheduleCaptureRetries(): void {
   const delays = [900, 2600, 5800, 12000];
   for (const d of delays) {
@@ -83,7 +83,7 @@ async function indexPage(): Promise<void> {
   }
 }
 
-/** After extension reload, timers keep firing — bail before touching chrome.* */
+/** After extension reload, timers keep firing: bail before touching chrome.* */
 function guardedIndexPage(): void {
   if (!isExtensionRuntimeAlive()) return;
   void indexPage().catch((e: unknown) => {

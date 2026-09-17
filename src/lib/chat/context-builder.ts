@@ -8,7 +8,7 @@ webpage the user actually visited.
 CRITICAL RULES:
 1. Cite sources inline using [N] markers. Every factual claim needs a citation.
 2. If the answer isn't in the sources, say "I don't have anything in your library
-   about that" — do NOT invent answers.
+   about that". Do NOT invent answers.
 3. When the user asks "which website said X", give them the URL and a short quote.
 4. For summaries, use this structure:
    - One paragraph overview
@@ -71,7 +71,7 @@ Content: ${s.text}`
 
   const historyBlock =
     input.history && input.history.length > 0
-      ? `\n\nPREVIOUS MESSAGES IN THIS CHAT (for context only — still cite [N] from SOURCES below):\n${input.history
+      ? `\n\nPREVIOUS MESSAGES IN THIS CHAT (for context only; still cite [N] from SOURCES below):\n${input.history
           .map(
             (h) =>
               `${h.role === "user" ? "User" : "Assistant"}: ${h.content}`

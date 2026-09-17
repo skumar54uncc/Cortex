@@ -48,3 +48,22 @@ describe("manifest.json", () => {
     expect(manifest.content_scripts[0].js).toEqual(["content.js"]);
   });
 });
+
+describe("store listing fields (Phase 2.9)", () => {
+  it("uses the release name and description", () => {
+    expect(manifest.name).toBe("Cortex: Private Memory for Everything You Read");
+    expect(manifest.description).toBe(
+      "Ask anything you've read, watched or scanned. Pages, YouTube, tables and images, indexed on your device."
+    );
+  });
+
+  it("keeps name within 75 and description within 132 characters", () => {
+    expect(manifest.name.length).toBeLessThanOrEqual(75);
+    expect(manifest.description.length).toBeLessThanOrEqual(132);
+  });
+
+  it("contains no em dash anywhere in the manifest", () => {
+    const raw = readFileSync(join(__dirname, "..", "manifest.json"), "utf8");
+    expect(raw).not.toContain("—");
+  });
+});

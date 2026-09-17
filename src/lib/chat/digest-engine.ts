@@ -17,7 +17,7 @@ You will be given the titles, summaries, and key passages from webpages a user
 visited during a specific time period. Your job is to produce a structured digest
 in this exact format:
 
-NARRATIVE: [2-3 sentences in second person, starting with "Your recent reading focused on…" — never say "The user"]
+NARRATIVE: [2-3 sentences in second person, starting with "Your recent reading focused on..." and never say "The user"]
 
 TOPICS:
 - [Topic name] ([N] pages)
@@ -125,7 +125,7 @@ interface ParsedDigest {
   insights: Array<{ text: string; sourceUrl: string; sourceTitle: string }>;
 }
 
-/** Exported for tests / eval harness — parses LLM digest layout. */
+/** Exported for tests / eval harness: parses LLM digest layout. */
 export function parseDigestOutput(raw: string, chunks: ChunkWithDoc[]): ParsedDigest {
   const narrativeMatch = raw.match(
     /NARRATIVE:\s*([\s\S]*?)(?=\n\s*TOPICS\s*:|\nTOPICS\s*:)/i

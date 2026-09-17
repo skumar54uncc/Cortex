@@ -3,5 +3,5 @@
   "overlay.tagline": "Private memory from pages you read.",
   "ask.placeholder": "Ask anything about what you've read…",
   "ask.sendHint": "Enter to send · Shift+Enter new line",
-  "errors.rate_limited": "Too many requests — slow down for a minute."
+  "errors.rate_limited": "Too many requests. Slow down for a minute."
 }
