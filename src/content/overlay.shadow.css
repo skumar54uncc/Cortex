@@ -48,10 +48,13 @@
 .cortex-panel {
   position: absolute;
   left: 50%;
-  top: 12vh;
-  transform: translateX(-50%) translateY(8px);
-  width: min(720px, calc(100vw - 32px));
-  max-height: min(82vh, 900px);
+  top: 50%;
+  transform: translate(-50%, calc(-50% + 8px));
+  /* One size for every tab (Phase 2.2); layout adapts inside via data-layout */
+  width: min(960px, calc(100vw - 32px));
+  height: min(760px, calc(100dvh - 48px));
+  max-height: calc(100dvh - 48px);
+  box-sizing: border-box;
   background: var(--cx-surface);
   color: var(--cx-text);
   border-radius: 14px;
@@ -70,12 +73,7 @@
 
 .cortex-panel.is-visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.cortex-panel--chat {
-  width: min(920px, calc(100vw - 24px));
-  max-height: min(86vh, 920px);
+  transform: translate(-50%, -50%);
 }
 
 /* Extension side panel (chrome:// pages — content scripts cannot run there) */
@@ -109,28 +107,18 @@
   transform: none;
 }
 
-:host(.cortex-overlay-host--shell) .cortex-panel--chat {
-  width: 100%;
-  max-height: 100%;
-}
-
 :host(.cortex-overlay-host--shell) .cortex-shell {
   min-height: 100%;
 }
 
-.cortex-panel--digest {
-  width: min(760px, calc(100vw - 24px));
-  max-height: min(86vh, 900px);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .cortex-panel {
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     transition: opacity 0.14s ease;
   }
 
   .cortex-panel.is-visible {
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
   }
 }
 

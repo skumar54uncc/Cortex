@@ -55,3 +55,37 @@ export const LOREM_PARAGRAPHS: string[] = [
   "Enterprise deployments can pin settings through managed storage, set a retention window, and block domains centrally. Users see those fields as managed by their organization.",
   "This paragraph exists only to push the article past the minimum length that the indexer requires before it will bother creating a document and a set of chunks for the page.",
 ];
+
+/** Simulate a toolbar click inside the service worker and wait for the overlay root. */
+export async function openOverlayViaToolbar(
+  page: import("@playwright/test").Page,
+  serviceWorker: Worker
+): Promise<void> {
+  await page.bringToFront();
+  const dispatched = await serviceWorker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (!tab) return "no-active-tab";
+    const ev = chrome.action.onClicked as unknown as { dispatch?: (t: chrome.tabs.Tab) => void };
+    if (typeof ev.dispatch !== "function") return "no-dispatch";
+    ev.dispatch(tab);
+    return "ok";
+  });
+  if (dispatched !== "ok") throw new Error(`toolbar dispatch failed: ${dispatched}`);
+  await page.waitForFunction(
+    () => Boolean(document.getElementById("cortex-overlay-root")?.isConnected),
+    undefined,
+    { timeout: 15_000 }
+  );
+  // Let the open transition settle.
+  await page.waitForTimeout(350);
+}
+
+export async function routeArticle(context: BrowserContext, title = "Cortex E2E page"): Promise<void> {
+  await context.route("http://cortex-e2e.test/**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/html; charset=utf-8",
+      body: articleHtml(title, LOREM_PARAGRAPHS),
+    })
+  );
+}

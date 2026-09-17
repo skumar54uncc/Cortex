@@ -663,8 +663,7 @@ export function openCortexOverlay(): void {
     const q = query.trim();
     if (!q) return;
     currentMode = "search";
-    panel.classList.toggle("cortex-panel--chat", false);
-    panel.classList.toggle("cortex-panel--digest", false);
+    panel.setAttribute("data-mode", "search");
     rebuildTabs();
     renderMode();
     window.setTimeout(() => {
@@ -678,8 +677,7 @@ export function openCortexOverlay(): void {
 
   function switchMode(mode: OverlayMode): void {
     currentMode = mode;
-    panel.classList.toggle("cortex-panel--chat", mode === "ask");
-    panel.classList.toggle("cortex-panel--digest", mode === "digest");
+    panel.setAttribute("data-mode", mode);
     rebuildTabs();
     renderMode();
     scheduleFocusRetries();
