@@ -6,6 +6,8 @@ import { defineConfig } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  /** QA screenshot capture (docs/release-1.2.0/qa) only when CORTEX_QA=1. */
+  testIgnore: process.env.CORTEX_QA ? [] : ["**/qa/**"],
   timeout: 120_000,
   expect: { timeout: 30_000 },
   fullyParallel: false,

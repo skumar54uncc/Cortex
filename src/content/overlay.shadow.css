@@ -1427,11 +1427,32 @@
 
 .cortex-panel[data-layout="medium"] .cortex-ask-layout {
   position: relative;
+  flex-direction: column;
+}
+
+/* Toggle bar spans the full width above the thread; the drawer opens under it. */
+.cortex-panel[data-layout="medium"] .cortex-chat-drawer-toggle {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Column layout: basis is height here, so keep the bar to its content height. */
+.cortex-panel[data-layout="narrow"] .cortex-chat-drawer-toggle {
+  flex: 0 0 auto;
+  order: 1;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.cortex-panel[data-layout="medium"] .cortex-chat-main {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .cortex-panel[data-layout="medium"] .cortex-chat-sidebar {
   position: absolute;
-  top: 0;
+  top: 45px;
   bottom: 0;
   left: 0;
   width: 260px;
@@ -1461,6 +1482,7 @@
 
 .cortex-panel[data-layout="narrow"] .cortex-chat-sidebar {
   flex: 0 0 auto;
+  order: 2;
   display: none;
   max-height: 40%;
   border-right: none;
@@ -1469,6 +1491,16 @@
 
 .cortex-panel[data-layout="narrow"] .cortex-chat-sidebar.is-open {
   display: flex;
+}
+
+.cortex-panel[data-layout="narrow"] .cortex-chat-main {
+  order: 3;
+}
+
+.cortex-tab:focus-visible {
+  outline: 2px solid var(--cx-accent);
+  outline-offset: -2px;
+  border-radius: 6px;
 }
 
 .cortex-panel[data-layout="narrow"] .cortex-source-item {

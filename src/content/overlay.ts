@@ -1676,7 +1676,13 @@ ${shadowCss}`;
 
       const drawerToggle = createChatDrawerToggle(sidebar, { label: "Chats" });
       askDrawerToggle = drawerToggle;
-      main.appendChild(drawerToggle.button);
+      // Toggle bar is the first row of the layout so the drawer opens below it
+      // (medium) or the list expands under it (narrow). Hidden in wide.
+      wrap.appendChild(drawerToggle.button);
+      // Click or tap on the thread while the drawer is open closes it.
+      main.addEventListener("mousedown", () => {
+        if (drawerToggle.isOpen()) drawerToggle.close();
+      });
 
       const composer = document.createElement("div");
       composer.className = "cortex-ask-composer";
