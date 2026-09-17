@@ -3,6 +3,8 @@ import shadowCss from "./overlay.shadow.css";
 import { getBrandFontFaceCss } from "../styles/brand-fonts";
 
 import { confidenceTier } from "./confidence";
+import { observePanelLayout } from "./layout-mode";
+import { createChatDrawerToggle, type ChatDrawerToggle } from "./chat-drawer";
 import {
   isExtensionRuntimeAlive,
   sendRuntimeMessage,
@@ -272,6 +274,11 @@ export function openCortexOverlay(): void {
   const tabBar = shell.querySelector<HTMLElement>(".cortex-tabs")!;
   const bodyEl = shell.querySelector<HTMLElement>(".cortex-body")!;
 
+  const stopLayoutObserver = observePanelLayout(
+    panel,
+    panel.getBoundingClientRect().width || window.innerWidth
+  );
+
   const announcePolite = (text: string): void => {
     const el = shell.querySelector<HTMLElement>("#cortex-announcer");
     if (!el) return;
@@ -530,6 +537,7 @@ export function openCortexOverlay(): void {
   }
 
   let askSidebarListEl: HTMLElement | null = null;
+  let askDrawerToggle: ChatDrawerToggle | null = null;
 
   async function deleteChatConversation(convId: number): Promise<void> {
     const res = (await sendRuntimeMessage({
@@ -564,6 +572,7 @@ export function openCortexOverlay(): void {
       | undefined;
 
     const list = res?.ok ? res.conversations ?? [] : [];
+    askDrawerToggle?.setCount(list.length);
     if (list.length === 0) {
       const empty = document.createElement("p");
       empty.className = "cortex-chat-sidebar-empty cortex-muted";
@@ -600,6 +609,7 @@ export function openCortexOverlay(): void {
         currentConversationId = conv.id!;
         void loadChatConversation(conv.id!, askMessagesEl!);
         void refreshChatSidebar();
+        askDrawerToggle?.close();
       });
 
       const delBtn = document.createElement("button");
@@ -1488,6 +1498,7 @@ export function openCortexOverlay(): void {
         currentConversationId = null;
         renderChatThread(messagesContainer, []);
         void refreshChatSidebar();
+        askDrawerToggle?.close();
         if (askTextareaEl) focusAskInput(askTextareaEl);
       });
       sidebar.appendChild(newBtn);
@@ -1495,6 +1506,10 @@ export function openCortexOverlay(): void {
 
       const main = document.createElement("div");
       main.className = "cortex-chat-main";
+
+      const drawerToggle = createChatDrawerToggle(sidebar, { label: "Chats" });
+      askDrawerToggle = drawerToggle;
+      main.appendChild(drawerToggle.button);
 
       const composer = document.createElement("div");
       composer.className = "cortex-ask-composer";
@@ -1598,6 +1613,7 @@ export function openCortexOverlay(): void {
   function closeOverlay(): void {
     chatEventSink = null;
     digestResultSink = null;
+    stopLayoutObserver();
     document.removeEventListener("keydown", onDocKey, true);
     document.removeEventListener("keydown", onOverlayNavKey, true);
     document.removeEventListener("keydown", onKeyCaptureRedirect, true);
