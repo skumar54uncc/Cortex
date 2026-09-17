@@ -412,6 +412,11 @@ async function loadSettingsUi(): Promise<void> {
     .forEach((r) => {
       r.checked = r.value === mode;
     });
+  document
+    .querySelectorAll<HTMLInputElement>('input[name="cx-theme"]')
+    .forEach((r) => {
+      r.checked = r.value === (s.theme ?? "system");
+    });
   (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked = s.cloudChatEnabled;
   (qs("#cx-opt-gemini-key") as HTMLInputElement).value = s.geminiApiKey ?? "";
 
@@ -458,6 +463,17 @@ document.addEventListener("DOMContentLoaded", () => {
   qs<HTMLTextAreaElement>("#cx-opt-blocklist").addEventListener("input", () => {
     renderBlocklistChips();
   });
+
+  document
+    .querySelectorAll<HTMLInputElement>('input[name="cx-theme"]')
+    .forEach((r) => {
+      r.addEventListener("change", () => {
+        if (!r.checked) return;
+        const theme =
+          r.value === "light" || r.value === "dark" ? r.value : "system";
+        void setUserSettings({ theme });
+      });
+    });
 
   qs<HTMLButtonElement>("#cx-opt-retry-stats").addEventListener("click", () => {
     void refreshStats();

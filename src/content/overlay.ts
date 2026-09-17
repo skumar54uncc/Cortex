@@ -17,6 +17,8 @@ import {
 } from "./chat-stream-controller";
 import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
 import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
+import { applyThemeToHost, themeTokensCss } from "../shared/theme";
+import { getUserSettings } from "../shared/extension-settings";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
 import type { ChunkWithDoc } from "../lib/search-engine";
 import { CHAT_LIMITS } from "../lib/limits";
@@ -219,8 +221,32 @@ export function openCortexOverlay(): void {
   const iconUrl = chrome.runtime.getURL("icons/icon-48.png");
 
   const style = document.createElement("style");
-  style.textContent = `${getBrandFontFaceCss()}\n${shadowCss}`;
+  style.textContent = `${getBrandFontFaceCss()}
+${themeTokensCss()}
+${shadowCss}`;
   shadow.appendChild(style);
+
+  // Theme: light / dark / system (Phase 2.6). Applied before first paint from
+  // the default, then refreshed once storage answers.
+  const applyTheme = (setting: Parameters<typeof applyThemeToHost>[1]): (() => void) => {
+    const stopHost = applyThemeToHost(host, setting);
+    // Side panel shell: mirror on <html> so the page background matches.
+    const stopDoc = overlayShellMode
+      ? applyThemeToHost(document.documentElement, setting)
+      : () => undefined;
+    return () => {
+      stopHost();
+      stopDoc();
+    };
+  };
+  let stopTheme = applyTheme("system");
+  void getUserSettings()
+    .then((s) => {
+      if (!host.isConnected) return;
+      stopTheme();
+      stopTheme = applyTheme(s.theme);
+    })
+    .catch(() => undefined);
 
   const shell = document.createElement("div");
   shell.className = "cortex-shell";
@@ -1594,6 +1620,7 @@ export function openCortexOverlay(): void {
   }
 
   function closeOverlay(): void {
+    stopTheme();
     if (chatController?.isStreaming) chatController.abort();
     chatController?.dispose();
     chatController = null;

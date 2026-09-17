@@ -6,6 +6,12 @@ body {
   background: #e4e2dd;
 }
 
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background: #141312;
+  color-scheme: dark;
+}
+
 #cortex-overlay-root {
   display: block;
   height: 100%;

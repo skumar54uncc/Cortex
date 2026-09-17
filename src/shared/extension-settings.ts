@@ -2,6 +2,7 @@
 
 import type { ChatSettings } from "../lib/chat/types";
 import { storageLocalGet, storageLocalSet } from "./storage-local";
+import { normalizeThemeSetting, type ThemeSetting } from "./theme";
 
 export type ChatMode = ChatSettings["mode"];
 
@@ -15,6 +16,8 @@ export interface CortexUserSettings {
   chatMode: ChatMode;
   cloudChatEnabled: boolean;
   geminiApiKey: string;
+  /** Overlay and side panel theme (Phase 2.6). */
+  theme: ThemeSetting;
 }
 
 const KEY = "cortex_user_settings";
@@ -27,6 +30,7 @@ export const DEFAULT_USER_SETTINGS: CortexUserSettings = {
   chatMode: "auto",
   cloudChatEnabled: false,
   geminiApiKey: "",
+  theme: "system",
 };
 
 let memorySettings: CortexUserSettings | null = null;
@@ -48,6 +52,7 @@ function normalizeSettings(
     cloudChatEnabled: Boolean(raw?.cloudChatEnabled),
     geminiApiKey:
       typeof raw?.geminiApiKey === "string" ? raw.geminiApiKey : "",
+    theme: normalizeThemeSetting(raw?.theme),
   };
 }
 

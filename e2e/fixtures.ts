@@ -62,20 +62,29 @@ export async function openOverlayViaToolbar(
   serviceWorker: Worker
 ): Promise<void> {
   await page.bringToFront();
-  const dispatched = await serviceWorker.evaluate(async () => {
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    if (!tab) return "no-active-tab";
-    const ev = chrome.action.onClicked as unknown as { dispatch?: (t: chrome.tabs.Tab) => void };
-    if (typeof ev.dispatch !== "function") return "no-dispatch";
-    ev.dispatch(tab);
-    return "ok";
-  });
-  if (dispatched !== "ok") throw new Error(`toolbar dispatch failed: ${dispatched}`);
-  await page.waitForFunction(
-    () => Boolean(document.getElementById("cortex-overlay-root")?.isConnected),
-    undefined,
-    { timeout: 15_000 }
-  );
+  // The first dispatch on a fresh profile can race the tab becoming active;
+  // retry a few times rather than waiting 15s on one attempt.
+  let opened = false;
+  for (let attempt = 0; attempt < 3 && !opened; attempt++) {
+    const dispatched = await serviceWorker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      if (!tab) return "no-active-tab";
+      const ev = chrome.action.onClicked as unknown as { dispatch?: (t: chrome.tabs.Tab) => void };
+      if (typeof ev.dispatch !== "function") return "no-dispatch";
+      ev.dispatch(tab);
+      return "ok";
+    });
+    if (dispatched !== "ok") throw new Error(`toolbar dispatch failed: ${dispatched}`);
+    opened = await page
+      .waitForFunction(
+        () => Boolean(document.getElementById("cortex-overlay-root")?.isConnected),
+        undefined,
+        { timeout: 5_000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+  }
+  if (!opened) throw new Error("overlay did not open after 3 toolbar dispatches");
   // Let the open transition settle.
   await page.waitForTimeout(350);
 }

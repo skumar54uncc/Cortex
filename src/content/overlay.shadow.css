@@ -1,23 +1,12 @@
 /* Overlay runs in Shadow DOM — duplicate theme tokens on :host */
 :host {
-  --cx-bg: #e4e2dd;
-  --cx-surface: #f7f5f0;
-  --cx-surface-input: #fffef9;
-  --cx-accent: #c72a09;
-  --cx-accent-soft: rgba(199, 42, 9, 0.12);
-  --cx-accent-muted: rgba(199, 42, 9, 0.22);
-  --cx-text: #1c1917;
-  --cx-text-muted: #3f3f46;
-  --cx-text-subtle: #52525b;
-  --cx-border: rgba(28, 25, 23, 0.14);
-  --cx-link: #9a3412;
+  /* Colour tokens are injected from src/shared/theme.ts (light + dark) */
   --cx-brand-font:
     "Garet", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   position: fixed;
   inset: 0;
   z-index: 2147483646;
-  color-scheme: light;
   font-family:
     "Plus Jakarta Sans",
     system-ui,
@@ -41,7 +30,7 @@
 .cortex-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(28, 25, 23, 0.35);
+  background: var(--cx-backdrop);
   backdrop-filter: blur(5px);
 }
 
@@ -60,8 +49,8 @@
   border-radius: 14px;
   border: 1px solid var(--cx-border);
   box-shadow:
-    0 22px 60px rgba(28, 25, 23, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    0 22px 60px var(--cx-shadow-color),
+    0 0 0 1px var(--cx-raised) inset;
   overflow: hidden;
   opacity: 0;
   transition:
@@ -155,7 +144,7 @@
 
 .cortex-icon-btn:hover {
   color: var(--cx-accent);
-  background: rgba(199, 42, 9, 0.08);
+  background: var(--cx-accent-faint);
 }
 
 .cortex-icon-btn:focus-visible {
@@ -200,11 +189,11 @@
   flex-shrink: 0;
   line-height: 0;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.12);
+  box-shadow: 0 1px 3px var(--cx-border);
 }
 
 .cx-brand-link:hover {
-  box-shadow: 0 2px 8px rgba(199, 42, 9, 0.22);
+  box-shadow: 0 2px 8px var(--cx-accent-muted);
 }
 
 .cx-brand-link:focus-visible {
@@ -295,7 +284,7 @@
   font-size: 10px;
   font-family: ui-monospace, monospace;
   border: 1px solid var(--cx-border);
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--cx-raised);
   color: var(--cx-text);
 }
 
@@ -325,7 +314,7 @@
   color: var(--cx-text);
   background: var(--cx-accent-soft);
   border-radius: 10px;
-  border: 1px solid rgba(199, 42, 9, 0.22);
+  border: 1px solid var(--cx-accent-muted);
 }
 
 .cortex-evidence-compact {
@@ -347,10 +336,10 @@
 }
 
 .cortex-hit-card-selected {
-  background: rgba(199, 42, 9, 0.11);
-  border-color: rgba(199, 42, 9, 0.42);
+  background: var(--cx-accent-soft);
+  border-color: var(--cx-accent-border);
   box-shadow:
-    0 0 0 1px rgba(199, 42, 9, 0.15),
+    0 0 0 1px var(--cx-accent-soft),
     inset 3px 0 0 var(--cx-accent);
 }
 
@@ -374,7 +363,7 @@
   margin-top: 2px;
   border-radius: 5px;
   overflow: hidden;
-  background: rgba(28, 25, 23, 0.06);
+  background: var(--cx-hover);
   border: 1px solid var(--cx-border);
 }
 
@@ -479,7 +468,7 @@
 }
 
 .cortex-hit-card:focus-visible {
-  outline: 2px solid rgba(199, 42, 9, 0.55);
+  outline: 2px solid var(--cx-accent-border);
   outline-offset: 2px;
 }
 
@@ -507,7 +496,7 @@
 
 .cortex-confidence-good {
   color: #78350f;
-  background: #fffbeb;
+  background: var(--cx-note-bg);
   border-color: #fbbf24;
 }
 
@@ -533,9 +522,9 @@
   border-radius: 6px;
   background: linear-gradient(
     90deg,
-    rgba(28, 25, 23, 0.06) 0%,
-    rgba(28, 25, 23, 0.11) 50%,
-    rgba(28, 25, 23, 0.06) 100%
+    var(--cx-hover) 0%,
+    var(--cx-border) 50%,
+    var(--cx-hover) 100%
   );
   background-size: 200% 100%;
   animation: cortex-shimmer 1.2s ease-in-out infinite;
@@ -553,7 +542,7 @@
 @media (prefers-reduced-motion: reduce) {
   .cortex-skel-row {
     animation: none;
-    background: rgba(28, 25, 23, 0.08);
+    background: var(--cx-hover-strong);
   }
 
   .cortex-streaming-cursor {
@@ -631,7 +620,7 @@
   padding: 8px 14px 10px;
   text-align: center;
   border-top: 1px solid var(--cx-border);
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--cx-raised);
 }
 
 .cortex-attribution {
@@ -659,7 +648,7 @@
   flex-direction: column;
   min-height: 0;
   border-right: 1px solid var(--cx-border);
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--cx-raised);
 }
 
 .cortex-chat-new {
@@ -726,12 +715,12 @@
 }
 
 .cortex-chat-history-item:hover {
-  background: rgba(28, 25, 23, 0.05);
+  background: var(--cx-hover);
 }
 
 .cortex-chat-history-item--active {
   background: var(--cx-accent-soft);
-  border-color: rgba(199, 42, 9, 0.28);
+  border-color: var(--cx-accent-muted);
 }
 
 .cortex-chat-history-delete {
@@ -756,7 +745,7 @@
 .cortex-chat-history-delete:hover {
   opacity: 1;
   color: var(--cx-accent);
-  background: rgba(199, 42, 9, 0.1);
+  background: var(--cx-accent-soft);
 }
 
 .cortex-chat-history-delete:focus-visible {
@@ -826,7 +815,7 @@
 .cortex-ask-input:focus {
   outline: 2px solid var(--cx-accent);
   outline-offset: 1px;
-  border-color: rgba(199, 42, 9, 0.45);
+  border-color: var(--cx-accent-border);
   box-shadow: 0 0 0 3px var(--cx-accent-soft);
 }
 
@@ -858,7 +847,7 @@
   font-weight: 600;
   padding: 8px 18px;
   border-radius: 10px;
-  border: 1px solid rgba(199, 42, 9, 0.45);
+  border: 1px solid var(--cx-accent-border);
   background: var(--cx-accent-soft);
   color: var(--cx-accent);
   cursor: pointer;
@@ -911,7 +900,7 @@
 }
 
 .cortex-msg--user {
-  background: rgba(28, 25, 23, 0.06);
+  background: var(--cx-hover);
   align-self: flex-end;
   max-width: 85%;
 }
@@ -950,7 +939,7 @@
 .cortex-sources-details {
   border-radius: 8px;
   border: 1px solid var(--cx-border);
-  background: rgba(255, 255, 255, 0.45);
+  background: var(--cx-raised);
 }
 
 .cortex-sources-toggle {
@@ -988,7 +977,7 @@
 }
 
 .cortex-source-item:hover {
-  background: rgba(28, 25, 23, 0.04);
+  background: var(--cx-hover);
 }
 
 .cortex-source-num {
@@ -1059,7 +1048,7 @@
   padding: 10px 14px;
   border-bottom: 1px solid var(--cx-border);
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--cx-raised);
 }
 
 .cortex-digest-range-btn {
@@ -1085,7 +1074,7 @@
 
 .cortex-digest-range-btn--active {
   background: var(--cx-accent-soft);
-  border-color: rgba(199, 42, 9, 0.45);
+  border-color: var(--cx-accent-border);
   color: var(--cx-accent);
   font-weight: 600;
 }
@@ -1125,11 +1114,11 @@
   letter-spacing: 0.02em;
   background: var(--cx-accent-soft);
   color: var(--cx-accent);
-  border: 1px solid rgba(199, 42, 9, 0.22);
+  border: 1px solid var(--cx-accent-muted);
 }
 
 .cortex-digest-badge--muted {
-  background: rgba(28, 25, 23, 0.05);
+  background: var(--cx-hover);
   color: var(--cx-text-muted);
   border-color: var(--cx-border);
 }
@@ -1140,10 +1129,10 @@
   border: 1px solid var(--cx-border);
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.72) 0%,
-    rgba(199, 42, 9, 0.06) 100%
+    var(--cx-raised) 0%,
+    var(--cx-accent-faint) 100%
   );
-  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.06);
+  box-shadow: 0 1px 3px var(--cx-hover);
 }
 
 .cortex-digest-section-label {
@@ -1200,9 +1189,9 @@
 }
 
 .cortex-digest-topic-chip:hover {
-  border-color: rgba(199, 42, 9, 0.45);
-  background: #fffef9;
-  box-shadow: 0 2px 8px rgba(199, 42, 9, 0.1);
+  border-color: var(--cx-accent-border);
+  background: var(--cx-surface-input);
+  box-shadow: 0 2px 8px var(--cx-accent-soft);
 }
 
 .cortex-digest-topic-chip:focus-visible {
@@ -1224,7 +1213,7 @@
   color: var(--cx-text-subtle);
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(28, 25, 23, 0.06);
+  background: var(--cx-hover);
 }
 
 .cortex-digest-insights {
@@ -1240,7 +1229,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--cx-border);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--cx-raised);
 }
 
 .cortex-digest-insight-text {
@@ -1265,7 +1254,7 @@
 .cortex-digest-sources-details {
   border-radius: 10px;
   border: 1px solid var(--cx-border);
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--cx-raised);
 }
 
 .cortex-digest-sources-toggle {
@@ -1304,7 +1293,7 @@
 }
 
 .cortex-digest-source-row:hover {
-  background: rgba(28, 25, 23, 0.04);
+  background: var(--cx-hover);
 }
 
 .cortex-digest-source-favicon {
@@ -1346,7 +1335,7 @@
   border-radius: 12px;
   border: 1px dashed var(--cx-border);
   text-align: center;
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--cx-raised);
 }
 
 .cortex-digest-empty-title {
@@ -1449,7 +1438,7 @@
   max-width: 85%;
   z-index: 2;
   background: var(--cx-surface);
-  box-shadow: 8px 0 24px rgba(28, 25, 23, 0.16);
+  box-shadow: 8px 0 24px var(--cx-shadow-color);
   transform: translateX(-100%);
   visibility: hidden;
   transition:
@@ -1512,4 +1501,28 @@
 .cortex-chat-stopped {
   margin: 6px 0 0;
   font-size: 11px;
+}
+
+/* Confidence badges in dark theme (AA on --cx-surface #1e1c1a) */
+:host([data-theme="dark"]) .cortex-confidence-strong {
+  color: #86efac;
+  background: rgba(74, 222, 128, 0.14);
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+:host([data-theme="dark"]) .cortex-confidence-good {
+  color: #fcd34d;
+  background: rgba(251, 191, 36, 0.14);
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+:host([data-theme="dark"]) .cortex-confidence-possible {
+  color: #d6d3d1;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+:host([data-theme="dark"]) .cortex-hit-favicon {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
 }
