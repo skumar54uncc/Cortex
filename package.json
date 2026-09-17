@@ -16,7 +16,9 @@
     "eval": "tsx eval/src/cli.ts",
     "eval:baseline": "tsx eval/src/cli.ts --baseline",
     "eval:test": "vitest run --config vitest.config.eval.ts",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "check:budget": "node scripts/check-bundle-budget.mjs",
+    "sbom": "cyclonedx-npm --omit dev --output-format JSON --output-file sbom.cdx.json"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.0",
@@ -24,6 +26,7 @@
     "dexie": "^4.0.10"
   },
   "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "^6.0.1",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@playwright/test": "^1.63.0",
     "@types/chrome": "^0.0.268",

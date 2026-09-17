@@ -71,6 +71,7 @@ import {
   openSearchSidePanelReliable,
 } from "../lib/side-panel-launcher";
 import { openCortexSearchForTab } from "../lib/open-cortex-search";
+import { openOverlayOnTab } from "../lib/overlay-injector";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { RateLimiter } from "../lib/rate-limiter";
 import {
@@ -600,49 +601,34 @@ function sleepMs(ms: number): Promise<void> {
 async function deliverOpenSearchMessage(tabId: number): Promise<boolean> {
   const msg = { type: "CORTEX_OPEN_SEARCH" as const };
   return new Promise((resolve) => {
-    chrome.tabs.sendMessage(tabId, msg, () => {
-      resolve(!chrome.runtime.lastError);
+    chrome.tabs.sendMessage(tabId, msg, (res) => {
+      if (chrome.runtime.lastError) {
+        resolve(false);
+        return;
+      }
+      resolve((res as { ok?: boolean } | undefined)?.ok === true);
     });
   });
 }
 
+/** Injects overlay.js on demand, then opens it. content.js stays extraction-only. */
 async function openSearchOnTab(tabId: number): Promise<boolean> {
-  let tabUrl = "";
-  try {
-    const tab = await chrome.tabs.get(tabId);
-    tabUrl = tab.url ?? "";
-  } catch {
-    return false;
-  }
-  if (!isInjectableWebUrl(tabUrl)) {
-    return false;
-  }
-
-  if (await deliverOpenSearchMessage(tabId)) return true;
-
-  const warm = warmContentScriptOnTab(tabId, tabUrl);
-
-  if (await deliverOpenSearchMessage(tabId)) return true;
-
-  await warm;
-
-  if (await deliverOpenSearchMessage(tabId)) return true;
-
-  try {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ["content.js"],
-    });
-  } catch (e) {
-    devLog.warn("[Cortex] overlay inject:", e);
-  }
-
-  for (let i = 0; i < 4; i++) {
-    if (await deliverOpenSearchMessage(tabId)) return true;
-    if (i < 3) await sleepMs(24);
-  }
-
-  return false;
+  return openOverlayOnTab(tabId, {
+    deliverOpen: deliverOpenSearchMessage,
+    inject: async (id, files) => {
+      await chrome.scripting.executeScript({ target: { tabId: id }, files });
+    },
+    sleep: sleepMs,
+    isInjectableUrl: isInjectableWebUrl,
+    getTabUrl: async (id) => {
+      try {
+        const tab = await chrome.tabs.get(id);
+        return tab.url ?? "";
+      } catch {
+        return null;
+      }
+    },
+  });
 }
 
 function queryActiveTab(): Promise<chrome.tabs.Tab | undefined> {

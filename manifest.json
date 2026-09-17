@@ -20,7 +20,10 @@
   "side_panel": {
     "default_path": "search-shell.html"
   },
-  "host_permissions": ["http://*/*", "https://*/*"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "background": {
     "service_worker": "service-worker.js"
   },
@@ -54,8 +57,13 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["content.js"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle",
       "all_frames": false
     }
@@ -67,8 +75,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*.png", "fonts/*.woff2", "models/**/*"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "icons/icon-48.png",
+        "fonts/*.woff2"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "use_dynamic_url": true
     }
   ]
 }

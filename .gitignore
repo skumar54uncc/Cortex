@@ -11,3 +11,10 @@ Thumbs.db
 *.local
 *.zip
 eval/.cache/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Generated in CI
+sbom.cdx.json

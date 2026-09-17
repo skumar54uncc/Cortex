@@ -1,7 +1,6 @@
 import { extractPageText } from "./extract";
 import { redactPII } from "../lib/pii-filter";
 import { summarizeBestEffort } from "../lib/summarize";
-import { mountOverlay } from "./overlay";
 import { getUserSettings } from "../shared/extension-settings";
 import {
   isExtensionRuntimeAlive,
@@ -18,7 +17,7 @@ declare global {
 }
 
 function bootstrap(): void {
-  mountOverlay();
+  // The overlay UI lives in overlay.js and is injected on demand by the service worker.
 
 function normalizedUrl(): string {
   const u = new URL(location.href);

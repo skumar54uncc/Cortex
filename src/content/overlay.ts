@@ -145,10 +145,11 @@ export function mountOverlay(opts?: MountOverlayOptions): void {
   if (overlayListenersInstalled) return;
   overlayListenersInstalled = true;
 
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type === "CORTEX_OPEN_SEARCH" && !overlayShellMode) {
       openCortexOverlay();
-      return undefined;
+      sendResponse({ ok: true as const });
+      return true;
     }
     if (msg?.type === "CORTEX_OPEN_SEARCH_SHELL" && overlayShellMode) {
       openCortexOverlay();

@@ -13,6 +13,7 @@ module.exports = (env, argv) => {
   entry: {
     "service-worker": "./src/background/service-worker.ts",
     content: "./src/content/main.ts",
+    overlay: "./src/content/overlay-entry.ts",
     offscreen: "./src/offscreen/offscreen.ts",
     popup: "./src/popup/popup.ts",
     options: "./src/options/options.ts",
