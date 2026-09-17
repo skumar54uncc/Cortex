@@ -16,6 +16,7 @@ import {
   type ChatStreamState,
 } from "./chat-stream-controller";
 import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
+import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
 import type { ChunkWithDoc } from "../lib/search-engine";
 import { CHAT_LIMITS } from "../lib/limits";
@@ -340,25 +341,8 @@ export function openCortexOverlay(): void {
     }
   };
 
-  const focusIsInsideOverlay = (): boolean => {
-    const sr = host.shadowRoot;
-    if (!sr) return false;
-    const ae = document.activeElement as Node | null;
-    if (ae && sr.contains(ae)) return true;
-    if (ae === host && sr.activeElement) return true;
-    return false;
-  };
-
-  const scheduleFocusRetries = (): void => {
-    focusPrimaryField();
-    requestAnimationFrame(() => {
-      focusPrimaryField();
-      window.setTimeout(focusPrimaryField, 0);
-      window.setTimeout(focusPrimaryField, 16);
-      window.setTimeout(focusPrimaryField, 50);
-      window.setTimeout(focusPrimaryField, 120);
-    });
-  };
+  /** Single focus after the open transition (Phase 2.5); no retry bursts. */
+  let cancelInitialFocus: (() => void) | null = null;
 
   const onOverlayNavKey = (ev: KeyboardEvent): void => {
     if (!overlayHost || currentMode !== "search") return;
@@ -417,38 +401,10 @@ export function openCortexOverlay(): void {
     }
   };
 
-  const onDocKey = (ev: KeyboardEvent): void => {
-    if (ev.key === "Escape") {
-      ev.preventDefault();
-      ev.stopPropagation();
-      closeOverlay();
-    }
-  };
-
-  const onFocusInCapturePage = (ev: FocusEvent): void => {
-    const sr = host.shadowRoot;
-    if (!sr) return;
-
-    const path = ev.composedPath();
-    if (path.includes(host)) {
-      if (currentMode === "ask") {
-        const t = ev.target as HTMLElement | null;
-        if (t?.classList.contains("cortex-tab")) {
-          queueMicrotask(() => {
-            const ta = getAskInput();
-            if (ta) focusAskInput(ta);
-          });
-        }
-      }
-      return;
-    }
-
-    queueMicrotask(() => {
-      if (!overlayHost) return;
-      if (focusIsInsideOverlay()) return;
-      focusPrimaryField();
-    });
-  };
+  const focusTrap = createFocusTrap(panel, {
+    restoreTo: previousFocus,
+    onEscape: () => closeOverlay(),
+  });
 
   const onKeyCaptureRedirect = (ev: KeyboardEvent): void => {
     if (!overlayHost || currentMode !== "search") return;
@@ -520,10 +476,9 @@ export function openCortexOverlay(): void {
     if (t?.getAttribute("data-act") === "close") closeOverlay();
   });
 
-  document.addEventListener("keydown", onDocKey, true);
   document.addEventListener("keydown", onOverlayNavKey, true);
   document.addEventListener("keydown", onKeyCaptureRedirect, true);
-  document.addEventListener("focusin", onFocusInCapturePage, true);
+  focusTrap.activate();
 
   function rebuildTabs(): void {
     tabBar.innerHTML = "";
@@ -690,7 +645,7 @@ export function openCortexOverlay(): void {
     panel.setAttribute("data-mode", mode);
     rebuildTabs();
     renderMode();
-    scheduleFocusRetries();
+    requestAnimationFrame(focusPrimaryField);
   }
 
   function chatNearBottom(el: HTMLElement, thresholdPx = 88): boolean {
@@ -1646,25 +1601,22 @@ export function openCortexOverlay(): void {
     askSendBtn = null;
     digestResultSink = null;
     stopLayoutObserver();
-    document.removeEventListener("keydown", onDocKey, true);
+    cancelInitialFocus?.();
+    cancelInitialFocus = null;
     document.removeEventListener("keydown", onOverlayNavKey, true);
     document.removeEventListener("keydown", onKeyCaptureRedirect, true);
-    document.removeEventListener("focusin", onFocusInCapturePage, true);
     panel.classList.remove("is-visible");
     host.remove();
     overlayHost = null;
     overlayShadowRoot = null;
-    try {
-      previousFocus?.focus({ preventScroll: true });
-    } catch {
-      /* stale */
-    }
+    // Restores focus to the element that had it before the overlay opened.
+    focusTrap.deactivate();
   }
 
   rebuildTabs();
   renderMode();
 
-  scheduleFocusRetries();
+  cancelInitialFocus = focusOnceAfterTransition(panel, focusPrimaryField);
 
   requestAnimationFrame(() => {
     panel.classList.add("is-visible");
