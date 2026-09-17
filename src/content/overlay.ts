@@ -12,6 +12,7 @@ import {
   type ConversationSummary,
   type PendingDelete,
 } from "./chat-history";
+import { buildExamplePrompts, type RecentVisitLite } from "./example-prompts";
 import {
   isExtensionRuntimeAlive,
   sendRuntimeMessage,
@@ -934,9 +935,19 @@ ${shadowCss}`;
     if (messages.length === 0) {
       const empty = document.createElement("div");
       empty.className = "cortex-chat-empty";
-      empty.innerHTML =
-        '<p class="cortex-chat-empty-title">What would you like to know?</p><p class="cortex-chat-empty-hint cortex-muted">Ask about pages you’ve read — answers stay grounded in your local library with citations.</p>';
+      const title = document.createElement("p");
+      title.className = "cortex-chat-empty-title";
+      title.textContent = "What would you like to know?";
+      const hint = document.createElement("p");
+      hint.className = "cortex-chat-empty-hint cortex-muted";
+      hint.textContent =
+        "Ask about pages you have read. Answers stay grounded in your local library, with citations.";
+      const chips = document.createElement("div");
+      chips.className = "cortex-example-chips";
+      chips.setAttribute("aria-label", "Example questions");
+      empty.append(title, hint, chips);
       messagesContainer.appendChild(empty);
+      void renderExampleChips(chips);
       return;
     }
 
@@ -961,6 +972,37 @@ ${shadowCss}`;
       renderSources(sourcesEl, cited);
       assistantMsgEl.appendChild(sourcesEl);
       messagesContainer.appendChild(assistantMsgEl);
+    }
+  }
+
+  /** Empty state chips built from local data (Phase 2.8); generic on an empty library. */
+  async function renderExampleChips(container: HTMLElement): Promise<void> {
+    let recent: RecentVisitLite[] = [];
+    try {
+      const res = (await sendRuntimeMessage({ type: "CORTEX_RECENT_VISITS" })) as
+        | { ok?: boolean; recent?: RecentVisitLite[] }
+        | undefined;
+      if (res?.ok && Array.isArray(res.recent)) recent = res.recent;
+    } catch {
+      /* generic fallback */
+    }
+    if (!container.isConnected) return;
+    container.innerHTML = "";
+    for (const prompt of buildExamplePrompts({ recent })) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "cortex-example-chip";
+      chip.textContent = prompt;
+      chip.addEventListener("click", () => {
+        const ta = askTextareaEl;
+        const messages = askMessagesEl;
+        if (!ta || !messages) return;
+        ta.value = prompt;
+        messages.querySelector(".cortex-chat-empty")?.remove();
+        ta.value = "";
+        handleAskSubmit(prompt, messages);
+      });
+      container.appendChild(chip);
     }
   }
 

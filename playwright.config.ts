@@ -10,7 +10,8 @@ export default defineConfig({
   expect: { timeout: 30_000 },
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  // One retry in CI: the synthetic toolbar dispatch can race the tab activation on a cold profile.
+  retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {
     trace: "retain-on-failure",

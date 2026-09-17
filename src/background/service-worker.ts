@@ -6,6 +6,7 @@ import {
   setChunkEmbedding,
   markChunkEmbedFailed,
   appendVisit,
+  getRecentVisits,
   hostnameFromUrl,
   clearAllIndexedData,
 } from "../db/schema";
@@ -1229,6 +1230,28 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   /**
    * @deprecated Prefer `readSnapshot()` in the popup. Kept for options and legacy callers.
    */
+  if (type === "CORTEX_RECENT_VISITS") {
+    void (async () => {
+      try {
+        const rows = await getRecentVisits(12);
+        sendResponse({
+          ok: true as const,
+          recent: rows.map((r) => ({
+            title: r.title,
+            hostname: r.hostname,
+            visitedAt: r.visitedAt,
+          })),
+        });
+      } catch (e: unknown) {
+        sendResponse({
+          ok: false as const,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    })();
+    return true;
+  }
+
   if (type === "CORTEX_STATS") {
     void (async () => {
       try {

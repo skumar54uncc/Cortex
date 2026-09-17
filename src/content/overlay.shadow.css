@@ -1606,3 +1606,37 @@
   outline: 2px solid var(--cx-accent);
   outline-offset: 1px;
 }
+
+/* Empty state example chips (Phase 2.8) */
+.cortex-example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.cortex-example-chip {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--cx-border);
+  background: var(--cx-surface-input);
+  color: var(--cx-text);
+  cursor: pointer;
+  max-width: 100%;
+  text-align: left;
+}
+
+.cortex-example-chip:hover {
+  border-color: var(--cx-accent);
+  color: var(--cx-accent);
+}
+
+.cortex-example-chip:focus-visible {
+  outline: 2px solid var(--cx-accent);
+  outline-offset: 2px;
+}
