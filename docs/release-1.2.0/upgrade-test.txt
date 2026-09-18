@@ -1,0 +1,8 @@
+version 1.0.1 -> 1.2.0
+db schema 50 -> 60
+stores after ['chunks', 'collectionItems', 'collections', 'conversations', 'digestCache', 'documents', 'highlights', 'messages', 'pages', 'people', 'visitLog']
+documents 10 -> 10 identical
+chunks 10 -> 10 identical per doc
+chats 2 -> 2 ; messages 4 -> 4 identical
+visits 20 -> 20
+settings {'blocklist': ['blocked-before-upgrade.test'], 'chatMode': 'on-device-only'} -> {'blocklist': ['blocked-before-upgrade.test'], 'chatMode': 'on-device-only'}
