@@ -7,16 +7,16 @@ import { join } from "node:path";
  * that renders UI (overlay, side panel, popup, options, onboarding, shared
  * copy) and lists offending lines so the fix is one grep away.
  */
-const UI_ROOTS = [
-  "src/content",
-  "src/options",
-  "src/popup",
-  "src/onboarding",
-  "src/search",
-  "src/lib/locales",
-  "src/lib/chat",
-  "src/lib/errors.ts",
-];
+/**
+ * Every source file: user-facing strings live in many places (notifications,
+ * popup status lines, search explanations). Comment lines are skipped.
+ */
+const UI_ROOTS = ["src"];
+
+function isCommentLine(line: string): boolean {
+  const t = line.trim();
+  return t.startsWith("//") || t.startsWith("*") || t.startsWith("/*");
+}
 
 function walk(p: string, out: string[]): void {
   const st = statSync(p);
@@ -36,7 +36,7 @@ describe("user-facing copy", () => {
     for (const f of files) {
       const lines = readFileSync(f, "utf8").split("\n");
       lines.forEach((line, i) => {
-        if (line.includes("—")) offenders.push(`${f.replace(root, "")}:${i + 1}: ${line.trim().slice(0, 80)}`);
+        if (line.includes("—") && !isCommentLine(line)) offenders.push(`${f.replace(root, "")}:${i + 1}: ${line.trim().slice(0, 80)}`);
       });
     }
     expect(offenders, offenders.join("\n")).toEqual([]);

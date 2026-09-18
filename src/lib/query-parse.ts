@@ -133,7 +133,7 @@ export function buildEvidenceIntro(
 ): string {
   let s = `Showing ${hitCount} saved page${hitCount === 1 ? "" : "s"} from your library.`;
   if (parsed.timeRange && timeRelaxed) {
-    s += " Nothing logged in that date window — widened to the closest matches.";
+    s += " Nothing logged in that date window, so the search widened to the closest matches.";
   } else if (parsed.timeRange && !timeRelaxed) {
     s += " Filtered to the visits in your date window.";
   }

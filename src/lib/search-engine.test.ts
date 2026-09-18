@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   docs: [] as DocumentRecord[],
   chunks: [] as ChunkRecord[],
   urlsInRange: new Set<string>(),
+  collectionItems: [] as { collectionId: number; documentId: number }[],
 }));
 
 vi.mock("../db/schema", () => ({
@@ -15,6 +16,13 @@ vi.mock("../db/schema", () => ({
     },
     chunks: {
       toArray: vi.fn(async () => mocks.chunks),
+    },
+    collectionItems: {
+      where: vi.fn(() => ({
+        equals: (id: number) => ({
+          toArray: async () => mocks.collectionItems.filter((x) => x.collectionId === id),
+        }),
+      })),
     },
   },
   getUrlsVisitedBetween: vi.fn(
@@ -300,5 +308,40 @@ describe("highlight boost (Phase 5.3)", () => {
     const res = await runAdvancedSearch("service tidal turbines slack tide", async () => null, { abstainFloor: 0 });
     expect(res.hits[0].url).toBe("https://b.test/highlighted");
     expect(res.hits[0].kind).toBe("highlight");
+  });
+});
+
+describe("collection scope (Phase 5.4)", () => {
+  const now = 1_700_000_000_000;
+  beforeEach(() => {
+    mocks.docs = [];
+    mocks.chunks = [];
+    mocks.urlsInRange = new Set();
+    mocks.collectionItems = [];
+  });
+
+  it("returns only documents in the chosen collection", async () => {
+    mocks.docs = [
+      doc(1, "https://a.test/", "Kombucha pH log", now),
+      doc(2, "https://b.test/", "Kombucha bottling", now),
+      doc(3, "https://c.test/", "Kombucha sugar", now),
+    ];
+    mocks.chunks = [
+      ch(1, 1, "kombucha fermentation ph curve"),
+      ch(2, 2, "kombucha fermentation bottling line"),
+      ch(3, 3, "kombucha fermentation sugar ratio"),
+    ];
+    mocks.collectionItems = [
+      { collectionId: 7, documentId: 2 },
+      { collectionId: 7, documentId: 3 },
+      { collectionId: 8, documentId: 1 },
+    ];
+    const all = await runAdvancedSearch("kombucha fermentation", async () => null, { abstainFloor: 0 });
+    expect(all.hits.map((h) => h.url).sort()).toEqual(["https://a.test/", "https://b.test/", "https://c.test/"]);
+    const scoped = await runAdvancedSearch("kombucha fermentation", async () => null, { abstainFloor: 0, collectionId: 7 });
+    expect(scoped.hits.map((h) => h.url).sort()).toEqual(["https://b.test/", "https://c.test/"]);
+    const empty = await runAdvancedSearch("kombucha fermentation", async () => null, { abstainFloor: 0, collectionId: 99 });
+    expect(empty.hits).toEqual([]);
+    expect(empty.evidence).toBe("This collection has no pages yet.");
   });
 });

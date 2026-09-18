@@ -10,6 +10,8 @@ export type CortexBusInbound =
       tabId: number;
       /** Correlates events and aborts with one overlay submit. */
       requestId: number;
+      /** Scope retrieval to one collection (Phase 5.4). */
+      collectionId?: number;
       conversationId: number | null;
       question: string;
       settings: ChatSettings;

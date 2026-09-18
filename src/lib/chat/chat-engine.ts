@@ -32,6 +32,8 @@ export interface ChatStreamEvent {
 export interface RunChatOptions {
   /** CORTEX_CHAT_ABORT: stop streaming, do not store the partial answer. */
   signal?: AbortSignal;
+  /** Answer only from pages in this collection (Phase 5.4). */
+  collectionId?: number;
 }
 
 function isAbortError(e: unknown): boolean {
@@ -97,6 +99,7 @@ export async function* runChat(
       maxHits: 20,
       forceTimeRange,
       includeChunks: true,
+      ...(opts.collectionId != null ? { collectionId: opts.collectionId } : {}),
     });
 
     const rawChunks = searchResults.chunks ?? [];

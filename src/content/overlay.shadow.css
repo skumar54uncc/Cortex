@@ -1823,3 +1823,53 @@ a.cortex-person-name:focus-visible {
   color: var(--cx-accent);
   border-color: var(--cx-accent);
 }
+
+/* Collection scope bar (Phase 5.4) */
+.cortex-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--cx-text-muted);
+}
+
+.cortex-scope[hidden] {
+  display: none;
+}
+
+.cortex-scope-select {
+  font: inherit;
+  font-size: 12px;
+  min-height: 30px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--cx-border);
+  background: var(--cx-surface-input);
+  color: var(--cx-text);
+  max-width: 60%;
+}
+
+.cortex-scope-add {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 30px;
+  padding: 2px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--cx-accent-border);
+  background: var(--cx-accent-soft);
+  color: var(--cx-accent);
+  cursor: pointer;
+}
+
+.cortex-scope-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cortex-scope-select:focus-visible,
+.cortex-scope-add:focus-visible {
+  outline: 2px solid var(--cx-accent);
+  outline-offset: 1px;
+}

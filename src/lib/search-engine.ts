@@ -77,6 +77,8 @@ export interface AdvancedSearchOptions {
   includeChunks?: boolean;
   /** Best-score floor under which the search abstains; 0 disables. Default ABSTAIN_FLOOR. */
   abstainFloor?: number;
+  /** Only documents in this collection (Phase 5.4). */
+  collectionId?: number;
 }
 
 const BM25_K1 = 1.35;
@@ -247,7 +249,7 @@ function explainMatch(
   if (hasSemantic) {
     breakdownParts.push(`Semantic layer ~${semPct}% aligned with your query`);
   } else {
-    breakdownParts.push("Semantic layer weak — this rank leaned on keywords and recency");
+    breakdownParts.push("Semantic layer weak: this rank leaned on keywords and recency");
   }
   breakdownParts.push(`Keyword layer ~${lexPct}% vs other passages in your library`);
   const groundPct = Math.round(
@@ -302,7 +304,12 @@ export async function runAdvancedSearch(
     docs.filter((d) => d.id != null).map((d) => [d.id as number, d])
   );
 
-  const chunkRows = await db.chunks.toArray();
+  let chunkRows = await db.chunks.toArray();
+  if (opts?.collectionId != null) {
+    const items = await db.collectionItems.where("collectionId").equals(opts.collectionId).toArray();
+    const scope = new Set(items.map((r) => r.documentId));
+    chunkRows = chunkRows.filter((c) => scope.has(c.documentId));
+  }
 
   const lexicalProbe = [q, ...parsed.entityTerms].join("\n ");
   const queryTerms = [...new Set(tokenize(lexicalProbe))];
@@ -342,7 +349,9 @@ export async function runAdvancedSearch(
     return {
       hits: [],
       evidence:
-        "Nothing indexed yet — browse pages normally so Cortex can store text chunks locally.",
+        opts?.collectionId != null
+          ? "This collection has no pages yet."
+          : "Nothing indexed yet. Browse pages normally so Cortex can store text chunks locally.",
     };
   }
 
@@ -541,7 +550,7 @@ export async function runAdvancedSearch(
     effectiveParsed.timeRange != null
   ) {
     evidence =
-      "No memories matched strongly — try quoted names, shorter keywords (e.g. linkedin), or revisit pages so Cortex can index them.";
+      "No memories matched strongly. Try quoted names, shorter keywords (e.g. linkedin), or revisit pages so Cortex can index them.";
   }
 
   const chunks: ChunkWithDoc[] | undefined = opts?.includeChunks

@@ -160,9 +160,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     }
     void (async () => {
       try {
+        const cid = (msg as { collectionId?: unknown }).collectionId;
         const { hits, evidence } = await runAdvancedSearch(
           q,
-          embedQueryForSearch
+          embedQueryForSearch,
+          typeof cid === "number" && Number.isFinite(cid) ? { collectionId: cid } : undefined
         );
         sendResponse({ ok: true as const, hits, evidence });
       } catch (e: unknown) {
@@ -202,7 +204,7 @@ cortexExtBus.onmessage = (ev: MessageEvent<CortexBusInbound>) => {
           incoming.question,
           settings,
           embedQueryForSearch,
-          { signal }
+          { signal, ...(incoming.collectionId != null ? { collectionId: incoming.collectionId } : {}) }
         )) {
           const out: CortexBusOutbound = {
             kind: "chat-event",

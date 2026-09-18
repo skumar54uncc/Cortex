@@ -24,7 +24,7 @@ export function notifyFirstInstallHistoryScanStarted(): void {
   safeCreate(NOTIFY_ID_START, {
     type: "basic",
     iconUrl: iconUrl(),
-    title: "Cortex — building your library",
+    title: "Cortex is building your library",
     message:
       "Scanning the last 30 days of browser history on this device. Privacy rules still apply. We'll notify you when it's done.",
     priority: 1,
@@ -48,13 +48,13 @@ export function notifyFirstInstallHistoryScanFinished(
   } else if (progress.indexed > 0) {
     message = `Indexed ${progress.indexed} page${progress.indexed === 1 ? "" : "s"} from your last 30 days (${progress.skipped} skipped). Press Ctrl+Shift+K to search.`;
   } else {
-    message = `Scan finished (${progress.processed} URLs tried, ${progress.indexed} indexed). Many sites need a live visit — browse normally and Cortex will index as you read.`;
+    message = `Scan finished (${progress.processed} URLs tried, ${progress.indexed} indexed). Many sites need a live visit: browse normally and Cortex will index as you read.`;
   }
 
   safeCreate(NOTIFY_ID_DONE, {
     type: "basic",
     iconUrl: iconUrl(),
-    title: "Cortex — history scan complete",
+    title: "Cortex history scan complete",
     message,
     priority: 1,
   });

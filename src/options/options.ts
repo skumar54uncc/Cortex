@@ -448,6 +448,59 @@ async function loadSettingsUi(): Promise<void> {
   applyManagedLockout(document, await getEffectiveSettings());
 }
 
+type CollectionRow = { id: number; name: string; count: number };
+
+async function renderCollections(): Promise<void> {
+  const ul = qs<HTMLUListElement>("#cx-collection-list");
+  const res = (await chrome.runtime.sendMessage({ type: "CORTEX_COLLECTIONS_LIST" })) as
+    | { ok?: boolean; collections?: CollectionRow[] }
+    | undefined;
+  const rows = res?.ok ? res.collections ?? [] : [];
+  ul.replaceChildren();
+  if (!rows.length) {
+    const li = document.createElement("li");
+    li.className = "cx-field-hint";
+    li.textContent = "No collections yet.";
+    ul.appendChild(li);
+    return;
+  }
+  for (const c of rows) {
+    const li = document.createElement("li");
+    li.className = "cx-collection-row";
+    const name = document.createElement("span");
+    name.className = "cx-collection-name";
+    name.textContent = c.name;
+    const count = document.createElement("span");
+    count.className = "cx-field-hint";
+    count.textContent = `${c.count} page${c.count === 1 ? "" : "s"}`;
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "cx-btn cx-btn-ghost cx-btn-sm";
+    del.textContent = "Delete";
+    del.setAttribute("aria-label", `Delete collection ${c.name}`);
+    del.addEventListener("click", async () => {
+      await chrome.runtime.sendMessage({ type: "CORTEX_COLLECTION_DELETE", id: c.id });
+      void renderCollections();
+    });
+    li.append(name, count, del);
+    ul.appendChild(li);
+  }
+}
+
+async function createCollectionFromForm(): Promise<void> {
+  const input = qs<HTMLInputElement>("#cx-collection-name");
+  const fb = qs<HTMLElement>("#cx-collection-feedback");
+  const res = (await chrome.runtime.sendMessage({
+    type: "CORTEX_COLLECTION_CREATE",
+    name: input.value,
+  })) as { ok?: boolean; error?: string } | undefined;
+  fb.classList.toggle("is-error", !res?.ok);
+  fb.textContent = res?.ok ? "Collection created." : res?.error ?? "Could not create the collection.";
+  fb.hidden = false;
+  if (res?.ok) input.value = "";
+  void renderCollections();
+}
+
 async function runForget(scope: "site" | "hour" | "day", hostname?: string): Promise<void> {
   const fb = qs<HTMLElement>("#cx-forget-feedback");
   fb.classList.remove("is-error");
@@ -540,6 +593,12 @@ document.addEventListener("DOMContentLoaded", () => {
   qs<HTMLSelectElement>("#cx-opt-retention").addEventListener("change", (e) => {
     const v = Number((e.target as HTMLSelectElement).value);
     void saveUserSettings({ retentionDays: Number.isFinite(v) && v >= 1 ? v : 0 });
+  });
+
+  void renderCollections();
+  qs<HTMLButtonElement>("#cx-collection-create").addEventListener("click", () => void createCollectionFromForm());
+  qs<HTMLInputElement>("#cx-collection-name").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") void createCollectionFromForm();
   });
 
   qs<HTMLButtonElement>("#cx-forget-site-btn").addEventListener("click", () => {

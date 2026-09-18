@@ -65,7 +65,11 @@ export class ChatStreamController {
   }
 
   /** Returns false (and sends nothing) while a request is streaming. */
-  submit(question: string, conversationId: number | null): boolean {
+  submit(
+    question: string,
+    conversationId: number | null,
+    scope: { collectionId?: number | null } = {}
+  ): boolean {
     if (this._state === "streaming") return false;
     this._requestId = nextRequestId++;
     this.setState("streaming");
@@ -76,6 +80,7 @@ export class ChatStreamController {
       conversationId,
       shell: this.opts.shell,
       requestId: this._requestId,
+      ...(scope.collectionId != null ? { collectionId: scope.collectionId } : {}),
     });
     return true;
   }

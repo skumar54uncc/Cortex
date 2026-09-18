@@ -43,7 +43,7 @@ export async function describeTabForPopup(
 
   if (tabIncognito) {
     return {
-      line: "Private window — not indexed.",
+      line: "Private window: not indexed.",
       badge: "skipped",
     };
   }
@@ -64,7 +64,7 @@ export async function describeTabForPopup(
 
   if (shouldAlwaysSkipUrl(tabUrl)) {
     return {
-      line: "Skipped — sensitive or inbox/storage URL.",
+      line: "Skipped: sensitive or inbox/storage URL.",
       badge: "skipped",
     };
   }
@@ -108,7 +108,7 @@ export async function describeTabForPopup(
   }
 
   return {
-    line: "Not saved yet — keep this tab open briefly so Cortex can capture it.",
+    line: "Not saved yet. Keep this tab open briefly so Cortex can capture it.",
     badge: "neutral",
   };
 }

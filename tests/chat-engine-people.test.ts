@@ -54,3 +54,16 @@ describe("Ask answers people questions from the people store", () => {
     expect(search).toHaveBeenCalled();
   });
 });
+
+describe("Ask scoped to a collection (Phase 5.4)", () => {
+  it("passes the collection id to retrieval", async () => {
+    search.mockClear();
+    const events: string[] = [];
+    for await (const ev of runChat(null, "what about kombucha", settings, async () => null, { collectionId: 7 })) {
+      events.push(ev.type);
+    }
+    expect(search).toHaveBeenCalledTimes(1);
+    const opts = (search.mock.calls[0] as unknown as [string, unknown, { collectionId?: number }])[2];
+    expect(opts.collectionId).toBe(7);
+  });
+});

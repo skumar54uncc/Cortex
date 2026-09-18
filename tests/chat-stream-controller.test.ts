@@ -163,3 +163,28 @@ describe("ChatStreamController", () => {
     expect(cb.onError).toHaveBeenCalledWith({ message: "Too many chat requests.", userAction: "Wait." });
   });
 });
+
+describe("ChatStreamController collection scope", () => {
+  it("includes collectionId in CORTEX_CHAT_START when given", () => {
+    const sent: unknown[] = [];
+    const ctl = new ChatStreamController({
+      send: (m) => {
+        sent.push(m);
+      },
+      shell: false,
+      callbacks: {
+        onConversation: () => undefined,
+        onSources: () => undefined,
+        onToken: () => undefined,
+        onDone: () => undefined,
+        onError: () => undefined,
+        onAborted: () => undefined,
+      },
+    });
+    ctl.submit("q", null, { collectionId: 4 });
+    expect((sent[0] as { collectionId?: number }).collectionId).toBe(4);
+    ctl.abort();
+    ctl.submit("q2", null);
+    expect("collectionId" in (sent[2] as object)).toBe(false);
+  });
+});

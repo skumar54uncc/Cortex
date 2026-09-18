@@ -27,6 +27,7 @@ import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
 import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
 import { createForgetMenu } from "./forget-menu";
 import { renderPeopleView, type PersonRow } from "./people-view";
+import { createScopeBar, type ScopeCollection } from "./scope-bar";
 import { applyThemeToHost, themeTokensCss } from "../shared/theme";
 import { getUserSettings } from "../shared/extension-settings";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
@@ -351,6 +352,33 @@ ${shadowCss}`;
   shell
     .querySelector<HTMLElement>(".cortex-head-actions")
     ?.insertBefore(forgetMenu.root, shell.querySelector("[data-cortex-open-options]"));
+
+  /** Collection that Search and Ask are scoped to (Phase 5.4); null = all pages. */
+  let activeCollectionId: number | null = null;
+
+  const makeScopeBar = (onChange?: () => void) => {
+    const bar = createScopeBar({
+      list: async () => {
+        const res = (await sendRuntimeMessage({ type: "CORTEX_COLLECTIONS_LIST" })) as
+          | { ok?: boolean; collections?: ScopeCollection[] }
+          | undefined;
+        return res?.ok ? res.collections ?? [] : [];
+      },
+      addPage: async (collectionId) =>
+        ((await sendRuntimeMessage({ type: "CORTEX_COLLECTION_ADD_PAGE", collectionId })) as
+          | { ok?: boolean; error?: string }
+          | undefined) ?? { ok: false },
+      onChange: (id) => {
+        activeCollectionId = id;
+        onChange?.();
+      },
+      showAddPage: !overlayShellMode,
+      announce: announcePolite,
+      initial: activeCollectionId,
+    });
+    void bar.refresh();
+    return bar;
+  };
 
   let currentMode: OverlayMode = "search";
   let currentConversationId: number | null = null;
@@ -1222,7 +1250,7 @@ ${shadowCss}`;
       renderer,
       citedChunks: [],
     };
-    ctl.submit(question, currentConversationId);
+    ctl.submit(question, currentConversationId, { collectionId: activeCollectionId });
   }
 
   function digestRangeLabel(range: DigestRange): string {
@@ -1476,6 +1504,11 @@ ${shadowCss}`;
 
       const input = bodyEl.querySelector<HTMLInputElement>(".cortex-search-input")!;
       const results = bodyEl.querySelector<HTMLElement>(".cortex-results")!;
+      const searchScope = makeScopeBar(() => {
+        const q = input.value.trim();
+        if (q) void runSearch(q);
+      });
+      bodyEl.insertBefore(searchScope.root, results);
 
       results.innerHTML = `<div class="cortex-results-idle cortex-muted" role="status">Type to search your saved pages. Titles and passages stay local.</div>`;
 
@@ -1510,7 +1543,11 @@ ${shadowCss}`;
               scoreBreakdown: string;
             }[];
           }>((resolve, reject) => {
-            chrome.runtime.sendMessage({ type: "CORTEX_SEARCH", query: q }, (response) => {
+            chrome.runtime.sendMessage({
+              type: "CORTEX_SEARCH",
+              query: q,
+              ...(activeCollectionId != null ? { collectionId: activeCollectionId } : {}),
+            }, (response) => {
               const err = chrome.runtime.lastError;
               if (err) {
                 reject(new Error(err.message));
@@ -1752,6 +1789,7 @@ ${shadowCss}`;
 
       composer.appendChild(inputInner);
       composer.appendChild(sendRow);
+      main.appendChild(makeScopeBar().root);
       main.appendChild(messagesContainer);
       main.appendChild(composer);
       wrap.appendChild(sidebar);

@@ -91,6 +91,12 @@ import { canonicalLinkedInUrl, type LinkedInEntity } from "../lib/capture/linked
 import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { saveHighlight } from "../lib/highlights";
+import {
+  addPageToCollection,
+  createCollection,
+  deleteCollection,
+  listCollections,
+} from "../lib/collections";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { RateLimiter } from "../lib/rate-limiter";
 import {
@@ -539,7 +545,7 @@ async function runHistoryImportJob(
 }
 
 /** Runs BM25 + hybrid retrieval inside the offscreen document (stable lifetime). */
-function searchViaOffscreen(query: string): Promise<
+function searchViaOffscreen(query: string, collectionId?: number): Promise<
   | { ok: true; hits: SearchHitDTO[]; evidence?: string }
   | { ok: false; error: string }
 > {
@@ -547,7 +553,7 @@ function searchViaOffscreen(query: string): Promise<
     void ensureOffscreen()
       .then(() => {
         chrome.runtime.sendMessage(
-          { type: "CORTEX_SEARCH_RUN", query },
+          { type: "CORTEX_SEARCH_RUN", query, ...(collectionId != null ? { collectionId } : {}) },
           (
             res:
               | {
@@ -897,7 +903,7 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   void getUserSettings();
-  devLog.info("[Cortex] installed — local-only indexing (chunk-level)");
+  devLog.info("[Cortex] installed: local-only indexing (chunk-level)");
   scheduleStorageMaintenanceAlarm();
 
   configureSidePanelBehavior();
@@ -1003,10 +1009,58 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   });
 });
 
+/** Gate, then inject extract.js if needed and ask it to extract (Phase 5 task 0.2). */
+function requestTabExtraction(
+  tabId: number,
+  url: string,
+  sender: chrome.runtime.MessageSender,
+  gateOpts?: { bypassIndexingPause?: boolean }
+) {
+  return requestExtraction(tabId, {
+    gate: () => shouldSkipIndexing(url, sender, gateOpts),
+    deliver: (id) =>
+      new Promise<boolean>((resolve) => {
+        chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW" }, { frameId: 0 }, (res) => {
+          if (chrome.runtime.lastError) {
+            resolve(false);
+            return;
+          }
+          resolve((res as { ok?: boolean } | undefined)?.ok === true);
+        });
+      }),
+    inject: async (id, files) => {
+      await chrome.scripting.executeScript({ target: { tabId: id, frameIds: [0] }, files });
+    },
+  });
+}
+
+/**
+ * Explicit "add this page to a collection" (overlay button or context menu).
+ * Runs the privacy gate (the user's own pause does not block an explicit
+ * action; policy, incognito, blocklist and sensitive sites do).
+ */
+async function addTabPageToCollection(
+  collectionId: number,
+  tab: chrome.tabs.Tab
+): Promise<{ ok: boolean; error?: string }> {
+  if (tab.id == null || !tab.url) return { ok: false, error: "no_page" };
+  const sender = { tab } as chrome.runtime.MessageSender;
+  const gate = await shouldSkipIndexing(tab.url, sender, { bypassIndexingPause: true });
+  if (gate.skip) return { ok: false, error: gate.reason };
+  const res = await addPageToCollection(collectionId, tab.url, tab.title ?? "");
+  if (res.created) {
+    void requestTabExtraction(tab.id, tab.url, sender, { bypassIndexingPause: true });
+  }
+  return { ok: true };
+}
+
 // ---------------------------------------------------------------------------
 // Context menus (Phase 5.3 highlights, 5.4 collections). Rebuilt from settings.
 // ---------------------------------------------------------------------------
 const HIGHLIGHT_MENU_ID = "cortex-save-highlight";
+const COLLECTION_MENU_ID = "cortex-collections";
+const COLLECTION_ITEM_PREFIX = "cortex-collection-";
+const COLLECTION_NEW_ID = "cortex-collection-new";
 const WEB_PATTERNS = ["http://*/*", "https://*/*"];
 
 async function syncContextMenus(): Promise<void> {
@@ -1021,6 +1075,54 @@ async function syncContextMenus(): Promise<void> {
       documentUrlPatterns: WEB_PATTERNS,
     });
   }
+  chrome.contextMenus.create({
+    id: COLLECTION_MENU_ID,
+    title: "Add page to collection",
+    contexts: ["page"],
+    documentUrlPatterns: WEB_PATTERNS,
+  });
+  for (const c of await listCollections()) {
+    chrome.contextMenus.create({
+      id: `${COLLECTION_ITEM_PREFIX}${c.id}`,
+      parentId: COLLECTION_MENU_ID,
+      title: c.name.replace(/&/g, "&&"),
+      contexts: ["page"],
+      documentUrlPatterns: WEB_PATTERNS,
+    });
+  }
+  chrome.contextMenus.create({
+    id: COLLECTION_NEW_ID,
+    parentId: COLLECTION_MENU_ID,
+    title: "New collection...",
+    contexts: ["page"],
+    documentUrlPatterns: WEB_PATTERNS,
+  });
+}
+
+async function handleCollectionMenu(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): Promise<void> {
+  if (tab?.id == null) return;
+  const id = String(info.menuItemId);
+  let collectionId: number | null = null;
+  if (id === COLLECTION_NEW_ID) {
+    let name: string | null = null;
+    try {
+      const [r] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => window.prompt("Name for the new Cortex collection:", ""),
+      });
+      name = typeof r?.result === "string" ? r.result : null;
+    } catch {
+      name = null;
+    }
+    if (!name?.trim()) return;
+    collectionId = await createCollection(name);
+    await syncContextMenus();
+  } else if (id.startsWith(COLLECTION_ITEM_PREFIX)) {
+    collectionId = Number(id.slice(COLLECTION_ITEM_PREFIX.length));
+  }
+  if (collectionId == null || !Number.isFinite(collectionId)) return;
+  const res = await addTabPageToCollection(collectionId, tab);
+  flashBadge(tab.id, res.ok ? "+" : "!");
 }
 
 function flashBadge(tabId: number, text: string): void {
@@ -1068,6 +1170,10 @@ async function handleSaveHighlight(info: chrome.contextMenus.OnClickData, tab?: 
 chrome.contextMenus?.onClicked.addListener((info, tab) => {
   if (info.menuItemId === HIGHLIGHT_MENU_ID) {
     void handleSaveHighlight(info, tab).catch((e) => devLog.warn("[Cortex] highlight:", e));
+    return;
+  }
+  if (String(info.menuItemId).startsWith(COLLECTION_ITEM_PREFIX)) {
+    void handleCollectionMenu(info, tab).catch((e) => devLog.warn("[Cortex] collection menu:", e));
   }
 });
 
@@ -1178,22 +1284,53 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       return true;
     }
     if (!rateLimitHit(`extract:${tabId}`, 20, sendResponse)) return true;
-    void requestExtraction(tabId, {
-      gate: () => shouldSkipIndexing(url, sender),
-      deliver: (id) =>
-        new Promise<boolean>((resolve) => {
-          chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW" }, { frameId: 0 }, (res) => {
-            if (chrome.runtime.lastError) {
-              resolve(false);
-              return;
-            }
-            resolve((res as { ok?: boolean } | undefined)?.ok === true);
-          });
-        }),
-      inject: async (id, files) => {
-        await chrome.scripting.executeScript({ target: { tabId: id, frameIds: [0] }, files });
-      },
-    }).then(sendResponse);
+    void requestTabExtraction(tabId, url, sender).then(sendResponse);
+    return true;
+  }
+
+  if (type === "CORTEX_COLLECTIONS_LIST") {
+    void listCollections()
+      .then((collections) => sendResponse({ ok: true, collections }))
+      .catch((e) => sendResponse({ ok: false, error: String(e) }));
+    return true;
+  }
+
+  if (type === "CORTEX_COLLECTION_CREATE") {
+    if (!rateLimitHit("collection_create", 20, sendResponse)) return true;
+    void createCollection(String((msg as { name?: unknown }).name ?? ""))
+      .then(async (id) => {
+        await syncContextMenus().catch(() => undefined);
+        sendResponse({ ok: true, id });
+      })
+      .catch((e) => sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }));
+    return true;
+  }
+
+  if (type === "CORTEX_COLLECTION_DELETE") {
+    const id = (msg as { id?: unknown }).id;
+    if (typeof id !== "number" || !Number.isFinite(id)) {
+      sendResponse({ ok: false, error: "bad_id" });
+      return true;
+    }
+    void deleteCollection(id)
+      .then(async () => {
+        await syncContextMenus().catch(() => undefined);
+        sendResponse({ ok: true });
+      })
+      .catch((e) => sendResponse({ ok: false, error: String(e) }));
+    return true;
+  }
+
+  if (type === "CORTEX_COLLECTION_ADD_PAGE") {
+    // From the in-page overlay: the page is always the sender's own tab.
+    const cid = (msg as { collectionId?: unknown }).collectionId;
+    if (!sender.tab || typeof cid !== "number" || !Number.isFinite(cid)) {
+      sendResponse({ ok: false, error: "bad_request" });
+      return true;
+    }
+    void addTabPageToCollection(cid, sender.tab)
+      .then(sendResponse)
+      .catch((e) => sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }));
     return true;
   }
 
@@ -1307,10 +1444,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           typeof requestIdRaw === "number" && Number.isFinite(requestIdRaw)
             ? requestIdRaw
             : 0;
+        const cidRaw = (msg as { collectionId?: unknown }).collectionId;
         const inbound: CortexBusInbound = {
           kind: "chat-run",
           tabId,
           requestId,
+          ...(typeof cidRaw === "number" && Number.isFinite(cidRaw) ? { collectionId: cidRaw } : {}),
           conversationId,
           question,
           settings,
@@ -1496,7 +1635,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           });
           return;
         }
-        const result = await searchViaOffscreen(q);
+        const cidRaw = (msg as { collectionId?: unknown }).collectionId;
+        const collectionId =
+          typeof cidRaw === "number" && Number.isFinite(cidRaw) ? cidRaw : undefined;
+        const result = await searchViaOffscreen(q, collectionId);
         if (result.ok) {
           sendResponse({
             ok: true,
