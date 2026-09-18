@@ -157,7 +157,7 @@ sequenceDiagram
 
 1. **Extract** article-like text (`extract.ts`; Readability on sanitized DOM clone).
 2. **Summarize** (`summarize.ts`) — Chrome Summarizer API when available, else excerpt.
-3. **Chunk** (`chunking.ts`): ~**420 words** per chunk, ~**75 words** overlap, max **36 chunks/page**.
+3. **Chunk** (`chunking.ts`): **180 words** per chunk, **40 words** overlap, max **88 chunks/page** (release 1.2.0, `CHUNKING_VERSION` 2; 1.0.x used 420/75). Older documents are re-chunked in the background (`rechunk.ts`, `cortex-rechunk` alarm).
 4. **Upsert** `documents` + replace `chunks` for that URL.
 5. **Queue embeddings** per chunk: `ensureOffscreen()` → `CORTEX_EMBED_TEXT` → `setChunkEmbedding` / `markChunkEmbedFailed`.
 
@@ -240,6 +240,7 @@ Reduces false “strong” matches on **generic words only** (e.g. “career” 
 ### 6.8 Aggregation & filtering
 
 - Best chunk score **per document**
+- **Abstain floor**: when the best fused score is under `ABSTAIN_FLOOR` (0.18), search returns no hits and Ask answers "I didn't find that in your library."
 - **Adaptive cutoff** vs top score
 - Optional **time range** from `parseAskQuery` → filter via `visitLog` (may relax if empty)
 

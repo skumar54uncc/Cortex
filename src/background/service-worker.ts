@@ -12,6 +12,11 @@ import {
 } from "../db/schema";
 import { chunkArticle } from "../lib/chunking";
 import {
+  RECHUNK_ALARM,
+  RECHUNK_ALARM_PERIOD_MIN,
+  runRechunkBatch,
+} from "../lib/rechunk";
+import {
   isBlockedDomain,
   looksSensitiveHostname,
 } from "../lib/privacy";
@@ -881,9 +886,50 @@ chrome.runtime.onStartup.addListener(() => {
 
 function scheduleStorageMaintenanceAlarm(): void {
   chrome.alarms.create("cortex-evict-storage", { periodInMinutes: 360 });
+  // Phase 3.4: upgrade pages chunked with an older profile, a few per tick.
+  chrome.alarms.create(RECHUNK_ALARM, {
+    delayInMinutes: 1,
+    periodInMinutes: RECHUNK_ALARM_PERIOD_MIN,
+  });
+}
+
+/** True while the previous re-chunk batch still has embeddings in the queue. */
+let rechunkBusy = false;
+
+async function runRechunkTick(): Promise<void> {
+  if (rechunkBusy) return;
+  const settings = await getUserSettings();
+  if (settings.indexingPaused) return;
+  rechunkBusy = true;
+  try {
+    const res = await runRechunkBatch({
+      queueEmbeddings: async (chunkIds) => {
+        const rows = await db.chunks.bulkGet(chunkIds);
+        queueEmbeddingsForChunkIds(
+          rows
+            .filter((r): r is NonNullable<typeof r> => r != null && r.id != null)
+            .map((r) => ({ chunkId: r.id as number, text: r.text }))
+        );
+      },
+    });
+    if (res.remaining === 0) {
+      await chrome.alarms.clear(RECHUNK_ALARM);
+    }
+  } catch (e) {
+    devLog.warn("[Cortex] rechunk batch:", e);
+  } finally {
+    // Release only after this batch's embeddings drain, so batches never pile up.
+    void embedChain.finally(() => {
+      rechunkBusy = false;
+    });
+  }
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === RECHUNK_ALARM) {
+    void runRechunkTick();
+    return;
+  }
   if (alarm.name !== "cortex-evict-storage") return;
   void ensureIndexingHeadroom().catch(() => {
     /* ignore */

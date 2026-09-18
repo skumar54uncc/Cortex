@@ -40,7 +40,21 @@ export interface SearchResponseDTO {
   evidence?: string;
   /** Best-ranked chunk per document (RAG / chat) — only when requested */
   chunks?: ChunkWithDoc[];
+  /** True when the best fused score fell under ABSTAIN_FLOOR (Phase 3.3). */
+  abstained?: boolean;
 }
+
+/**
+ * Abstain floor on the best fused document score. Calibrated on the Phase 3
+ * eval corpus (160 pages, 32 negatives) with eval/src/calibrate-abstain.ts:
+ * 0.18 passes 27/32 negatives (84.4%) and abstains on 0/161 positives.
+ * 0.22 would pass 30/32 but abstains on one exploratory query (score 0.188).
+ * Negative top scores ranged 0.046 to 0.250; lowest positives 0.188, 0.252.
+ * See docs/release-1.2.0/phase-3.md. Override per call with opts.abstainFloor.
+ */
+export const ABSTAIN_FLOOR = 0.18;
+
+export const ABSTAIN_MESSAGE = "I didn't find that in your library.";
 
 /** Chunk plus parent document for grounded answers */
 export interface ChunkWithDoc extends ChunkRecord {
@@ -54,6 +68,8 @@ export interface AdvancedSearchOptions {
   forceTimeRange?: { start: number; end: number };
   /** Attach chunk payloads aligned with hits order */
   includeChunks?: boolean;
+  /** Best-score floor under which the search abstains; 0 disables. Default ABSTAIN_FLOOR. */
+  abstainFloor?: number;
 }
 
 const BM25_K1 = 1.35;
@@ -457,6 +473,15 @@ export async function runAdvancedSearch(
     .sort((a, b) => b.score - a.score);
 
   const topScore = ranked[0]?.score ?? 0;
+  const floor = opts?.abstainFloor ?? ABSTAIN_FLOOR;
+  if (floor > 0 && topScore < floor) {
+    return {
+      hits: [],
+      evidence: ABSTAIN_MESSAGE,
+      abstained: true,
+      ...(opts?.includeChunks ? { chunks: [] } : {}),
+    };
+  }
   const cutoff = Math.max(0.028, Math.min(0.26, topScore * 0.072));
 
   ranked = ranked.filter((x) => x.score >= cutoff);

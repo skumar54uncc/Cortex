@@ -22,11 +22,14 @@ function parseArgs(argv: string[]): {
   baseline: boolean;
   ci: boolean;
   override: boolean;
+  chunkProfile?: "compact" | "wide";
 } {
+  const cp = argv.find((a) => a.startsWith("--chunk-profile="))?.split("=")[1];
   return {
     baseline: argv.includes("--baseline"),
     ci: argv.includes("--ci"),
     override: argv.includes("--eval-override"),
+    chunkProfile: cp === "compact" || cp === "wide" ? cp : undefined,
   };
 }
 
@@ -40,8 +43,10 @@ export async function runEvalCli(argv: string[] = process.argv.slice(2)): Promis
   const pages = loadCorpusFromFile(pagesPath);
   const queries = loadQueriesFromFile(queriesPath);
 
-  console.info(`[eval] Indexing ${pages.length} pages…`);
-  const built = await buildTestDb(pages);
+  console.info(
+    `[eval] Indexing ${pages.length} pages (chunk profile: ${args.chunkProfile ?? "default"})`
+  );
+  const built = await buildTestDb(pages, { chunkProfile: args.chunkProfile });
   console.info(`[eval] Indexed ${built.documentCount} docs, ${built.chunkCount} chunks`);
 
   const urlToDocId = buildUrlToDocIdMap(pages);

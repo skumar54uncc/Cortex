@@ -101,6 +101,7 @@ describe("runAdvancedSearch", () => {
     mocks.chunks = clist;
     const res = await runAdvancedSearch("alpha keyword", async () => null, {
       maxHits: 2,
+      abstainFloor: 0,
     });
     expect(res.hits.length).toBe(2);
   });
@@ -138,7 +139,7 @@ describe("runAdvancedSearch", () => {
     const res = await runAdvancedSearch(
       "anything",
       async () => qv,
-      { maxHits: 5 }
+      { maxHits: 5, abstainFloor: 0 }
     );
     expect(res.hits.length).toBeGreaterThanOrEqual(1);
     const urls = res.hits.map((h) => h.url);
@@ -198,5 +199,44 @@ describe("runAdvancedSearch", () => {
     const res = await runAdvancedSearch("quantum physics", async () => null);
     expect(res.hits.some((h) => h.url.includes("strong"))).toBe(true);
     expect(res.hits.every((h) => h.score >= 0.028)).toBe(true);
+  });
+});
+
+describe("abstain floor (Phase 3.3)", () => {
+  const now = 1_700_000_000_000;
+
+  beforeEach(() => {
+    mocks.docs = [];
+    mocks.chunks = [];
+    mocks.urlsInRange = new Set();
+  });
+
+  it("exports a calibrated default floor", async () => {
+    const mod = await import("./search-engine");
+    expect(typeof mod.ABSTAIN_FLOOR).toBe("number");
+    expect(mod.ABSTAIN_FLOOR).toBeGreaterThan(0);
+    expect(mod.ABSTAIN_FLOOR).toBeLessThan(1);
+  });
+
+  it("returns no hits, abstained=true and the library message when the best score is under the floor", async () => {
+    mocks.docs = [doc(1, "https://a.test/a", "Alpha rockets", now)];
+    mocks.chunks = [ch(1, 1, "alpha rockets are fast and loud")];
+    const res = await runAdvancedSearch("alpha rockets", async () => null, {
+      abstainFloor: 5, // impossible to reach: forces abstain
+    });
+    expect(res.hits).toEqual([]);
+    expect(res.abstained).toBe(true);
+    expect(res.evidence).toMatch(/didn't find that in your library/i);
+    expect(res.chunks ?? []).toEqual([]);
+  });
+
+  it("does not abstain when the best score clears the floor, and never abstains with floor 0", async () => {
+    mocks.docs = [doc(1, "https://a.test/a", "Alpha rockets", now)];
+    mocks.chunks = [ch(1, 1, "alpha rockets are fast and loud")];
+    const strong = await runAdvancedSearch("alpha rockets", async () => null, { abstainFloor: 0.01 });
+    expect(strong.hits.length).toBe(1);
+    expect(strong.abstained).toBeFalsy();
+    const off = await runAdvancedSearch("zzz qqq", async () => null, { abstainFloor: 0 });
+    expect(off.abstained).toBeFalsy();
   });
 });

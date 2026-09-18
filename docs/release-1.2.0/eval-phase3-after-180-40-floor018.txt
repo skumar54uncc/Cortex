@@ -1,0 +1,69 @@
+
+> cortex@1.0.1 eval
+> tsx eval/src/cli.ts
+
+[eval] Indexing 160 pages (chunk profile: default)
+[eval] Indexed 160 docs, 490 chunks
+[eval] Running 193 queries…
+
+=== Cortex retrieval eval ===
+Run: 2026-09-18T15:18:58.810Z
+Cache: warm
+Latency ms — p50: 81.3  p95: 117.3  p99: 138.4
+
+By type: factual
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+99.6%        100.0%       99.5%        100.0%       100   
+
+By type: navigational
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+93.6%        100.0%       91.7%        100.0%       37    
+
+By type: exploratory
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+64.8%        100.0%       61.2%        100.0%       24    
+
+By type: negative
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+84.4%        84.4%        84.4%        84.4%        32    
+
+Overall
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+91.6%        97.4%        90.7%        84.4%        193   
+
+✗ q-243 (negative): "how to change a flat tire on a bicycle"
+  #1 score=0.225 doc=gen-synth-article-1 — cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #2 score=0.223 doc=gen-glacier-article-2 — acsero: how base camp uplink bandwidth changed glacier monitoring drones
+  #3 score=0.223 doc=gen-synth-article-2 — Patvol: how panel legend reprinting changed vintage synthesizer restoration
+
+✗ q-244 (negative): "best time of year to plant tomatoes"
+  #1 score=0.198 doc=gen-boardgames-profile-3 — Zanele Petrova - Lead Research at wardmeeix | LinkedIn
+  #2 score=0.197 doc=gen-coldchain-news-1 — cierstelix raises 42 million to expand cold chain pharmacy delivery in Halifax
+  #3 score=0.185 doc=gen-coldchain-table-1 — validated temperature log comparison, 2025 (table)
+
+✗ q-256 (negative): "what is the boiling point of nitrogen"
+  #1 score=0.250 doc=gen-coldchain-article-1 — ovagla: how delivery window promises changed cold chain pharmacy delivery
+  #2 score=0.246 doc=gen-coldchain-article-2 — manefroa: how insulated tote validation changed cold chain pharmacy delivery
+  #3 score=0.243 doc=gen-coldchain-article-4 — Therstela: how excursion event handling changed cold chain pharmacy delivery
+
+✗ q-263 (negative): "history of the printing press"
+  #1 score=0.217 doc=gen-boardgames-table-1 — tile-laying retail margin comparison, 2024 (table)
+  #2 score=0.151 doc=gen-boardgames-docs-2 — Tabwardo API reference: createTabwardoClient and retailTimeout
+  #3 score=0.148 doc=gen-boardgames-article-3 — wardplar: how rulebook draft reviews changed board game publishing
+
+✗ q-265 (negative): "sql join types inner left right full"
+  #1 score=0.197 doc=gen-signlang-transcript-1 — Episode 96: Kwame Ngata on grammar module ordering (video transcript)
+  #2 score=0.197 doc=gen-signlang-transcript-2 — Episode 12: Dmitri Ishikawa on fingerspelling drill pacing (video transcript)
+  #3 score=0.148 doc=gen-synth-transcript-1 — Episode 55: Kenji Quist on power rail replacement (video transcript)
+
+[eval] Wrote D:\Cortex\eval\results\run-2026-09-18T15-18-58-810Z.json
+
+=== Diff vs baseline ===
+nDCG@10 (overall)            0.7902 → 0.9161 (+0.1259, +15.9%) [improved]
+Recall@10 (overall)          0.8497 → 0.9741 (+0.1244, +14.6%) [ok]
+MRR@10 (overall)             0.7810 → 0.9074 (+0.1264, +16.2%) [ok]
+p95 latency ms               72.6296 → 117.2504 (+44.6208, +61.4%) [REGRESSION]
+nDCG@10 (factual)            0.9889 → 0.9963 (+0.0074, +0.7%) [ok]
+nDCG@10 (navigational)       0.9477 → 0.9362 (-0.0115, -1.2%) [ok]
+nDCG@10 (exploratory)        0.6479 → 0.6475 (-0.0004, -0.1%) [ok]
+nDCG@10 (negative)           0.0938 → 0.8438 (+0.7500, +800.0%) [improved]

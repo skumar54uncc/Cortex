@@ -1,4 +1,4 @@
-import { chunkArticle } from "../../src/lib/chunking.js";
+import { chunkArticle, CHUNK_PROFILES, type ChunkProfileName } from "../../src/lib/chunking.js";
 import {
   appendVisit,
   clearAllIndexedData,
@@ -20,7 +20,11 @@ export interface BuildTestDbResult {
   chunkCount: number;
 }
 
-export async function buildTestDb(pages: CorpusPage[]): Promise<BuildTestDbResult> {
+export async function buildTestDb(
+  pages: CorpusPage[],
+  opts: { chunkProfile?: ChunkProfileName } = {}
+): Promise<BuildTestDbResult> {
+  const profile = opts.chunkProfile ? CHUNK_PROFILES[opts.chunkProfile] : undefined;
   await clearAllIndexedData();
 
   const sorted = [...pages].sort((a, b) => a.id.localeCompare(b.id));
@@ -39,7 +43,7 @@ export async function buildTestDb(pages: CorpusPage[]): Promise<BuildTestDbResul
       lastVisitedAt: Number.isFinite(visitedAt) ? visitedAt : Date.now(),
     });
 
-    const parts = chunkArticle(page.extracted_text).map((c) => ({
+    const parts = chunkArticle(page.extracted_text, profile).map((c) => ({
       ord: c.ord,
       text: c.text,
     }));

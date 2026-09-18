@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from "dexie";
 
 import { CORTEX_DB_SCHEMA_VERSION } from "../shared/cortex-constants";
 import { CORTEX_EMBED_MODEL_ID } from "../shared/embed-model";
+import { CHUNKING_VERSION } from "../lib/chunking";
 
 export { CORTEX_DB_SCHEMA_VERSION };
 
@@ -26,6 +27,11 @@ export interface DocumentRecord {
   visitCount: number;
   /** 0–1 roll-up for ranking (visits, length — viewport scoring can refine later) */
   importanceScore: number;
+  /**
+   * Chunking profile version used for this document's chunks (Phase 3.2).
+   * Missing on 1.0.x rows; the background re-chunk job upgrades them.
+   */
+  chunkingVersion?: number;
 }
 
 export type EmbedState = "pending" | "embedded" | "failed" | "skipped";
@@ -223,6 +229,7 @@ export async function replaceChunksForDocument(
     });
     ids.push(id as number);
   }
+  await db.documents.update(documentId, { chunkingVersion: CHUNKING_VERSION });
   return ids;
 }
 

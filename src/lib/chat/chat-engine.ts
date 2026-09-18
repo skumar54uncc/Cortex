@@ -85,8 +85,11 @@ export async function* runChat(
         type: "error",
         data: {
           message: parsed.timeRange
-            ? `I don't have anything indexed from ${parsed.timeRange.label} matching your question.`
-            : `I don't have anything in your library matching that question.`,
+            ? `I didn't find that in your library for ${parsed.timeRange.label}.`
+            : "I didn't find that in your library.",
+          userAction: searchResults.abstained
+            ? "Try different words, or read the page again so Cortex can index it."
+            : undefined,
           recoverable: true,
         },
       };

@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SYNTHETIC_PAGES } from "../corpus/synthetic-seed";
 import { SYNTHETIC_QUERIES } from "../queries/synthetic-queries";
+import { GENERATED_PAGES, GENERATED_QUERIES, GENERATED_STATS } from "../corpus/generated-seed";
 
 const EVAL_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -20,8 +21,11 @@ function writeJsonl(path: string, rows: unknown[]): void {
 export function runSeed(): void {
   const pagesPath = join(EVAL_ROOT, "corpus", "pages.jsonl");
   const queriesPath = join(EVAL_ROOT, "queries", "retrieval.jsonl");
-  writeJsonl(pagesPath, SYNTHETIC_PAGES);
-  writeJsonl(queriesPath, SYNTHETIC_QUERIES);
-  console.info(`[eval:seed] Wrote ${SYNTHETIC_PAGES.length} pages → ${pagesPath}`);
-  console.info(`[eval:seed] Wrote ${SYNTHETIC_QUERIES.length} queries → ${queriesPath}`);
+  const pages = [...SYNTHETIC_PAGES, ...GENERATED_PAGES];
+  const queries = [...SYNTHETIC_QUERIES, ...GENERATED_QUERIES];
+  writeJsonl(pagesPath, pages);
+  writeJsonl(queriesPath, queries);
+  console.info(`[eval:seed] Wrote ${pages.length} pages -> ${pagesPath}`);
+  console.info(`[eval:seed] Wrote ${queries.length} queries -> ${queriesPath}`);
+  console.info(`[eval:seed] Generated: ${JSON.stringify(GENERATED_STATS)}`);
 }

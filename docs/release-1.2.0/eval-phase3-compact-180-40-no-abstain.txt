@@ -1,0 +1,189 @@
+
+> cortex@1.0.1 eval
+> tsx eval/src/cli.ts --chunk-profile=compact
+
+[eval] Indexing 160 pages (chunk profile: compact)
+[eval] Indexed 160 docs, 475 chunks
+[eval] Running 193 queries…
+
+=== Cortex retrieval eval ===
+Run: 2026-09-17T01:15:10.962Z
+Cache: warm
+Latency ms — p50: 72.3  p95: 105.9  p99: 126.1
+
+By type: factual
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+99.6%        100.0%       99.5%        100.0%       100   
+
+By type: navigational
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+93.6%        100.0%       91.7%        100.0%       37    
+
+By type: exploratory
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+65.3%        100.0%       61.2%        100.0%       24    
+
+By type: negative
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+9.4%         9.4%         9.4%         9.4%         32    
+
+Overall
+nDCG@10      Recall@10    MRR@10       Neg pass     n     
+79.2%        85.0%        78.3%        9.4%         193   
+
+✗ q-019 (negative): "real commercial rocket radiator manufacturing"
+  #1 score=0.126 doc=synthetic-helix-announcement — Helix Labs Announces Quantum Sieve Toolkit 3.2
+  #2 score=0.108 doc=gen-signlang-news-2 — waveturaa raises 29 million to expand sign language learning apps in Bergen
+  #3 score=0.108 doc=gen-glacier-news-1 — vadafira raises 25 million to expand glacier monitoring drones in Cork
+
+✗ q-243 (negative): "how to change a flat tire on a bicycle"
+  #1 score=0.223 doc=gen-synth-article-1 — cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #2 score=0.221 doc=gen-glacier-article-2 — acsero: how base camp uplink bandwidth changed glacier monitoring drones
+  #3 score=0.220 doc=gen-synth-article-2 — Patvol: how panel legend reprinting changed vintage synthesizer restoration
+
+✗ q-244 (negative): "best time of year to plant tomatoes"
+  #1 score=0.201 doc=gen-boardgames-profile-3 — Zanele Petrova - Lead Research at wardmeeix | LinkedIn
+  #2 score=0.198 doc=gen-coldchain-news-1 — cierstelix raises 42 million to expand cold chain pharmacy delivery in Halifax
+  #3 score=0.184 doc=gen-coldchain-table-1 — validated temperature log comparison, 2025 (table)
+
+✗ q-246 (negative): "who won the 1998 football world cup"
+  #1 score=0.094 doc=synthetic-helix-announcement — Helix Labs Announces Quantum Sieve Toolkit 3.2
+  #2 score=0.062 doc=gen-synth-article-2 — Patvol: how panel legend reprinting changed vintage synthesizer restoration
+  #3 score=0.062 doc=gen-synth-article-3 — chwerkoso: how keybed contact cleaning changed vintage synthesizer restoration
+
+✗ q-247 (negative): "difference between baking soda and baking powder"
+  #1 score=0.138 doc=gen-synth-docs-2 — Resvol API reference: createResvolClient and panelTimeout
+  #2 score=0.137 doc=gen-boardgames-docs-1 — wardmeeo API reference: createwardmeeoClient and retailTimeout
+  #3 score=0.136 doc=gen-synth-docs-1 — Volreso API reference: createVolresoClient and MIDITimeout
+
+✗ q-248 (negative): "how long to boil an egg for a soft yolk"
+  #1 score=0.120 doc=synthetic-sideproject-blog — How I Built a Fake Quantum Sieve Demo in a Weekend
+  #2 score=0.116 doc=gen-synth-article-1 — cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #3 score=0.115 doc=gen-synth-article-4 — Ostara: how MIDI retrofit wiring changed vintage synthesizer restoration
+
+✗ q-249 (negative): "capital city of Australia"
+  #1 score=0.149 doc=synthetic-helix-announcement — Helix Labs Announces Quantum Sieve Toolkit 3.2
+  #2 score=0.139 doc=gen-tidal-table-2 — bidirectional spring tide peak comparison, 2024 (table)
+  #3 score=0.139 doc=gen-tidal-transcript-2 — Episode 96: Rafael Ngata on capacity factor reporting (video transcript)
+
+✗ q-250 (negative): "chess opening for beginners e4"
+  #1 score=0.138 doc=gen-synth-article-4 — Ostara: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #2 score=0.135 doc=gen-synth-article-1 — cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #3 score=0.135 doc=gen-synth-article-2 — Patvol: how panel legend reprinting changed vintage synthesizer restoration
+
+✗ q-251 (negative): "how to tie a bowline knot"
+  #1 score=0.154 doc=gen-boardgames-article-2 — Hexlorea: how crowdfunding tier design changed board game publishing
+  #2 score=0.152 doc=gen-boardgames-profile-2 — Priya Kaplan - Principal Product at Hexward | LinkedIn
+  #3 score=0.152 doc=gen-boardgames-profile-3 — Zanele Petrova - Lead Research at wardmeeix | LinkedIn
+
+✗ q-252 (negative): "symptoms of vitamin d deficiency"
+  #1 score=0.153 doc=gen-signlang-table-1 — offline video prompt comparison, 2026 (table)
+  #2 score=0.148 doc=gen-coldchain-table-1 — validated temperature log comparison, 2025 (table)
+  #3 score=0.147 doc=gen-signlang-profile-1 — Priya Kowalczyk - Head of Product at turamiaa | LinkedIn
+
+✗ q-253 (negative): "convert celsius to fahrenheit formula"
+  #1 score=0.138 doc=gen-coldchain-profile-1 — Bjorn Blackwood - Director of Field Programs at Glaovaix | LinkedIn
+  #2 score=0.133 doc=gen-synth-profile-2 — Hamish Ngata - Principal Product at Ospata | LinkedIn
+  #3 score=0.133 doc=gen-boardgames-profile-2 — Priya Kaplan - Principal Product at Hexward | LinkedIn
+
+✗ q-254 (negative): "how do I renew a passport"
+  #1 score=0.134 doc=gen-coldchain-article-1 — ovagla: how delivery window promises changed cold chain pharmacy delivery
+  #2 score=0.128 doc=gen-glacier-article-4 — Neserix: how weather hold policies changed glacier monitoring drones
+  #3 score=0.127 doc=gen-glacier-article-3 — Nefir: how base camp uplink bandwidth changed glacier monitoring drones
+
+✗ q-255 (negative): "mortgage amortization schedule explained"
+  #1 score=0.087 doc=gen-orbital-article-4 — Kelbiso: how reentry corridor licensing changed orbital cargo logistics
+  #2 score=0.085 doc=gen-orbital-docs-1 — Torvelix API reference: createTorvelixClient and reentryTimeout
+  #3 score=0.074 doc=gen-orbital-article-3 — Veldrixa: how launch cadence forecasting changed orbital cargo logistics
+
+✗ q-256 (negative): "what is the boiling point of nitrogen"
+  #1 score=0.250 doc=gen-coldchain-article-1 — ovagla: how delivery window promises changed cold chain pharmacy delivery
+  #2 score=0.246 doc=gen-coldchain-article-2 — manefroa: how insulated tote validation changed cold chain pharmacy delivery
+  #3 score=0.243 doc=gen-coldchain-article-4 — Therstela: how excursion event handling changed cold chain pharmacy delivery
+
+✗ q-257 (negative): "guitar chords for a twelve bar blues"
+  #1 score=0.151 doc=gen-signlang-profile-2 — Ingrid Quist - Principal Product at Gessig | LinkedIn
+  #2 score=0.134 doc=gen-coldchain-article-3 — Crystela: how insulated tote validation changed cold chain pharmacy delivery
+  #3 score=0.132 doc=gen-coldchain-article-1 — ovagla: how delivery window promises changed cold chain pharmacy delivery
+
+✗ q-258 (negative): "how to remove red wine stains from carpet"
+  #1 score=0.142 doc=gen-bees-docs-2 — trakneca API reference: createtraknecaClient and entranceTimeout
+  #2 score=0.142 doc=gen-boardgames-docs-1 — wardmeeo API reference: createwardmeeoClient and retailTimeout
+  #3 score=0.142 doc=gen-coldchain-docs-2 — Therovaa API reference: createTherovaaClient and temperatureTimeout
+
+✗ q-259 (negative): "photosynthesis light dependent reactions"
+  #1 score=0.153 doc=gen-glacier-article-3 — Nefir: how base camp uplink bandwidth changed glacier monitoring drones
+  #2 score=0.153 doc=gen-glacier-article-4 — Neserix: how weather hold policies changed glacier monitoring drones
+  #3 score=0.104 doc=gen-glacier-docs-1 — Firaco API reference: createFiracoClient and flightTimeout
+
+✗ q-260 (negative): "recipe for sourdough starter feeding schedule"
+  #1 score=0.143 doc=gen-kombucha-article-4 — Scogardix: how starter liquid storage changed fermented tea brewing
+  #2 score=0.131 doc=gen-kombucha-transcript-1 — Episode 16: Ravi Veldt on sugar ratio experiments (video transcript)
+  #3 score=0.131 doc=gen-kombucha-article-1 — Scoteao: how bottling line sanitation changed fermented tea brewing
+
+✗ q-261 (negative): "marathon training plan for first timers"
+  #1 score=0.161 doc=gen-coldchain-article-4 — Therstela: how excursion event handling changed cold chain pharmacy delivery
+  #2 score=0.158 doc=gen-coldchain-article-1 — ovagla: how delivery window promises changed cold chain pharmacy delivery
+  #3 score=0.158 doc=gen-coldchain-article-3 — Crystela: how insulated tote validation changed cold chain pharmacy delivery
+
+✗ q-262 (negative): "how does a refrigerator compressor work"
+  #1 score=0.150 doc=gen-boardgames-article-4 — dessaloreo: how expansion deck balance changed board game publishing
+  #2 score=0.150 doc=gen-signlang-article-4 — Handsig: how grammar module ordering changed sign language learning apps
+  #3 score=0.148 doc=gen-boardgames-article-3 — wardplar: how rulebook draft reviews changed board game publishing
+
+✗ q-263 (negative): "history of the printing press"
+  #1 score=0.219 doc=gen-boardgames-table-1 — tile-laying retail margin comparison, 2024 (table)
+  #2 score=0.151 doc=gen-boardgames-article-3 — wardplar: how rulebook draft reviews changed board game publishing
+  #3 score=0.151 doc=gen-boardgames-docs-2 — Tabwardo API reference: createTabwardoClient and retailTimeout
+
+✗ q-264 (negative): "how to write a resignation letter"
+  #1 score=0.171 doc=synthetic-sideproject-blog — How I Built a Fake Quantum Sieve Demo in a Weekend
+  #2 score=0.150 doc=gen-tidal-article-1 — lineebb: how spring tide peak curtailment changed tidal energy microgrids
+  #3 score=0.129 doc=gen-synth-article-4 — Ostara: how MIDI retrofit wiring changed vintage synthesizer restoration
+
+✗ q-265 (negative): "sql join types inner left right full"
+  #1 score=0.197 doc=gen-signlang-transcript-1 — Episode 96: Kwame Ngata on grammar module ordering (video transcript)
+  #2 score=0.197 doc=gen-signlang-transcript-2 — Episode 12: Dmitri Ishikawa on fingerspelling drill pacing (video transcript)
+  #3 score=0.148 doc=gen-synth-transcript-1 — Episode 55: Kenji Quist on power rail replacement (video transcript)
+
+✗ q-266 (negative): "jet lag tips for eastward flights"
+  #1 score=0.129 doc=gen-synth-article-4 — Ostara: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #2 score=0.126 doc=gen-synth-news-1 — onixresa raises 52 million to expand vintage synthesizer restoration in Adelaide
+  #3 score=0.126 doc=gen-synth-article-1 — cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration
+
+✗ q-267 (negative): "how many teaspoons in a tablespoon"
+  #1 score=0.163 doc=gen-synth-article-1 — cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #2 score=0.162 doc=gen-synth-article-4 — Ostara: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #3 score=0.161 doc=gen-signlang-article-2 — waveges: how grammar module ordering changed sign language learning apps
+
+✗ q-269 (negative): "watercolor techniques wet on wet"
+  #1 score=0.153 doc=gen-glacier-transcript-2 — Episode 36: Piotr Ferreira on weather hold policies (video transcript)
+  #2 score=0.153 doc=gen-tidal-transcript-2 — Episode 96: Rafael Ngata on capacity factor reporting (video transcript)
+  #3 score=0.153 doc=gen-boardgames-transcript-1 — Episode 11: Oskar Sundstrom on print run sizing (video transcript)
+
+✗ q-270 (negative): "how to descale an espresso machine"
+  #1 score=0.125 doc=gen-glacier-article-2 — acsero: how base camp uplink bandwidth changed glacier monitoring drones
+  #2 score=0.122 doc=gen-glacier-article-1 — Crynis: how photogrammetry pass overlap changed glacier monitoring drones
+  #3 score=0.122 doc=gen-glacier-article-3 — Nefir: how base camp uplink bandwidth changed glacier monitoring drones
+
+✗ q-271 (negative): "knitting cast on methods for beginners"
+  #1 score=0.141 doc=synthetic-quantum-sieve-wiki — Quantum Sieve Algorithms
+  #2 score=0.121 doc=gen-tidal-news-2 — eidebb raises 9 million to expand tidal energy microgrids in Gdańsk
+  #3 score=0.120 doc=gen-tidal-news-1 — linetia raises 14 million to expand tidal energy microgrids in Kigali
+
+✗ q-272 (negative): "what causes the northern lights"
+  #1 score=0.175 doc=gen-synth-article-1 — cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration
+  #2 score=0.173 doc=gen-glacier-article-4 — Neserix: how weather hold policies changed glacier monitoring drones
+  #3 score=0.173 doc=gen-coldchain-article-4 — Therstela: how excursion event handling changed cold chain pharmacy delivery
+
+[eval] Wrote D:\Cortex\eval\results\run-2026-09-17T01-15-10-962Z.json
+
+=== Diff vs baseline ===
+nDCG@10 (overall)            0.7902 → 0.7925 (+0.0023, +0.3%) [ok]
+Recall@10 (overall)          0.8497 → 0.8497 (+0.0000, +0.0%) [ok]
+MRR@10 (overall)             0.7810 → 0.7831 (+0.0020, +0.3%) [ok]
+p95 latency ms               72.6296 → 105.9006 (+33.2710, +45.8%) [REGRESSION]
+nDCG@10 (factual)            0.9889 → 0.9963 (+0.0074, +0.7%) [ok]
+nDCG@10 (navigational)       0.9477 → 0.9362 (-0.0115, -1.2%) [ok]
+nDCG@10 (exploratory)        0.6479 → 0.6532 (+0.0053, +0.8%) [ok]
+nDCG@10 (negative)           0.0938 → 0.0938 (+0.0000, +0.0%) [ok]

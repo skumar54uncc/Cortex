@@ -37,3 +37,10 @@ Warm-cache run ~8s total for 5 pages / 20 queries. Do **not** tune production se
 ## Existing tests
 
 - `tests/eval/search-eval.test.ts` (mocked DB) remains in `npm test`; this harness is the CI gate for retrieval file changes.
+
+## Release 1.2.0, Phase 3 (2026-09-18)
+
+- Corpus expanded to 160 pages and 193 queries (`corpus/generated-seed.ts`), including 32 negatives.
+- 180/40 chunking beat 420/75 by 0.23 nDCG points with a Recall@10 tie; p95 latency roughly 1.6x because the chunk count doubles.
+- Abstain floor 0.18 on the best fused score: negatives pass 84.4% (was 9.4%) with no loss on the 161 positive queries. Recalibrate with `npx tsx eval/src/calibrate-abstain.ts <run.json>` after ranking changes.
+- Full tables: `docs/release-1.2.0/phase-3.md`.
