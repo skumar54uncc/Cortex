@@ -1886,3 +1886,12 @@ a.cortex-person-name:focus-visible {
   outline: 2px solid var(--cx-accent);
   outline-offset: 1px;
 }
+
+/* Per-kind detail on a search hit (release 1.2.0): "PDF page 4", "Video at 12:40". */
+.cortex-hit-kind {
+  color: var(--cx-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.cortex-hit-kind::before {
+  content: "\00B7\00A0";
+}

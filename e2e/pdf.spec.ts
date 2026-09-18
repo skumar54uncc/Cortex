@@ -226,6 +226,18 @@ test("an answer citing a PDF opens the PDF at the cited page, and the card says 
     const cards = await findInShadow(page, (n, a) => n === "A" && (a.class ?? "").split(" ").includes("cortex-source-item"));
     expect(cards[0]?.attrs.href).toBe(`${PDF_URL}#page=2`);
     expect(cards[0]?.text).toContain("PDF page 2");
+
+    // Search results link the same way.
+    await clickInShadow(page, "cortex-tab", "Search");
+    await clickInShadow(page, "cortex-search-input");
+    await page.keyboard.type("fluxgate recalibrated pdf");
+    await expect
+      .poll(async () => (await findInShadow(page, (n, a) => n === "A" && a.class === "cortex-hit-link")).map((h) => h.attrs.href), {
+        timeout: 20_000,
+      })
+      .toContain(`${PDF_URL}#page=2`);
+    const hit = (await findInShadow(page, (n, a) => n === "A" && a.class === "cortex-hit-link")).find((h) => h.attrs.href.endsWith("#page=2"));
+    expect(hit?.text).toContain("PDF page 2");
   } finally {
     cdp.close();
   }

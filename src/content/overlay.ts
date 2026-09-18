@@ -35,6 +35,8 @@ import type { ChunkWithDoc } from "../lib/search-engine";
 import { CHAT_LIMITS } from "../lib/limits";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { buildSourceItem, citationLink, type StoredCitation } from "./citation-cards";
+import { citationDetail, citationHref } from "../lib/kind-labels";
+import type { ChunkKind, ChunkLocator } from "../db/schema";
 import { ERROR_CODES } from "../lib/errors";
 
 let overlayHost: HTMLDivElement | null = null;
@@ -1510,6 +1512,8 @@ ${shadowCss}`;
               grounding?: number;
               matchReason?: string;
               scoreBreakdown: string;
+              kind?: ChunkKind;
+              locator?: ChunkLocator;
             }[];
           }>((resolve, reject) => {
             chrome.runtime.sendMessage({
@@ -1584,13 +1588,15 @@ ${shadowCss}`;
                 ? `<div class="cortex-hit-extra">${esc(h.matchReason)}</div>`
                 : "";
 
+              // Per-kind target and detail (release 1.2.0): video moment, PDF page, table rows.
+              const kindDetail = citationDetail(h);
               return `
 <div class="cortex-hit-card" role="listitem">
-  <a class="cortex-hit-link" href="${safeHttpUrl(h.url)}" target="_blank" rel="noreferrer">
+  <a class="cortex-hit-link" href="${esc(citationHref(h, h.url) ?? "#")}" target="_blank" rel="noreferrer">
     <span class="cortex-hit-favicon-wrap">${favHtml}</span>
     <span class="cortex-hit-main-col">
       <span class="cortex-hit-title">${esc(h.title)}</span>
-      <span class="cortex-hit-host">${esc(hostName)}</span>
+      <span class="cortex-hit-host">${esc(hostName)}${kindDetail ? ` <span class="cortex-hit-kind">${esc(kindDetail)}</span>` : ""}</span>
       <span class="cortex-hit-snippet">${esc(h.snippet)}</span>
     </span>
   </a>

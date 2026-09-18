@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { test, expect, articleHtml, LOREM_PARAGRAPHS, EXTENSION_PATH } from "./fixtures";
+import { test, expect, articleHtml, LOREM_PARAGRAPHS, EXTENSION_PATH, openOverlayViaToolbar } from "./fixtures";
 
 /**
  * The overlay bundle is injected on demand: content.js (always on) must not
@@ -31,20 +31,7 @@ test("content.js carries no overlay UI; toolbar click injects overlay.js and ope
   // Content script present but overlay not mounted yet.
   await expect.poll(() => page.evaluate(() => Boolean(document.getElementById("cortex-overlay-root")))).toBe(false);
 
-  // Simulate the toolbar click inside the service worker.
-  const dispatched = await serviceWorker.evaluate(async () => {
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    if (!tab) return "no-active-tab";
-    const ev = chrome.action.onClicked as unknown as { dispatch?: (t: chrome.tabs.Tab) => void };
-    if (typeof ev.dispatch !== "function") return "no-dispatch";
-    ev.dispatch(tab);
-    return "ok";
-  });
-  expect(dispatched).toBe("ok");
-
-  await expect
-    .poll(() => page.evaluate(() => Boolean(document.getElementById("cortex-overlay-root")?.isConnected)), {
-      timeout: 15_000,
-    })
-    .toBe(true);
+  // Simulate the toolbar click inside the service worker (dispatched to this page's tab).
+  await openOverlayViaToolbar(page, serviceWorker);
+  expect(await page.evaluate(() => Boolean(document.getElementById("cortex-overlay-root")?.isConnected))).toBe(true);
 });

@@ -71,19 +71,25 @@ export async function openOverlayViaToolbar(
   serviceWorker: Worker
 ): Promise<void> {
   await page.bringToFront();
-  // The first dispatch on a fresh profile can race the tab becoming active;
-  // retry a few times rather than waiting 15s on one attempt.
+  // Dispatch to this page's own tab, found by URL. "The active tab" is not
+  // reliable here: on a fresh profile the onboarding tab (an extension page,
+  // so its URL reads as "") can still be the last focused one, and a click
+  // dispatched to it never opens the overlay on the test page.
   let opened = false;
   for (let attempt = 0; attempt < 3 && !opened; attempt++) {
-    const dispatched = await serviceWorker.evaluate(async () => {
-      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      if (!tab) return "no-active-tab";
+    const dispatched = await serviceWorker.evaluate(async (url) => {
+      const tab = (await chrome.tabs.query({})).find((t) => t.url === url);
+      if (!tab) return "no-tab-for-page";
       const ev = chrome.action.onClicked as unknown as { dispatch?: (t: chrome.tabs.Tab) => void };
       if (typeof ev.dispatch !== "function") return "no-dispatch";
       ev.dispatch(tab);
       return "ok";
-    });
-    if (dispatched !== "ok") throw new Error(`toolbar dispatch failed: ${dispatched}`);
+    }, page.url());
+    if (dispatched === "no-dispatch") throw new Error("toolbar dispatch failed: no-dispatch");
+    if (dispatched !== "ok") {
+      await page.waitForTimeout(250);
+      continue;
+    }
     opened = await page
       .waitForFunction(
         () => Boolean(document.getElementById("cortex-overlay-root")?.isConnected),

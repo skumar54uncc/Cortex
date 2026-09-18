@@ -51,7 +51,7 @@ describe("backup UI", () => {
   });
 
   it("markdown export decodes the zip bytes", async () => {
-    const send = vi.fn(async () => ({ ok: true, filename: "cortex-notes.zip", mime: "application/zip", base64: btoa("PK") }));
+    const send = vi.fn(async () => ({ ok: true, filename: "cortex-notes.zip", mime: "application/zip", base64: btoa("PK\u0003\u0004") }));
     const { download, $ } = setup(send);
     $<HTMLButtonElement>("#cx-export-md").click();
     await vi.waitFor(() => expect(download).toHaveBeenCalled());

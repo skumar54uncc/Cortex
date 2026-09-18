@@ -63,7 +63,7 @@ test("export notes and backup, wipe, restore from the file: the page is back and
 
   const md = await saved(options, () => options.click("#cx-export-md"));
   expect(md.name).toMatch(/^cortex-notes-\d{4}-\d{2}-\d{2}\.zip$/);
-  expect(md.bytes.subarray(0, 4).toString("latin1")).toBe("PK");
+  expect(md.bytes.subarray(0, 4).toString("latin1")).toBe("PK\u0003\u0004");
   expect(md.bytes.toString("utf8")).toContain("notes/quillfeather-glacier-survey.md");
   await expect(options.locator("#cx-export-feedback")).toHaveText(`Saved ${md.name}.`);
 
