@@ -74,6 +74,9 @@ function boundaryOf(root: HTMLElement): Node {
   return rootNode instanceof ShadowRoot ? rootNode.host : root;
 }
 
+const RECLAIM_LIMIT = 3;
+const RECLAIM_WINDOW_MS = 1000;
+
 export function createFocusTrap(root: HTMLElement, opts: FocusTrapOptions): FocusTrap {
   const doc = opts.ownerDocument ?? root.ownerDocument;
   let active = false;
@@ -105,12 +108,50 @@ export function createFocusTrap(root: HTMLElement, opts: FocusTrapOptions): Focu
     }
   };
 
+  // Pages with their own focus management (github.com) move focus back in
+  // their focusin handlers. Reclaiming synchronously made the two handlers
+  // re-enter each other until the stack overflowed. Reclaim after the event,
+  // at most RECLAIM_LIMIT times per window, then let the page keep focus
+  // until the user focuses the overlay again.
+  let reclaimTimes: number[] = [];
+  let yielded = false;
+  let scheduled = false;
+  let reclaiming = false;
+
+  const focusIsInside = (): boolean => {
+    const cur = doc.activeElement;
+    return cur != null && (cur === boundaryOf(root) || root.contains(cur));
+  };
+
   const onFocusIn = (ev: FocusEvent): void => {
     if (!active) return;
     const path = ev.composedPath();
-    if (path.includes(root) || path.includes(boundaryOf(root))) return;
-    const first = getTabbable(root)[0];
-    first?.focus({ preventScroll: true });
+    if (path.includes(root) || path.includes(boundaryOf(root))) {
+      if (!reclaiming) {
+        yielded = false;
+        reclaimTimes = [];
+      }
+      return;
+    }
+    if (yielded || scheduled) return;
+    const now = Date.now();
+    reclaimTimes = reclaimTimes.filter((t) => now - t < RECLAIM_WINDOW_MS);
+    if (reclaimTimes.length >= RECLAIM_LIMIT) {
+      yielded = true;
+      return;
+    }
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      if (!active || yielded || focusIsInside()) return;
+      reclaimTimes.push(Date.now());
+      reclaiming = true;
+      try {
+        getTabbable(root)[0]?.focus({ preventScroll: true });
+      } finally {
+        reclaiming = false;
+      }
+    });
   };
 
   return {

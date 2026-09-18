@@ -101,7 +101,7 @@ describe("createFocusTrap", () => {
     expect(document.activeElement).toBe(restoreTo);
   });
 
-  it("focus that escapes the root is pulled back to the first tabbable", () => {
+  it("focus that escapes the root is pulled back to the first tabbable", async () => {
     const { root, a } = build();
     const trap = createFocusTrap(root, { restoreTo, onEscape: () => undefined });
     trap.activate();
@@ -109,6 +109,7 @@ describe("createFocusTrap", () => {
     const outside = document.createElement("input");
     document.body.appendChild(outside);
     outside.focus();
+    await Promise.resolve();
     expect(document.activeElement).toBe(a);
     trap.deactivate();
     outside.focus();
@@ -197,7 +198,7 @@ describe("createFocusTrap inside a closed shadow root (production overlay)", () 
     trap.deactivate();
   });
 
-  it("Tab wraps using the shadow root's active element, and outside focus is pulled back", () => {
+  it("Tab wraps using the shadow root's active element, and outside focus is pulled back", async () => {
     const { panel, a, b, c, active } = buildShadow();
     const trap = createFocusTrap(panel, { restoreTo: null, onEscape: () => undefined });
     trap.activate();
@@ -213,7 +214,58 @@ describe("createFocusTrap inside a closed shadow root (production overlay)", () 
     const outside = document.createElement("input");
     document.body.appendChild(outside);
     outside.focus();
+    await Promise.resolve();
     expect(active()).toBe(a);
+    trap.deactivate();
+  });
+});
+
+describe("createFocusTrap against a page that also manages focus (found on github.com)", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("never re-enters inside a focus event and stops fighting after a few reclaims", async () => {
+    const { root, a } = build();
+    const pageEl = document.createElement("button");
+    document.body.appendChild(pageEl);
+    // A page script that insists on keeping focus on its own element.
+    let pageRefocus = 0;
+    const insist = (ev: FocusEvent) => {
+      if (ev.target !== pageEl) {
+        pageRefocus += 1;
+        pageEl.focus();
+      }
+    };
+    document.addEventListener("focusin", insist);
+    const trap = createFocusTrap(root, { restoreTo: null, onEscape: () => undefined });
+    trap.activate();
+    const reclaims = vi.spyOn(a, "focus");
+
+    expect(() => pageEl.focus()).not.toThrow();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+
+    expect(reclaims.mock.calls.length).toBeLessThanOrEqual(3);
+    expect(pageRefocus).toBeLessThanOrEqual(3);
+    expect(document.activeElement).toBe(pageEl);
+    document.removeEventListener("focusin", insist);
+    trap.deactivate();
+  });
+
+  it("after yielding, focusing inside the overlay again re-arms the trap", async () => {
+    const { root, a, b } = build();
+    const outside = document.createElement("input");
+    document.body.appendChild(outside);
+    const trap = createFocusTrap(root, { restoreTo: null, onEscape: () => undefined });
+    trap.activate();
+    for (let i = 0; i < 4; i++) {
+      outside.focus();
+      await Promise.resolve();
+    }
+    b.focus();
+    outside.focus();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(a);
     trap.deactivate();
   });
 });

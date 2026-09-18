@@ -78,7 +78,8 @@ export async function openOverlayViaToolbar(
   let opened = false;
   for (let attempt = 0; attempt < 3 && !opened; attempt++) {
     const dispatched = await serviceWorker.evaluate(async (url) => {
-      const tab = (await chrome.tabs.query({})).find((t) => t.url === url);
+      const matches = (await chrome.tabs.query({})).filter((t) => t.url === url);
+      const tab = matches.find((t) => t.active) ?? matches[matches.length - 1];
       if (!tab) return "no-tab-for-page";
       const ev = chrome.action.onClicked as unknown as { dispatch?: (t: chrome.tabs.Tab) => void };
       if (typeof ev.dispatch !== "function") return "no-dispatch";
