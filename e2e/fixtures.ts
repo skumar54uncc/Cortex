@@ -72,9 +72,10 @@ export async function openOverlayViaToolbar(
 ): Promise<void> {
   await page.bringToFront();
   // Dispatch to this page's own tab, found by URL. "The active tab" is not
-  // reliable here: on a fresh profile the onboarding tab (an extension page,
-  // so its URL reads as "") can still be the last focused one, and a click
-  // dispatched to it never opens the overlay on the test page.
+  // reliable here: on a fresh profile another tab whose navigation has not
+  // committed yet (URL still ""), most likely the onboarding tab opened on
+  // install, can be the last focused one, and a click dispatched to it never
+  // opens the overlay on the test page.
   let opened = false;
   for (let attempt = 0; attempt < 3 && !opened; attempt++) {
     const dispatched = await serviceWorker.evaluate(async (url) => {

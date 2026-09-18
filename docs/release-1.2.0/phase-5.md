@@ -52,7 +52,7 @@ Branch `release/1.2.0`. Plan: `docs/release-1.2.0/features-plan.md`. Every featu
 ## Also fixed in this phase
 
 - `src/search/search-shell.ts` rendered a load error with `innerHTML` and the raw error message (present since 1.0.x). Now `textContent`, with a test.
-- E2E flake "overlay did not open after 3 toolbar dispatches" (about 1 in 5 runs in isolation). Root cause, found by instrumenting the helper: the dispatch went to the "active" tab, which on a fresh profile can still be the onboarding tab (an extension page, whose URL reads as empty), so the click never reached the test page. The helper now dispatches to the test page's own tab. Before: 1 failure in 5 runs; after: 60 of 60 runs of the two affected specs passed.
+- E2E flake "overlay did not open after 3 toolbar dispatches" (about 1 in 5 runs in isolation). Root cause, found by instrumenting the helper: the dispatch went to the "active" tab, and in the failing runs that tab's URL was still empty (its navigation had not committed; most likely the onboarding tab that opens on install), so the click never reached the test page. The helper now dispatches to the test page's own tab. Before: 1 failure in 5 runs; after: 60 of 60 runs of the two affected specs passed.
 - Tool note: some shell heredocs turned `\\` escapes into control characters in generated files. A scan of all source, test, style and doc files now finds no control characters.
 
 ## Gates (final Phase 5 state)
