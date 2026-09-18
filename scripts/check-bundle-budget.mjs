@@ -10,6 +10,7 @@ export const BUNDLE_BUDGETS = {
   "content.js": 15 * KB,
   "extract.js": 60 * KB,
   "resurface-chip.js": 8 * KB,
+  "youtube-bridge.js": 4 * KB,
   "overlay.js": 140 * KB,
   "service-worker.js": 220 * KB,
   "offscreen.js": 700 * KB,

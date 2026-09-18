@@ -1,0 +1,19 @@
+{
+  "videoDetails": {
+    "videoId": "tIdAl4Mgr01",
+    "title": "Tidal microgrids explained",
+    "author": "Tidegrid Weekly",
+    "lengthSeconds": "185",
+    "shortDescription": "How island microgrids use tidal turbines.\n\nChapters:\n0:00 Intro\n1:05 Slack tide storage\n2:30 Islanding drills\n\nThis video is fictional test data."
+  },
+  "captions": {
+    "playerCaptionsTracklistRenderer": {
+      "captionTracks": [
+        { "baseUrl": "https://www.youtube.com/api/timedtext?v=tIdAl4Mgr01&lang=en&kind=asr", "languageCode": "en", "kind": "asr", "name": { "simpleText": "English (auto-generated)" } },
+        { "baseUrl": "https://www.youtube.com/api/timedtext?v=tIdAl4Mgr01&lang=de", "languageCode": "de", "name": { "simpleText": "German" } },
+        { "baseUrl": "https://www.youtube.com/api/timedtext?v=tIdAl4Mgr01&lang=en", "languageCode": "en", "name": { "simpleText": "English" } }
+      ]
+    }
+  },
+  "somethingElse": { "huge": "ignored" }
+}

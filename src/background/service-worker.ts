@@ -92,6 +92,11 @@ import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { saveHighlight } from "../lib/highlights";
 import {
+  sanitizeTranscriptPayload,
+  transcriptChunks,
+  videoIdFromUrl,
+} from "../lib/capture/youtube";
+import {
   dayKey,
   pruneShownMap,
   RESURFACE_SHOWN_KEY,
@@ -1078,17 +1083,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 /** Gate, then inject extract.js if needed and ask it to extract (Phase 5 task 0.2). */
-function requestTabExtraction(
+async function requestTabExtraction(
   tabId: number,
   url: string,
   sender: chrome.runtime.MessageSender,
   gateOpts?: { bypassIndexingPause?: boolean }
 ) {
-  return requestExtraction(tabId, {
+  const settings = await getEffectiveSettings();
+  // YouTube transcripts (Phase 5.6): only on watch pages, only when enabled.
+  const youtube = settings.youtubeTranscriptsEnabled && videoIdFromUrl(url) != null;
+  const result = await requestExtraction(tabId, {
     gate: () => shouldSkipIndexing(url, sender, gateOpts),
     deliver: (id) =>
       new Promise<boolean>((resolve) => {
-        chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW" }, { frameId: 0 }, (res) => {
+        chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW", youtube }, { frameId: 0 }, (res) => {
           if (chrome.runtime.lastError) {
             resolve(false);
             return;
@@ -1100,6 +1108,13 @@ function requestTabExtraction(
       await chrome.scripting.executeScript({ target: { tabId: id, frameIds: [0] }, files });
     },
   });
+  if (result.ok && youtube) {
+    // Reads the player response in the page's own world (idempotent).
+    await chrome.scripting
+      .executeScript({ target: { tabId, frameIds: [0] }, files: ["youtube-bridge.js"], world: "MAIN" })
+      .catch(() => undefined);
+  }
+  return result;
 }
 
 /**
@@ -1353,6 +1368,46 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     }
     if (!rateLimitHit(`extract:${tabId}`, 20, sendResponse)) return true;
     void requestTabExtraction(tabId, url, sender).then(sendResponse);
+    return true;
+  }
+
+  if (type === "CORTEX_INDEX_TRANSCRIPT") {
+    const tab = sender.tab;
+    const p = tab?.url ? sanitizeTranscriptPayload((msg as { payload?: unknown }).payload, tab.url) : null;
+    if (!tab || !p) {
+      sendResponse({ ok: false, error: "bad_transcript" });
+      return true;
+    }
+    if (!rateLimitHit(`transcript:${tab.id}`, 6, sendResponse)) return true;
+    void (async () => {
+      const settings = await getEffectiveSettings();
+      if (!settings.youtubeTranscriptsEnabled) {
+        sendResponse({ ok: false, reason: "disabled" });
+        return;
+      }
+      const gate = await shouldSkipIndexing(p.url, sender);
+      if (gate.skip) {
+        sendResponse({ ok: false, reason: gate.reason });
+        return;
+      }
+      const docId = await upsertDocument({
+        url: p.url,
+        domain: hostnameFromUrl(p.url),
+        title: p.title || "YouTube video",
+        summary: redactPII(p.metadata).redacted.slice(0, 500),
+        lastVisitedAt: Date.now(),
+      });
+      const windows = p.windows.length
+        ? p.windows
+        : [{ startSec: 0, endSec: Math.max(60, p.lengthSeconds), text: p.metadata }];
+      const chunks = transcriptChunks(
+        p.videoId,
+        windows.map((w) => ({ ...w, text: redactPII(w.text).redacted }))
+      );
+      const ids = await replaceChunksForDocument(docId, chunks, { kinds: ["transcript"] });
+      queueEmbeddingsForChunkIds(ids.map((id, i) => ({ chunkId: id, text: chunks[i]!.text })));
+      sendResponse({ ok: true, chunks: ids.length, fromCaptions: p.windows.length > 0 });
+    })().catch((e) => sendResponse({ ok: false, error: String(e) }));
     return true;
   }
 

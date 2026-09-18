@@ -1,0 +1,11 @@
+{
+  "events": [
+    { "tStartMs": 0, "dDurationMs": 4000, "segs": [{ "utf8": "Welcome back to Tidegrid Weekly." }] },
+    { "tStartMs": 4000, "dDurationMs": 5000, "segs": [{ "utf8": "Today: " }, { "utf8": "tidal microgrids." }] },
+    { "tStartMs": 9000, "dDurationMs": 1000, "segs": [{ "utf8": "\n" }] },
+    { "tStartMs": 58000, "dDurationMs": 6000, "segs": [{ "utf8": "Slack tide is when the turbines rest." }] },
+    { "tStartMs": 65000, "dDurationMs": 5000, "segs": [{ "utf8": "Batteries carry the island through slack tide." }] },
+    { "tStartMs": 150000, "dDurationMs": 8000, "segs": [{ "utf8": "Islanding drills happen every spring." }] },
+    { "tStartMs": 160000 }
+  ]
+}

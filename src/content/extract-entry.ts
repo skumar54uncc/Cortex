@@ -17,6 +17,7 @@ import {
 } from "../shared/extension-runtime";
 import { devLog } from "../lib/extension-logger";
 import { parseLinkedInPage } from "../lib/capture/linkedin";
+import { armYouTubeCapture } from "./youtube-capture";
 
 declare global {
   interface Window {
@@ -76,6 +77,8 @@ if (!window.__cortexExtractLoaded) {
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type !== "CORTEX_EXTRACT_NOW") return undefined;
     sendResponse({ ok: true as const });
+    // YouTube watch page with transcripts on (decided by the service worker).
+    if (msg.youtube === true) armYouTubeCapture();
     void extractAndIndex();
     return undefined;
   });
