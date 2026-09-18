@@ -195,6 +195,6 @@ describe("reading chrome.storage.managed", () => {
       }
     );
     const chat = await getEffectiveChatSettings();
-    expect(chat).toEqual({ mode: "auto", cloudEnabled: false, geminiApiKey: "" });
+    expect(chat).toEqual({ mode: "auto", cloudEnabled: false, geminiApiKey: "", peopleEnabled: true });
   });
 });

@@ -1,0 +1,68 @@
+// @vitest-environment jsdom
+import { describe, it, expect, vi } from "vitest";
+import { renderPeopleView, type PersonRow } from "../src/content/people-view";
+
+const rows: PersonRow[] = [
+  { id: 1, kind: "person", name: "Mira <b>Okafor</b>", headline: "Head of Field Programs", company: "Tidora", profileUrl: "https://www.linkedin.com/in/mira/", lastSeen: Date.now(), visitCount: 3 },
+  { id: 2, kind: "company", name: "Tidora", headline: "Tidal microgrids", company: "Tidora", profileUrl: "https://www.linkedin.com/company/tidora/", lastSeen: Date.now(), visitCount: 1 },
+];
+
+function setup(list = rows) {
+  const container = document.createElement("div");
+  document.body.replaceChildren(container);
+  const deps = {
+    list: vi.fn(async (_q: string) => list),
+    remove: vi.fn(async (_id: number) => true),
+    announce: vi.fn(),
+  };
+  return { container, deps };
+}
+
+describe("People view", () => {
+  it("lists people with a filter input, rendering page text as text (never HTML)", async () => {
+    const { container, deps } = setup();
+    await renderPeopleView(container, deps);
+    const input = container.querySelector<HTMLInputElement>("input[type=search]")!;
+    expect(input.getAttribute("aria-label")).toBe("Filter people");
+    const items = container.querySelectorAll(".cortex-person");
+    expect(items).toHaveLength(2);
+    expect(container.querySelector("b")).toBeNull();
+    expect(items[0].querySelector(".cortex-person-name")?.textContent).toBe("Mira <b>Okafor</b>");
+    const link = items[0].querySelector<HTMLAnchorElement>("a.cortex-person-name")!;
+    expect(link.href).toBe("https://www.linkedin.com/in/mira/");
+    expect(link.rel).toContain("noopener");
+    expect(items[1].textContent).toContain("Company");
+  });
+
+  it("filters through the list function", async () => {
+    const { container, deps } = setup();
+    await renderPeopleView(container, deps);
+    const input = container.querySelector<HTMLInputElement>("input[type=search]")!;
+    input.value = "tidora";
+    input.dispatchEvent(new Event("input"));
+    await vi.waitFor(() => expect(deps.list).toHaveBeenLastCalledWith("tidora"));
+  });
+
+  it("deletes one person with a labelled button and announces it", async () => {
+    const { container, deps } = setup();
+    await renderPeopleView(container, deps);
+    const del = container.querySelector<HTMLButtonElement>('button[aria-label="Delete Mira <b>Okafor</b>"]')!;
+    del.click();
+    await vi.waitFor(() => expect(deps.remove).toHaveBeenCalledWith(1));
+    await vi.waitFor(() => expect(container.querySelectorAll(".cortex-person")).toHaveLength(1));
+    expect(deps.announce).toHaveBeenCalled();
+  });
+
+  it("shows an empty state that explains how people get here", async () => {
+    const { container, deps } = setup([]);
+    await renderPeopleView(container, deps);
+    expect(container.textContent).toContain("LinkedIn");
+  });
+
+  it("drops profile links that are not http(s)", async () => {
+    const { container, deps } = setup([{ ...rows[0], profileUrl: "javascript:alert(1)" }]);
+    await renderPeopleView(container, deps);
+    expect(container.querySelector("a")).toBeNull();
+    expect(container.querySelector(".cortex-person-name")?.textContent).toContain("Mira");
+  });
+});

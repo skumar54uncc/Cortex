@@ -2,6 +2,7 @@ import {
   getUserSettings,
   setUserSettings,
   type CortexUserSettings,
+  type FeatureToggle,
 } from "../shared/extension-settings";
 import { getEffectiveSettings } from "../shared/managed-policy";
 import { applyManagedLockout, stripLockedFields } from "./managed-ui";
@@ -436,6 +437,10 @@ async function loadSettingsUi(): Promise<void> {
   (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked = s.cloudChatEnabled;
   (qs("#cx-opt-gemini-key") as HTMLInputElement).value = s.geminiApiKey ?? "";
   qs<HTMLSelectElement>("#cx-opt-retention").value = String(s.retentionDays ?? 0);
+  document.querySelectorAll<HTMLInputElement>("input[data-feature]").forEach((box) => {
+    const key = box.dataset.feature as FeatureToggle;
+    box.checked = Boolean(s[key]);
+  });
 
   renderBlocklistChips();
 
@@ -523,6 +528,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   qs<HTMLButtonElement>("#cx-opt-retry-stats").addEventListener("click", () => {
     void refreshStats();
+  });
+
+  document.querySelectorAll<HTMLInputElement>("input[data-feature]").forEach((box) => {
+    box.addEventListener("change", () => {
+      const key = box.dataset.feature as FeatureToggle;
+      void saveUserSettings({ [key]: box.checked } as Partial<CortexUserSettings>);
+    });
   });
 
   qs<HTMLSelectElement>("#cx-opt-retention").addEventListener("change", (e) => {

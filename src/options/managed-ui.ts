@@ -86,6 +86,15 @@ export function applyManagedLockout(doc: Document, eff: EffectiveSettings): void
     }
   }
 
+  if (locked.has("imageDescriptionsEnabled")) {
+    const box = doc.querySelector<HTMLInputElement>('input[data-feature="imageDescriptionsEnabled"]');
+    if (box) {
+      box.checked = false;
+      box.disabled = true;
+      noteAfter(doc, box.parentElement?.querySelector(".cx-field-label") ?? box, "imageDescriptionsEnabled");
+    }
+  }
+
   const managedRow = doc.getElementById("cx-opt-managed-blocklist");
   if (managedRow) {
     managedRow.replaceChildren();

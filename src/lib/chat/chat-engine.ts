@@ -15,6 +15,7 @@ import {
 } from "./llm-router";
 import { CortexError } from "../errors";
 import type { ChatSettings } from "./types";
+import { answerPeopleQuery, parsePeopleQuery } from "../people";
 export interface ChatStreamEvent {
   type:
     | "conversation"
@@ -52,6 +53,26 @@ export async function* runChat(
     if (convId == null) {
       convId = await createConversation(question);
       yield { type: "conversation", data: { id: convId } };
+    }
+
+    // People questions ("who did I view from X") come from the people store,
+    // not from page search or a model. Falls through to RAG when nobody matches.
+    if (settings.peopleEnabled !== false) {
+      const pq = parsePeopleQuery(question);
+      const answer = pq ? await answerPeopleQuery(pq) : null;
+      if (answer) {
+        await addMessageToConversation(convId, { role: "user", content: question, timestamp: Date.now() });
+        yield { type: "sources", data: { chunks: [] } };
+        yield { type: "token", data: answer.text };
+        await addMessageToConversation(convId, {
+          role: "assistant",
+          content: answer.text,
+          timestamp: Date.now(),
+          citedChunks: [],
+        });
+        yield { type: "done", data: { provider: "people" } };
+        return;
+      }
     }
 
     const priorMessages =

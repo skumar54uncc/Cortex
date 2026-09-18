@@ -114,3 +114,37 @@ describe("stripLockedFields (options saves never persist managed values)", () =>
     });
   });
 });
+
+describe("feature toggles in options", () => {
+  beforeEach(() => loadOptionsHtml());
+
+  it("renders one labelled checkbox per Phase 5 toggle", () => {
+    for (const key of [
+      "peopleMemoryEnabled",
+      "omniboxEnabled",
+      "highlightsEnabled",
+      "resurfacingEnabled",
+      "youtubeTranscriptsEnabled",
+      "tablesEnabled",
+      "imagesEnabled",
+      "imageDescriptionsEnabled",
+      "pdfEnabled",
+    ]) {
+      const box = document.querySelector<HTMLInputElement>(`input[data-feature="${key}"]`);
+      expect(box, key).not.toBeNull();
+      expect(box!.type).toBe("checkbox");
+      expect(box!.labels?.[0]?.textContent?.trim().length ?? 0, key).toBeGreaterThan(3);
+    }
+  });
+
+  it("locks image descriptions when the policy forbids them", () => {
+    applyManagedLockout(
+      document,
+      applyManagedPolicy({ ...DEFAULT_USER_SETTINGS, imageDescriptionsEnabled: true }, { imageDescriptionsAllowed: false })
+    );
+    const box = document.querySelector<HTMLInputElement>('input[data-feature="imageDescriptionsEnabled"]')!;
+    expect(box.disabled).toBe(true);
+    expect(box.checked).toBe(false);
+    expect(document.querySelector('[data-managed-note="imageDescriptionsEnabled"]')?.textContent).toBe(MANAGED_LABEL);
+  });
+});

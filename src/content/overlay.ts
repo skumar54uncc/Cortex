@@ -26,6 +26,7 @@ import {
 import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
 import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
 import { createForgetMenu } from "./forget-menu";
+import { renderPeopleView, type PersonRow } from "./people-view";
 import { applyThemeToHost, themeTokensCss } from "../shared/theme";
 import { getUserSettings } from "../shared/extension-settings";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
@@ -197,7 +198,7 @@ function faviconUrlForHost(hostname: string): string {
   return `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(h)}`;
 }
 
-type OverlayMode = "search" | "ask" | "digest";
+type OverlayMode = "search" | "ask" | "digest" | "people";
 
 /** Opens the panel if closed. Idempotent: avoids double Ctrl+Shift+K (command + key handler). */
 export function openCortexOverlay(): void {
@@ -249,11 +250,17 @@ ${shadowCss}`;
     };
   };
   let stopTheme = applyTheme("system");
+  /** People tab visible only while people memory is on (Phase 5.1). */
+  let peopleTabEnabled = false;
   void getUserSettings()
     .then((s) => {
       if (!host.isConnected) return;
       stopTheme();
       stopTheme = applyTheme(s.theme);
+      if (s.peopleMemoryEnabled !== peopleTabEnabled) {
+        peopleTabEnabled = s.peopleMemoryEnabled;
+        rebuildTabs();
+      }
     })
     .catch(() => undefined);
 
@@ -535,6 +542,7 @@ ${shadowCss}`;
       { id: "search", label: "Search" },
       { id: "ask", label: "Ask" },
       { id: "digest", label: "Digest" },
+      ...(peopleTabEnabled ? [{ id: "people" as OverlayMode, label: "People" }] : []),
     ];
 
     for (const tab of tabs) {
@@ -1780,6 +1788,30 @@ ${shadowCss}`;
         void loadChatConversation(currentConversationId, messagesContainer);
       }
       requestAnimationFrame(() => focusAskInput(ta));
+      return;
+    }
+
+    if (currentMode === "people") {
+      const host = document.createElement("div");
+      host.className = "cortex-people-host";
+      bodyEl.appendChild(host);
+      void renderPeopleView(host, {
+        list: async (q) => {
+          const res = (await sendRuntimeMessage({ type: "CORTEX_PEOPLE_LIST", q })) as
+            | { ok?: boolean; people?: PersonRow[] }
+            | undefined;
+          return res?.ok ? res.people ?? [] : [];
+        },
+        remove: async (id) => {
+          const res = (await sendRuntimeMessage({ type: "CORTEX_PEOPLE_DELETE", id })) as
+            | { ok?: boolean }
+            | undefined;
+          return res?.ok === true;
+        },
+        announce: announcePolite,
+      }).then(() => {
+        host.querySelector<HTMLInputElement>(".cortex-people-filter")?.focus({ preventScroll: true });
+      });
       return;
     }
 

@@ -16,6 +16,7 @@ import {
   sendRuntimeMessage,
 } from "../shared/extension-runtime";
 import { devLog } from "../lib/extension-logger";
+import { parseLinkedInPage } from "../lib/capture/linkedin";
 
 declare global {
   interface Window {
@@ -40,16 +41,27 @@ async function extractAndIndex(): Promise<void> {
     const text = redactPII(raw.text).redacted;
 
     const host = location.hostname;
+    // LinkedIn profile / company pages also feed people memory (Phase 5.1).
+    const person = /(^|\.)linkedin\.com$/i.test(host) ? parseLinkedInPage(document, location.href) : null;
+
     const localMin =
       host.includes("linkedin.com") ? 28 : host.includes("twitter.com") || host === "x.com" ? 38 : 72;
-    if (text.length < localMin) return;
+    const textOk = text.length >= localMin;
+    if (!textOk && !person) return;
 
-    const summary = await summarizeBestEffort(text);
+    const summary = textOk ? await summarizeBestEffort(text) : "";
     if (!isExtensionRuntimeAlive()) return;
 
     await sendRuntimeMessage({
       type: "CORTEX_INDEX",
-      payload: { url: normalizedUrl(), title, text, summary, visitedAt: Date.now() },
+      payload: {
+        url: normalizedUrl(),
+        title,
+        text: textOk ? text : "",
+        summary,
+        visitedAt: Date.now(),
+        ...(person ? { person } : {}),
+      },
     });
   } catch (e) {
     if (isInvalidatedExtensionError(e) || !isExtensionRuntimeAlive()) return;

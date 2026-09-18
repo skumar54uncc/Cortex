@@ -196,5 +196,6 @@ export async function getEffectiveChatSettings(): Promise<ChatSettings> {
     mode: s.chatMode,
     cloudEnabled: s.cloudChatEnabled,
     geminiApiKey: s.geminiApiKey.trim(),
+    peopleEnabled: s.peopleMemoryEnabled,
   };
 }

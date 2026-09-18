@@ -87,6 +87,8 @@ import {
 import { openCortexSearchForTab } from "../lib/open-cortex-search";
 import { openOverlayOnTab } from "../lib/overlay-injector";
 import { requestExtraction } from "../lib/extract-injector";
+import { canonicalLinkedInUrl, type LinkedInEntity } from "../lib/capture/linkedin";
+import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { RateLimiter } from "../lib/rate-limiter";
 import {
@@ -136,6 +138,33 @@ export interface IndexPayload {
   text: string;
   summary: string;
   visitedAt: number;
+  /** LinkedIn profile or company parsed by extract.js (Phase 5.1). */
+  person?: LinkedInEntity;
+}
+
+/**
+ * Records a LinkedIn person/company when people memory is on. The entity must
+ * describe the very page that sent it (canonical URL match), so a page cannot
+ * plant a different profile. Fields are re-capped here.
+ */
+async function maybeRecordPerson(person: unknown, pageUrl: string): Promise<boolean> {
+  const settings = await getEffectiveSettings();
+  if (!settings.peopleMemoryEnabled) return false;
+  const p = person as Partial<LinkedInEntity> | null;
+  if (!p || (p.kind !== "person" && p.kind !== "company")) return false;
+  const canonical = canonicalLinkedInUrl(pageUrl);
+  if (!canonical || p.profileUrl !== canonical) return false;
+  const cap = (v: unknown, n: number) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+  const name = cap(p.name, 120);
+  if (!name) return false;
+  await upsertPerson({
+    kind: p.kind,
+    name,
+    headline: cap(p.headline, 220),
+    company: cap(p.company, 120),
+    profileUrl: canonical,
+  });
+  return true;
 }
 
 function minCharsForUrl(url: string): number {
@@ -1059,9 +1088,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           return;
         }
 
+        const personRecorded = p.person ? await maybeRecordPerson(p.person, p.url) : false;
+
         const minLen = minCharsForUrl(p.url);
         if (!p?.text || p.text.length < minLen) {
-          sendResponse({ ok: false, reason: "too_short", minLen });
+          sendResponse({ ok: personRecorded, reason: "too_short", minLen, person: personRecorded });
           return;
         }
 
@@ -1182,6 +1213,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     };
     cortexBus.postMessage(abortMsg);
     sendResponse({ ok: true });
+    return true;
+  }
+
+  if (type === "CORTEX_PEOPLE_LIST") {
+    void (async () => {
+      const q = String((msg as { q?: unknown }).q ?? "").slice(0, 200);
+      const people = await listPeople({ q, limit: 200 });
+      sendResponse({ ok: true as const, people });
+    })().catch((e) => sendResponse({ ok: false, error: String(e) }));
+    return true;
+  }
+
+  if (type === "CORTEX_PEOPLE_DELETE") {
+    const id = (msg as { id?: unknown }).id;
+    if (typeof id !== "number" || !Number.isFinite(id)) {
+      sendResponse({ ok: false, error: "bad_id" });
+      return true;
+    }
+    void deletePerson(id)
+      .then(() => sendResponse({ ok: true }))
+      .catch((e) => sendResponse({ ok: false, error: String(e) }));
     return true;
   }
 

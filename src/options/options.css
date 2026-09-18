@@ -1034,3 +1034,31 @@ body {
   flex: 1 1 220px;
   min-width: 0;
 }
+
+/* Feature toggles (release 1.2.0, Phase 5) */
+.cx-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cx-feature-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.cx-feature-row .cx-check-native {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.cx-feature-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
