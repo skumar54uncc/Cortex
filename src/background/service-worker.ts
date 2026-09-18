@@ -92,6 +92,13 @@ import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { saveHighlight } from "../lib/highlights";
 import {
+  dayKey,
+  pruneShownMap,
+  RESURFACE_SHOWN_KEY,
+  shouldResurface,
+  type SimilarDocument,
+} from "../lib/resurface";
+import {
   addPageToCollection,
   createCollection,
   deleteCollection,
@@ -345,7 +352,67 @@ function queueEmbeddingsForChunkIds(
 }
 
 /** Persist document + chunks + embedding queue + visit log (shared by live indexing and history import). */
-async function commitIndexPayload(p: IndexPayload): Promise<{
+/**
+ * "Seen this before" (Phase 5.5): after this page's embeddings finish, look
+ * for a strongly similar older page and show a chip, at most once per page
+ * per day. Only pages that passed the indexing gate get here.
+ */
+function scheduleResurface(tabId: number, documentId: number, url: string): void {
+  void embedChain.then(() => maybeResurface(tabId, documentId, url)).catch(() => undefined);
+}
+
+async function maybeResurface(tabId: number, documentId: number, url: string): Promise<void> {
+  const settings = await getEffectiveSettings();
+  if (!settings.resurfacingEnabled) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return;
+  }
+  const sensitive =
+    looksSensitiveHostname(parsed.hostname, parsed.pathname) ||
+    shouldAlwaysSkipUrl(url, { applyPathPatterns: true }) ||
+    isBlockedDomain(parsed.hostname, settings.blocklist);
+  const today = dayKey(Date.now());
+  const stored = (await storageLocalGet([RESURFACE_SHOWN_KEY]))[RESURFACE_SHOWN_KEY];
+  const shown = pruneShownMap((stored as Record<string, string>) ?? {}, today);
+  if (sensitive || shown[url] === today) return;
+
+  await ensureOffscreen();
+  const res = await new Promise<{ ok?: boolean; best?: SimilarDocument | null } | undefined>((resolve) => {
+    chrome.runtime.sendMessage({ type: "CORTEX_RESURFACE_RUN", documentId }, (r) => {
+      if (chrome.runtime.lastError) resolve(undefined);
+      else resolve(r);
+    });
+  });
+  const best = res?.best;
+  if (!best) return;
+  if (
+    !shouldResurface({
+      enabled: settings.resurfacingEnabled,
+      similarity: best.similarity,
+      currentUrl: url,
+      matchUrl: best.url,
+      sensitive,
+      lastShownDay: shown[url],
+      today,
+    })
+  ) {
+    return;
+  }
+  // The tab must still show this page.
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  if (!tab?.url || !indexPayloadUrlMatchesTab(url, { tab } as chrome.runtime.MessageSender)) return;
+  shown[url] = today;
+  await storageLocalSet({ [RESURFACE_SHOWN_KEY]: shown });
+  await chrome.scripting.executeScript({ target: { tabId, frameIds: [0] }, files: ["resurface-chip.js"] });
+  await chrome.tabs
+    .sendMessage(tabId, { type: "CORTEX_RESURFACE_SHOW", title: best.title, url: best.url }, { frameId: 0 })
+    .catch(() => undefined);
+}
+
+async function commitIndexPayload(p: IndexPayload, opts: { tabId?: number } = {}): Promise<{
   id: number;
   chunks: number;
 }> {
@@ -374,6 +441,7 @@ async function commitIndexPayload(p: IndexPayload): Promise<{
     text: parts[i]?.text ?? "",
   }));
   queueEmbeddingsForChunkIds(embedPairs);
+  if (opts.tabId != null) scheduleResurface(opts.tabId, docId, p.url);
 
   await appendVisit({
     url: p.url,
@@ -1377,7 +1445,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           return;
         }
 
-        const { id: docId, chunks } = await commitIndexPayload(p);
+        const { id: docId, chunks } = await commitIndexPayload(p, { tabId: sender.tab?.id });
         sendResponse({ ok: true, id: docId, chunks });
       } catch (e) {
         // #region agent log

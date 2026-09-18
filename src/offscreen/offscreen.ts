@@ -13,6 +13,7 @@ import {
 import { agentDebugLog } from "../lib/agent-debug-log";
 import { runChat } from "../lib/chat/chat-engine";
 import { ChatRunRegistry } from "../lib/chat/chat-run-registry";
+import { findMostSimilarDocument } from "../lib/resurface";
 import { generateDigest } from "../lib/chat/digest-engine";
 import {
   CORTEX_EXTENSION_BUS_CHANNEL,
@@ -146,6 +147,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       }
     })();
 
+    return true;
+  }
+
+  if (msg?.type === "CORTEX_RESURFACE_RUN") {
+    const id = Number(msg.documentId);
+    void findMostSimilarDocument(id)
+      .then((best) => sendResponse({ ok: true as const, best }))
+      .catch((e) => sendResponse({ ok: false as const, error: String(e) }));
     return true;
   }
 

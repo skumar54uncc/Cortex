@@ -21,6 +21,7 @@ module.exports = (env, argv) => {
     content: "./src/content/main.ts",
     overlay: "./src/content/overlay-entry.ts",
     extract: "./src/content/extract-entry.ts",
+    "resurface-chip": "./src/content/resurface-chip.ts",
     offscreen: "./src/offscreen/offscreen.ts",
     popup: "./src/popup/popup.ts",
     options: "./src/options/options.ts",
