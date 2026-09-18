@@ -94,6 +94,9 @@ import { saveHighlight } from "../lib/highlights";
 import { sanitizeExtraChunks, sanitizeImageInputs, type ImageInput } from "../lib/capture/extra-chunks";
 import { appendDescriptions, planImageDescriptions, reuseDescribedText } from "../lib/capture/images";
 import { isPdfUrl } from "../lib/capture/pdf";
+import { collectBackup, restoreBackup, validateBackup } from "../lib/export/backup";
+import { buildVault } from "../lib/export/markdown-vault";
+import { createZip } from "../lib/export/zip";
 import { indexPdfTab, type PdfExtractResult } from "../lib/pdf-indexer";
 import type { ChunkKind } from "../db/schema";
 import type { NewChunk } from "../db/schema";
@@ -402,6 +405,32 @@ async function describeImagesOnDevice(docId: number, baseText: string, images: I
   } finally {
     describingDocs.delete(docId);
   }
+}
+
+/**
+ * Chunks restored from a backup (Phase 5.10) come back without embeddings.
+ * A storage flag survives service worker restarts; each pass embeds a batch
+ * and schedules the next until nothing is pending.
+ */
+const PENDING_EMBEDS_KEY = "cortex_pending_embeds";
+const BACKUP_MAX_CHARS = 60 * 1024 * 1024;
+
+async function drainPendingEmbeddings(): Promise<void> {
+  const flag = (await storageLocalGet([PENDING_EMBEDS_KEY]))[PENDING_EMBEDS_KEY];
+  if (flag !== true) return;
+  const pending = await db.chunks.filter((c) => c.embedState === "pending").limit(500).toArray();
+  if (!pending.length) {
+    await storageLocalSet({ [PENDING_EMBEDS_KEY]: false });
+    return;
+  }
+  queueEmbeddingsForChunkIds(pending.map((c) => ({ chunkId: c.id!, text: c.text })));
+  void embedChain.then(() => drainPendingEmbeddings()).catch(() => undefined);
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
 }
 
 /** Persist document + chunks + embedding queue + visit log (shared by live indexing and history import). */
@@ -2016,6 +2045,83 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     return true;
   }
 
+  // Export and backup (Phase 5.10): options page only. The library leaves the
+  // device only as a file the user saves; restore goes through the privacy gate.
+  if (type === "CORTEX_EXPORT" || type === "CORTEX_BACKUP_VALIDATE" || type === "CORTEX_BACKUP_RESTORE") {
+    if (!isOptionsPageSender(sender)) {
+      sendResponse({
+        ok: false,
+        error: ERROR_CODES.FOREIGN_SENDER,
+        ...payloadFromCode(ERROR_CODES.FOREIGN_SENDER),
+      });
+      return true;
+    }
+    if (!rateLimitHit("export", 10, sendResponse)) return true;
+    void (async () => {
+      try {
+        const m = msg as { format?: unknown; text?: unknown; mode?: unknown; confirmed?: unknown };
+        if (type === "CORTEX_EXPORT") {
+          const backup = await collectBackup();
+          const stamp = new Date(backup.exportedAt).toISOString().slice(0, 10);
+          if (m.format === "markdown") {
+            const zip = createZip(buildVault(backup));
+            sendResponse({ ok: true, filename: `cortex-notes-${stamp}.zip`, mime: "application/zip", base64: bytesToBase64(zip) });
+          } else {
+            sendResponse({ ok: true, filename: `cortex-backup-${stamp}.json`, mime: "application/json", text: JSON.stringify(backup) });
+          }
+          return;
+        }
+        const text = typeof m.text === "string" ? m.text : "";
+        if (text.length > BACKUP_MAX_CHARS) {
+          sendResponse({ ok: false, error: "This file is too large to restore here (limit 60 MB)." });
+          return;
+        }
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          sendResponse({ ok: false, error: "This file is not a Cortex backup (it is not valid JSON)." });
+          return;
+        }
+        const v = validateBackup(parsed);
+        if (!v.ok) {
+          sendResponse({ ok: false, error: v.error });
+          return;
+        }
+        if (type === "CORTEX_BACKUP_VALIDATE") {
+          sendResponse({ ok: true, counts: v.counts, exportedAt: v.backup.exportedAt });
+          return;
+        }
+        if (m.confirmed !== true) {
+          sendResponse({ ok: false, error: "Confirm the restore first." });
+          return;
+        }
+        const settings = await getEffectiveSettings();
+        if (settings.policy.indexingDisabled === true) {
+          sendResponse({ ok: false, error: "Your administrator has turned off indexing, so backups cannot be restored." });
+          return;
+        }
+        const res = await restoreBackup(v.backup, {
+          mode: m.mode === "replace" ? "replace" : "merge",
+          // Restoring is an explicit user action: it bypasses the user's own
+          // pause, never the policy, blocklist, allowlist or sensitive hosts.
+          allowUrl: async (u) =>
+            !(await shouldSkipIndexing(u, {} as chrome.runtime.MessageSender, { bypassIndexingPause: true })).skip,
+        });
+        await applyRetention(settings.retentionDays);
+        await db.digestCache.clear();
+        await storageLocalSet({ [PENDING_EMBEDS_KEY]: true });
+        void drainPendingEmbeddings();
+        await refreshSnapshotNow({}).catch(() => undefined);
+        sendResponse({ ok: true, added: res.added, blocked: res.blocked });
+      } catch (e) {
+        devLog.warn("[Cortex] export/backup:", e);
+        sendResponse({ ok: false, error: "Could not finish. Try again." });
+      }
+    })();
+    return true;
+  }
+
   if (type === "CORTEX_CLEAR_ALL_DATA") {
     if (!isOptionsPageSender(sender)) {
       sendResponse({
@@ -2153,3 +2259,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
 
   return false;
 });
+
+// Resume re-embedding restored chunks after a service worker restart (Phase 5.10).
+void drainPendingEmbeddings().catch(() => undefined);

@@ -1087,3 +1087,26 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Export and backup (Phase 5.10): neutral confirm step; Replace turns it red. */
+.cx-restore-confirm {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.cx-restore-confirm.is-destructive {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+.cx-restore-confirm .cx-radio-cards {
+  margin-bottom: var(--space-4);
+}
+
+.cx-file-input {
+  padding: var(--space-2);
+  cursor: pointer;
+}

@@ -1,3 +1,4 @@
+import { initBackupUi, saveBlob } from "./backup-ui";
 import {
   getUserSettings,
   setUserSettings,
@@ -550,6 +551,11 @@ function updateDeleteConfirmEnabled(): void {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initBackupUi(document, {
+    send: (m) => chrome.runtime.sendMessage(m),
+    download: saveBlob,
+    onRestored: () => void refreshStats(),
+  });
   void refreshStats();
   void loadSettingsUi();
   void (async () => {

@@ -418,6 +418,54 @@
         <section class="cx-opt-section cx-section-muted" aria-labelledby="cx-data-h">
           <h2 id="cx-data-h" class="cx-section-heading">Data</h2>
 
+          <h3 class="cx-subheading">Export and backup</h3>
+          <p class="cx-section-desc">
+            Files are made on this device and saved where you choose. Backups leave out embeddings and
+            your settings, including any Gemini key.
+          </p>
+          <div class="cx-actions-row">
+            <button type="button" id="cx-export-md" class="cx-btn cx-btn-secondary">Export notes (Markdown)</button>
+            <button type="button" id="cx-export-json" class="cx-btn cx-btn-secondary">Download backup (JSON)</button>
+          </div>
+          <p id="cx-export-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+
+          <div class="cx-field">
+            <label class="cx-field-label" for="cx-restore-file">Restore from a backup</label>
+            <p class="cx-field-hint" id="cx-restore-hint">Choose a Cortex backup file (.json). Nothing changes until you confirm.</p>
+            <input type="file" id="cx-restore-file" class="cx-input cx-file-input" accept=".json,application/json" aria-describedby="cx-restore-hint" />
+          </div>
+          <div id="cx-restore-confirm" class="cx-restore-confirm" hidden>
+            <p id="cx-restore-summary" class="cx-delete-confirm-text" tabindex="-1"></p>
+            <p id="cx-restore-mode-h" class="cx-field-label">How to restore</p>
+            <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-restore-mode-h">
+              <label class="cx-radio-card">
+                <input type="radio" name="cx-restore-mode" value="merge" checked />
+                <span class="cx-radio-card-inner">
+                  <span class="cx-radio-card-title">Merge</span>
+                  <span class="cx-radio-card-desc">Adds what is missing. Pages already in your library are kept.</span>
+                  <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5"></path>
+                  </svg>
+                </span>
+              </label>
+              <label class="cx-radio-card">
+                <input type="radio" name="cx-restore-mode" value="replace" />
+                <span class="cx-radio-card-inner">
+                  <span class="cx-radio-card-title">Replace</span>
+                  <span class="cx-radio-card-desc">Deletes your current pages, chats and highlights first. Cannot be undone.</span>
+                  <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5"></path>
+                  </svg>
+                </span>
+              </label>
+            </div>
+            <div class="cx-actions-row">
+              <button type="button" id="cx-restore-btn" class="cx-btn cx-btn-primary">Restore</button>
+              <button type="button" id="cx-restore-cancel" class="cx-btn cx-btn-ghost">Cancel</button>
+            </div>
+          </div>
+          <p id="cx-restore-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+
           <h3 class="cx-subheading">Forget</h3>
           <div class="cx-field">
             <label class="cx-field-label" for="cx-forget-site">Forget a site</label>
