@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Cortex: Private Memory for Everything You Read",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "Ask anything you've read, watched or scanned. Pages, YouTube, tables and images, indexed on your device.",
   "minimum_chrome_version": "116",
   "content_security_policy": {
