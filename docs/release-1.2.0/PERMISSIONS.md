@@ -22,6 +22,11 @@ Every entry in `manifest.json` `permissions`, `host_permissions` and `web_access
 |---------|-----|---------|
 | `http://*/*`, `https://*/*` | Content script for page extraction on every site the user reads, and fetching page HTML during history import. Sensitive domains, blocklist, allowlist and incognito gates apply before anything is stored. | "Read and change all your data on all websites" |
 
+No new host permission in 1.2.0. Two new uses of the existing one, both behind the full privacy gate:
+
+- **PDFs (Phase 5.9).** Content scripts do not run in Chrome's PDF viewer, so the service worker sees a PDF tab through `tabs.onUpdated` (a tab's URL is readable for hosts in `host_permissions`; no `tabs` permission). After the gate passes, the offscreen document fetches that same URL once with `credentials: "omit"` and `redirect: "error"`, 30 MB cap. PDFs behind a login are therefore not indexed; this is deliberate (no cookies are replayed).
+- **Tab URL on PDF tabs** is the only tab data read; nothing is injected into the viewer.
+
 ## web_accessible_resources
 
 1.0.1 exposed `icons/*.png`, `fonts/*.woff2` and `models/**/*` to `<all_urls>`. Any page could probe `chrome-extension://<id>/models/...` and detect Cortex.
@@ -45,6 +50,8 @@ Guarded by `tests/manifest.test.ts`.
 
 | Candidate | Decision |
 |-----------|----------|
+| `downloads` | Not needed. Export files (Phase 5.10) are saved from the options page through a temporary `blob:` link with the `download` attribute. The `downloads` permission would add a "Manage your downloads" warning. |
+| `tabs` | Not needed. PDF tab URLs are readable through host permissions. |
 | `webNavigation` | Not needed; SPA navigation is detected in the content script. |
 | `declarativeNetRequest` | Not needed. |
 | `identity` | No accounts. |

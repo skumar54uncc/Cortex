@@ -34,6 +34,18 @@ Automated grep targets: `innerHTML`, `outerHTML`, `document.write`, `eval(`.
 | `src/options/managed-ui.ts` | `textContent`; managed domains come from admin policy and are rendered with `textContent` | **Safe** |
 | `src/options/options.ts` forget feedback | `textContent` | **Safe** |
 
+## Phase 5 additions (Features 8 to 11)
+
+| File | Sinks | Verdict |
+|------|-------|---------|
+| `src/content/citation-cards.ts` | none: `createElement`, `textContent`; links come from `citationHref` (http(s) only, else `#`) | **Safe** |
+| `src/content/overlay.ts` search hit rows | existing `results.innerHTML` template; the new per-kind link is `esc(citationHref(...) ?? "#")` and the detail is `esc(citationDetail(h))` | **Safe**: every interpolation escaped |
+| `src/content/image-inputs.ts` | none (canvas `drawImage`, `toDataURL`) | **Safe** |
+| `src/options/backup-ui.ts` | none: all copy through `textContent`; file contents are sent to the service worker as a string and never rendered | **Safe** |
+| `src/options/options.html` Export and backup section | static markup | **Safe** |
+| `src/search/search-shell.ts` load error | was `document.body.innerHTML` with the raw error message (since 1.0.x); now a `<pre>` with `textContent` (`tests/search-shell-error.test.ts`) | **Fixed** |
+| `src/lib/export/markdown-vault.ts` | not a DOM sink; writes Markdown files. Page text has `<` escaped as `&lt;` so a Markdown viewer that renders HTML shows it as text | **Safe** |
+
 ## Follow-up
 
 Re-run when changing hit templates or adding new HTML sinks:

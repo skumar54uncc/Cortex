@@ -11,7 +11,11 @@ function bootSearchShell(): void {
     openCortexOverlay();
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    document.body.innerHTML = `<pre style="margin:16px;font:13px/1.5 system-ui,sans-serif;color:#1c1917">Cortex could not load.\n${msg}</pre>`;
+    // Error text is data: set it with textContent, never as HTML.
+    const pre = document.createElement("pre");
+    pre.style.cssText = "margin:16px;font:13px/1.5 system-ui,sans-serif;color:#1c1917";
+    pre.textContent = `Cortex could not load.\n${msg}`;
+    document.body.replaceChildren(pre);
   }
 }
 

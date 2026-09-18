@@ -75,6 +75,8 @@ Open `chrome://policy`, find the Cortex extension section, and check the values 
 - **Retention**: Settings > Privacy > "Keep indexed pages for" (Forever, 7, 30, 90, 180 days, 1 year). Locked when `retentionDays` is managed.
 - **Forget**: Settings > Data, and the trash menu in the Cortex panel header: forget this site (the current tab's site, including subdomains), forget last hour, forget last day, forget all. Forgetting covers every IndexedDB store, including chats: answers that cite a forgotten site are deleted (the user's question stays), and chat messages written in a forgotten time window are deleted. The digest cache and the popup statistics snapshot are refreshed.
 - A page can never trigger a forget for another site: from the in-page panel, "this site" is always taken from the tab the request came from (`src/lib/forget-request.ts`).
+- **Export and backup** (1.2.0): Settings > Data. "Export notes (Markdown)" saves a zip with one note per page; "Download backup (JSON)" saves the library without embeddings and without settings (the Gemini key is never included). Only the options page can request an export; the in-page panel and other extension pages are refused. The file is created on the device and saved where the user chooses.
+- **Restore**: validated row by row, then merged (default) or, after an explicit choice, replacing the library. Every restored page URL passes the same gate as a live visit (managed blocklist, allowlist, sensitive hosts); pages that fail are left out and counted. Restore is refused while `indexingDisabled` is set. Retention applies right after a restore. There is currently no policy to disable export; see "Open questions" in the release report.
 
 ## Encryption at rest: threat model (not implemented)
 
