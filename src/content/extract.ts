@@ -166,15 +166,48 @@ function extractMainColumnFallback(doc: Document, host: string): string {
   return parts.reduce((best, cur) => (cur.length > best.length ? cur : best), "");
 }
 
+export interface ExtractOptions {
+  /**
+   * Document-order indexes of tables already captured as table chunks
+   * (Phase 5.7); they are left out of the article text so rows are not
+   * indexed twice.
+   */
+  dropTableIndexes?: number[];
+}
+
+/** Sanitized copy of the page without the given tables (text fallbacks read it). */
+function withoutTables(doc: Document, indexes: number[]): Document {
+  const copy = doc.cloneNode(true) as Document;
+  const tables = copy.querySelectorAll("table");
+  const drop = new Set(indexes);
+  const dead: Element[] = [];
+  tables.forEach((t, i) => {
+    if (drop.has(i)) dead.push(t);
+  });
+  for (const t of dead) t.parentNode?.removeChild(t);
+  sanitizeDomForExtraction(copy);
+  return copy;
+}
+
 /**
  * @param hostnameHint Optional host when `doc` has no `location` (e.g. DOMParser output).
  */
-export function extractPageText(doc: Document, hostnameHint?: string): ExtractResult {
+export function extractPageText(
+  doc: Document,
+  hostnameHint?: string,
+  opts: ExtractOptions = {}
+): ExtractResult {
   const host =
     hostnameHint ??
     (typeof doc.location?.hostname === "string" ? doc.location.hostname : "");
 
-  const clone = doc.cloneNode(true) as Document;
+  const dropping = (opts.dropTableIndexes?.length ?? 0) > 0;
+  // When tables were captured separately, every text candidate comes from a
+  // sanitized copy without them (a detached copy has no layout, so innerText
+  // falls back to textContent there).
+  const source = dropping ? withoutTables(doc, opts.dropTableIndexes!) : doc;
+
+  const clone = source.cloneNode(true) as Document;
   sanitizeDomForExtraction(clone);
   stripSiteChromeLandmarks(clone, host);
 
@@ -191,8 +224,10 @@ export function extractPageText(doc: Document, hostnameHint?: string): ExtractRe
     /* ignore */
   }
 
-  const bodyFallback = normalizeWs(doc.body?.innerText || "");
-  const mainFallback = extractMainColumnFallback(doc, host);
+  const bodyFallback = normalizeWs(
+    (dropping ? source.body?.textContent : source.body?.innerText) || ""
+  );
+  const mainFallback = dropping ? "" : extractMainColumnFallback(doc, host);
 
   const candidates = [readableText, bodyFallback, mainFallback].filter(Boolean);
   const longest = candidates.reduce((a, b) => (b.length > a.length ? b : a), "");

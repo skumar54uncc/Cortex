@@ -91,6 +91,8 @@ import { canonicalLinkedInUrl, type LinkedInEntity } from "../lib/capture/linked
 import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { saveHighlight } from "../lib/highlights";
+import { sanitizeExtraChunks } from "../lib/capture/extra-chunks";
+import type { NewChunk } from "../db/schema";
 import {
   sanitizeTranscriptPayload,
   transcriptChunks,
@@ -160,6 +162,8 @@ export interface IndexPayload {
   visitedAt: number;
   /** LinkedIn profile or company parsed by extract.js (Phase 5.1). */
   person?: LinkedInEntity;
+  /** Table / image chunks built by extract.js (Phase 5.7, 5.8); validated before use. */
+  extraChunks?: unknown;
 }
 
 /**
@@ -417,7 +421,10 @@ async function maybeResurface(tabId: number, documentId: number, url: string): P
     .catch(() => undefined);
 }
 
-async function commitIndexPayload(p: IndexPayload, opts: { tabId?: number } = {}): Promise<{
+async function commitIndexPayload(
+  p: IndexPayload,
+  opts: { tabId?: number; extraChunks?: NewChunk[] } = {}
+): Promise<{
   id: number;
   chunks: number;
 }> {
@@ -435,11 +442,17 @@ async function commitIndexPayload(p: IndexPayload, opts: { tabId?: number } = {}
     lastVisitedAt: p.visitedAt,
   });
 
-  const parts = chunkArticle(p.text).map((c) => ({
-    ord: c.ord,
-    text: c.text,
-  }));
-  const chunkIds = await replaceChunksForDocument(docId, parts);
+  const parts: NewChunk[] = [
+    ...chunkArticle(p.text).map((c) => ({ ord: c.ord, text: c.text })),
+    ...(opts.extraChunks ?? []),
+  ];
+  // Live page visits rewrite text, table and image chunks; transcript,
+  // highlight and PDF chunks of the same document are kept.
+  const chunkIds = await replaceChunksForDocument(
+    docId,
+    parts,
+    opts.extraChunks ? { kinds: ["text", "table", "image"] } : {}
+  );
 
   const embedPairs = chunkIds.map((id, i) => ({
     chunkId: id,
@@ -1096,7 +1109,7 @@ async function requestTabExtraction(
     gate: () => shouldSkipIndexing(url, sender, gateOpts),
     deliver: (id) =>
       new Promise<boolean>((resolve) => {
-        chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW", youtube }, { frameId: 0 }, (res) => {
+        chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW", youtube, tables: settings.tablesEnabled, images: settings.imagesEnabled }, { frameId: 0 }, (res) => {
           if (chrome.runtime.lastError) {
             resolve(false);
             return;
@@ -1485,11 +1498,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
 
         const personRecorded = p.person ? await maybeRecordPerson(p.person, p.url) : false;
 
+        const settingsForExtras = await getEffectiveSettings();
+        const extraChunks = sanitizeExtraChunks(p.extraChunks, {
+          tables: settingsForExtras.tablesEnabled,
+          images: settingsForExtras.imagesEnabled,
+        });
+
         const minLen = minCharsForUrl(p.url);
-        if (!p?.text || p.text.length < minLen) {
+        const text = typeof p.text === "string" ? p.text : "";
+        // A page that is mostly a data table still counts (Phase 5.7).
+        if (text.length < minLen && !extraChunks.length) {
           sendResponse({ ok: personRecorded, reason: "too_short", minLen, person: personRecorded });
           return;
         }
+        if (text.length < minLen) p.text = "";
 
         if (p.text.length > STORAGE_LIMITS.MAX_DOCUMENT_TEXT_BYTES) {
           sendResponse({
@@ -1500,7 +1522,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           return;
         }
 
-        const { id: docId, chunks } = await commitIndexPayload(p, { tabId: sender.tab?.id });
+        const { id: docId, chunks } = await commitIndexPayload(p, { tabId: sender.tab?.id, extraChunks });
         sendResponse({ ok: true, id: docId, chunks });
       } catch (e) {
         // #region agent log
