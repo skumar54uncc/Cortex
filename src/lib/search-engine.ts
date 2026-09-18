@@ -8,7 +8,10 @@ import {
   getUrlsVisitedBetween,
   type DocumentRecord,
   type ChunkRecord,
+  type ChunkKind,
+  type ChunkLocator,
 } from "../db/schema";
+import { detectKindIntent, kindBoost } from "./kind-intent";
 import { cosineSimilarity } from "./similarity";
 import { titleMatchScore, recencyBoost } from "./ranking";
 import { parseAskQuery, buildEvidenceIntro } from "./query-parse";
@@ -33,6 +36,10 @@ export interface SearchHitDTO {
   matchReason?: string;
   /** Human-readable scores for “Why this matched” */
   scoreBreakdown: string;
+  /** Kind of the best matching chunk (Phase 5); "text" for plain pages. */
+  kind?: ChunkKind;
+  /** Where inside the source the best chunk sits (video time, table rows, PDF page). */
+  locator?: ChunkLocator;
 }
 
 export interface SearchResponseDTO {
@@ -349,6 +356,9 @@ export async function runAdvancedSearch(
 
   const lexicalProbeForTitle = [q, ...parsed.entityTerms].join("\n");
 
+  // Intent words ("video", "table", "pdf"...) boost chunks of that kind only.
+  const kindIntent = detectKindIntent(rawQuery);
+
   const bm25RawList: number[] = [];
   const cosineList: number[] = [];
 
@@ -430,6 +440,7 @@ export async function runAdvancedSearch(
       parsed.entityTerms
     );
     fused *= relevanceMultiplier(grounding);
+    fused *= kindBoost(p.chunk.kind ?? "text", kindIntent);
     fused = Math.min(1.45, fused + bonus);
 
     const groundScore = groundingForConfidence(grounding);
@@ -515,6 +526,8 @@ export async function runAdvancedSearch(
       snippet: pickSnippet(chunk.text, q),
       score,
       grounding,
+      kind: chunk.kind ?? "text",
+      ...(chunk.locator ? { locator: chunk.locator } : {}),
       ...(matchReason ? { matchReason } : {}),
       scoreBreakdown,
     })

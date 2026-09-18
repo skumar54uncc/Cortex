@@ -240,3 +240,42 @@ describe("abstain floor (Phase 3.3)", () => {
     expect(off.abstained).toBeFalsy();
   });
 });
+
+describe("chunk kinds in search (Phase 5 task 0.3)", () => {
+  const now = 1_700_000_000_000;
+  beforeEach(() => {
+    mocks.docs = [];
+    mocks.chunks = [];
+    mocks.urlsInRange = new Set();
+  });
+
+  function setup() {
+    mocks.docs = [
+      doc(1, "https://a.test/notes", "Turbine notes", now),
+      doc(2, "https://www.youtube.com/watch?v=abc", "Turbine talk", now - 30 * 86_400_000),
+    ];
+    mocks.chunks = [
+      ch(1, 1, "tidal turbine maintenance windows and blade pitch"),
+      {
+        ...ch(2, 2, "tidal turbine maintenance windows and blade pitch"),
+        kind: "transcript",
+        locator: { videoId: "abc", startSec: 60, endSec: 120 },
+      },
+    ];
+  }
+
+  it("without intent words the newer text page ranks first (kinds ignored)", async () => {
+    setup();
+    const res = await runAdvancedSearch("tidal turbine blade pitch", async () => null, { abstainFloor: 0 });
+    expect(res.hits[0].url).toBe("https://a.test/notes");
+    expect(res.hits[0].kind).toBe("text");
+  });
+
+  it("with a video intent the transcript chunk wins and the hit carries kind and locator", async () => {
+    setup();
+    const res = await runAdvancedSearch("video about tidal turbine blade pitch", async () => null, { abstainFloor: 0 });
+    expect(res.hits[0].url).toBe("https://www.youtube.com/watch?v=abc");
+    expect(res.hits[0].kind).toBe("transcript");
+    expect(res.hits[0].locator).toEqual({ videoId: "abc", startSec: 60, endSec: 120 });
+  });
+});

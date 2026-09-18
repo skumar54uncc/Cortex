@@ -22,7 +22,28 @@ export interface CortexUserSettings {
   retentionDays: number;
   /** On-device image descriptions via the Prompt API (Phase 5.8); off by default. */
   imageDescriptionsEnabled: boolean;
+  /** Release 1.2.0 feature toggles (Phase 5). */
+  peopleMemoryEnabled: boolean;
+  omniboxEnabled: boolean;
+  highlightsEnabled: boolean;
+  /** "Seen this before" chip; opt-in. */
+  resurfacingEnabled: boolean;
+  youtubeTranscriptsEnabled: boolean;
+  tablesEnabled: boolean;
+  imagesEnabled: boolean;
+  pdfEnabled: boolean;
 }
+
+export type FeatureToggle =
+  | "peopleMemoryEnabled"
+  | "omniboxEnabled"
+  | "highlightsEnabled"
+  | "resurfacingEnabled"
+  | "youtubeTranscriptsEnabled"
+  | "tablesEnabled"
+  | "imagesEnabled"
+  | "imageDescriptionsEnabled"
+  | "pdfEnabled";
 
 const KEY = "cortex_user_settings";
 
@@ -37,7 +58,19 @@ export const DEFAULT_USER_SETTINGS: CortexUserSettings = {
   theme: "system",
   retentionDays: 0,
   imageDescriptionsEnabled: false,
+  peopleMemoryEnabled: true,
+  omniboxEnabled: true,
+  highlightsEnabled: true,
+  resurfacingEnabled: false,
+  youtubeTranscriptsEnabled: true,
+  tablesEnabled: true,
+  imagesEnabled: true,
+  pdfEnabled: true,
 };
+
+function bool(v: unknown, fallback: boolean): boolean {
+  return typeof v === "boolean" ? v : fallback;
+}
 
 let memorySettings: CortexUserSettings | null = null;
 
@@ -66,6 +99,14 @@ function normalizeSettings(
         ? Math.floor(raw.retentionDays)
         : 0,
     imageDescriptionsEnabled: raw?.imageDescriptionsEnabled === true,
+    peopleMemoryEnabled: bool(raw?.peopleMemoryEnabled, DEFAULT_USER_SETTINGS.peopleMemoryEnabled),
+    omniboxEnabled: bool(raw?.omniboxEnabled, DEFAULT_USER_SETTINGS.omniboxEnabled),
+    highlightsEnabled: bool(raw?.highlightsEnabled, DEFAULT_USER_SETTINGS.highlightsEnabled),
+    resurfacingEnabled: raw?.resurfacingEnabled === true,
+    youtubeTranscriptsEnabled: bool(raw?.youtubeTranscriptsEnabled, DEFAULT_USER_SETTINGS.youtubeTranscriptsEnabled),
+    tablesEnabled: bool(raw?.tablesEnabled, DEFAULT_USER_SETTINGS.tablesEnabled),
+    imagesEnabled: bool(raw?.imagesEnabled, DEFAULT_USER_SETTINGS.imagesEnabled),
+    pdfEnabled: bool(raw?.pdfEnabled, DEFAULT_USER_SETTINGS.pdfEnabled),
   };
 }
 
