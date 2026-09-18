@@ -4,26 +4,35 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 export const EXTENSION_PATH = resolve(__dirname, "..", "dist");
+/** Open-shadow build for axe audits (npm run build:e2e). */
+export const EXTENSION_PATH_E2E_AUDIT = resolve(__dirname, "..", "dist-e2e");
 
 export interface ExtensionFixtures {
+  extensionPath: string;
+  userDataDir: string;
   context: BrowserContext;
   serviceWorker: Worker;
   extensionId: string;
 }
 
 export const test = base.extend<ExtensionFixtures>({
+  extensionPath: [EXTENSION_PATH, { option: true }],
   // eslint-disable-next-line no-empty-pattern
-  context: async ({}, use) => {
-    if (!existsSync(join(EXTENSION_PATH, "manifest.json"))) {
-      throw new Error("dist/manifest.json missing. Run `npm run build` before e2e.");
+  userDataDir: async ({}, use) => {
+    await use(mkdtempSync(join(tmpdir(), "cortex-e2e-")));
+  },
+  context: async ({ extensionPath, userDataDir }, use) => {
+    if (!existsSync(join(extensionPath, "manifest.json"))) {
+      throw new Error(`${extensionPath}/manifest.json missing. Run the build before e2e.`);
     }
-    const userDataDir = mkdtempSync(join(tmpdir(), "cortex-e2e-"));
     const context = await chromium.launchPersistentContext(userDataDir, {
       channel: "chromium",
       headless: process.env.CORTEX_E2E_HEADED ? false : true,
       args: [
-        `--disable-extensions-except=${EXTENSION_PATH}`,
-        `--load-extension=${EXTENSION_PATH}`,
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+        // Lets e2e/cdp.ts reach the offscreen document, which Playwright does not expose.
+        "--remote-debugging-port=0",
       ],
     });
     await use(context);

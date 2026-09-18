@@ -1,4 +1,5 @@
 import { test, expect, articleHtml, LOREM_PARAGRAPHS } from "./fixtures";
+import { BrowserCdp, recordOffscreenRequests } from "./cdp";
 
 /**
  * Smoke test for the on-device embedding path after the Transformers.js v4
@@ -10,7 +11,12 @@ import { test, expect, articleHtml, LOREM_PARAGRAPHS } from "./fixtures";
 test("indexes a page and stores 384-d embeddings without any external fetch", async ({
   context,
   serviceWorker,
+  userDataDir,
 }) => {
+  // The offscreen document (model + WASM runtime) is invisible to Playwright's
+  // request events, so it is watched through CDP from the moment it starts.
+  const cdp = await BrowserCdp.connect(userDataDir);
+  const offscreen = await recordOffscreenRequests(cdp);
   const external: string[] = [];
   context.on("request", (req) => {
     const u = req.url();
@@ -66,6 +72,16 @@ test("indexes a page and stores 384-d embeddings without any external fetch", as
     }
     return last;
   });
+
+  cdp.close();
+  expect(offscreen.attached(), "offscreen document observed").toBe(true);
+  const offscreenExternal = offscreen.urls.filter(
+    (u) => !u.startsWith("chrome-extension://") && !u.startsWith("data:") && !u.startsWith("blob:")
+  );
+  expect(offscreenExternal).toEqual([]);
+  // The model and the ONNX runtime were loaded from the extension package.
+  expect(offscreen.urls.some((u) => u.includes("/models/Xenova/all-MiniLM-L6-v2/"))).toBe(true);
+  expect(offscreen.urls.some((u) => u.endsWith("/wasm/ort-wasm-simd-threaded.wasm"))).toBe(true);
 
   expect(result.total).toBeGreaterThan(0);
   expect(result.embedded).toBe(result.total);

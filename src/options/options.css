@@ -8,7 +8,8 @@
   --border-strong: #d4d2cc;
   --text: #1a1a1a;
   --text-secondary: #5c5c5c;
-  --text-tertiary: #8a8a8a;
+  /* #8a8a8a was 3.3:1 on --bg; #666666 is 5.5:1 (axe color-contrast, release 1.2.0) */
+  --text-tertiary: #666666;
   --accent: #c72a09;
   --accent-hover: #a82207;
   --accent-subtle: rgba(199, 42, 9, 0.1);

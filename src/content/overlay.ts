@@ -223,7 +223,7 @@ export function openCortexOverlay(): void {
   }
 
   const shadow = host.attachShadow({
-    mode: __CORTEX_DEBUG__ ? "open" : "closed",
+    mode: __CORTEX_DEBUG__ || __CORTEX_E2E_OPEN_SHADOW__ ? "open" : "closed",
   });
   overlayShadowRoot = shadow;
 
@@ -355,7 +355,8 @@ ${shadowCss}`;
     shell.querySelectorAll<HTMLElement>(".cortex-hit-card").forEach((el, i) => {
       const on = i === selectedHitIndex;
       el.classList.toggle("cortex-hit-card-selected", on);
-      el.setAttribute("aria-selected", on ? "true" : "false");
+      if (on) el.setAttribute("aria-current", "true");
+      else el.removeAttribute("aria-current");
       if (on) {
         el.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
@@ -406,7 +407,7 @@ ${shadowCss}`;
       if (selectedHitIndex < 0) selectedHitIndex = 0;
       else selectedHitIndex = Math.min(selectedHitIndex + 1, hits.length - 1);
       applyHitSelection();
-      hits[selectedHitIndex]?.focus({ preventScroll: true });
+      hits[selectedHitIndex]?.querySelector<HTMLElement>(".cortex-hit-link")?.focus({ preventScroll: true });
       return;
     }
 
@@ -421,7 +422,7 @@ ${shadowCss}`;
       }
       selectedHitIndex--;
       applyHitSelection();
-      hits[selectedHitIndex]?.focus({ preventScroll: true });
+      hits[selectedHitIndex]?.querySelector<HTMLElement>(".cortex-hit-link")?.focus({ preventScroll: true });
       return;
     }
 
@@ -679,7 +680,6 @@ ${shadowCss}`;
     for (const group of groups) {
       const heading = document.createElement("div");
       heading.className = "cortex-chat-group-label";
-      heading.setAttribute("role", "presentation");
       heading.textContent = group.label;
       list.appendChild(heading);
 
@@ -691,12 +691,11 @@ ${shadowCss}`;
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "cortex-chat-history-item";
-        btn.setAttribute("role", "option");
         btn.setAttribute("data-conversation-id", String(conv.id));
         btn.title = label;
         btn.tabIndex = -1;
         const isActive = conv.id === currentConversationId;
-        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+        if (isActive) btn.setAttribute("aria-current", "true");
         if (isActive) btn.classList.add("cortex-chat-history-item--active");
         const title = document.createElement("span");
         title.className = "cortex-chat-history-title";
@@ -1572,7 +1571,7 @@ ${shadowCss}`;
                 : "";
 
               return `
-<div class="cortex-hit-card" role="option" tabindex="-1" aria-selected="false">
+<div class="cortex-hit-card" role="listitem">
   <a class="cortex-hit-link" href="${safeHttpUrl(h.url)}" target="_blank" rel="noreferrer">
     <span class="cortex-hit-favicon-wrap">${favHtml}</span>
     <span class="cortex-hit-main-col">
@@ -1594,7 +1593,7 @@ ${shadowCss}`;
             })
             .join("");
 
-          results.innerHTML = `${evidenceBlock}<div class="cortex-hit-list" role="listbox" aria-label="Matching pages">${rows}</div>`;
+          results.innerHTML = `${evidenceBlock}<div class="cortex-hit-list" role="list" aria-label="Matching pages">${rows}</div>`;
 
           announcePolite(
             `${res.hits.length} result${res.hits.length === 1 ? "" : "s"} found`
@@ -1674,7 +1673,7 @@ ${shadowCss}`;
 
       const sidebarList = document.createElement("div");
       sidebarList.className = "cortex-chat-sidebar-list";
-      sidebarList.setAttribute("role", "listbox");
+      sidebarList.setAttribute("role", "group");
       sidebarList.setAttribute("aria-label", "Past chats");
       sidebarList.addEventListener("keydown", onSidebarKey);
       askSidebarListEl = sidebarList;
@@ -1787,7 +1786,8 @@ ${shadowCss}`;
     if (currentMode === "digest") {
       const rangeBar = document.createElement("div");
       rangeBar.className = "cortex-digest-range";
-      rangeBar.setAttribute("role", "tablist");
+      // Toggle buttons (aria-pressed), not tabs: there is one shared content area.
+      rangeBar.setAttribute("role", "group");
       rangeBar.setAttribute("aria-label", "Digest time range");
       const ranges: Array<[DigestRange, string]> = [
         ["today", "Today"],
@@ -1805,7 +1805,6 @@ ${shadowCss}`;
         btn.className = "cortex-digest-range-btn";
         btn.textContent = label;
         btn.setAttribute("data-digest-range", key);
-        btn.setAttribute("role", "tab");
         btn.addEventListener("click", () => void loadDigest(key, content));
         rangeBar.appendChild(btn);
         digestRangeButtons.push(btn);

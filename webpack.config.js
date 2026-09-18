@@ -8,6 +8,12 @@ module.exports = (env, argv) => {
     process.env.CORTEX_DEBUG === "0"
       ? false
       : process.env.CORTEX_DEBUG === "1" || mode === "development";
+  /**
+   * `--env e2e` builds dist-e2e/ with an open overlay shadow root so axe-core
+   * can audit the overlay. Everything else is identical to production.
+   * The shipped build (dist/) always uses a closed shadow root.
+   */
+  const e2eAudit = Boolean(env && env.e2e);
 
   return {
   entry: {
@@ -21,7 +27,7 @@ module.exports = (env, argv) => {
     "search-shell": "./src/search/search-shell.ts",
   },
   output: {
-    path: path.resolve(__dirname, "dist"),
+    path: path.resolve(__dirname, e2eAudit ? "dist-e2e" : "dist"),
     filename: "[name].js",
     /** style-loader breaks in MV3 pages when left as `auto` */
     publicPath: "",
@@ -63,6 +69,7 @@ module.exports = (env, argv) => {
   plugins: [
     new webpack.DefinePlugin({
       __CORTEX_DEBUG__: JSON.stringify(cortexDebug),
+      __CORTEX_E2E_OPEN_SHADOW__: JSON.stringify(e2eAudit),
     }),
     new CopyWebpackPlugin({
       patterns: [

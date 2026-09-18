@@ -18,3 +18,4 @@ playwright-report/
 
 # Generated in CI
 sbom.cdx.json
+dist-e2e/

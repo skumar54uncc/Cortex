@@ -298,7 +298,7 @@
             >
               <span class="cx-toggle-thumb"></span>
             </button>
-            <input type="checkbox" id="cx-opt-pause" class="cx-visually-hidden" tabindex="-1" />
+            <input type="checkbox" id="cx-opt-pause" class="cx-visually-hidden" tabindex="-1" aria-label="Pause indexing" />
           </div>
 
           <div class="cx-field">
@@ -317,8 +317,8 @@
           <div class="cx-field">
             <label class="cx-field-label" for="cx-opt-blocklist">Blocked domains</label>
             <p class="cx-field-hint">One domain per line. Click × on a chip to remove.</p>
-            <div id="cx-opt-managed-blocklist" class="cx-chip-row" aria-label="Domains blocked by your organization" hidden></div>
-            <div id="cx-opt-blocklist-chips" class="cx-chip-row" aria-label="Blocked domains"></div>
+            <div id="cx-opt-managed-blocklist" class="cx-chip-row" role="group" aria-label="Domains blocked by your organization" hidden></div>
+            <div id="cx-opt-blocklist-chips" class="cx-chip-row" role="group" aria-label="Blocked domains"></div>
             <textarea id="cx-opt-blocklist" class="cx-input cx-textarea" rows="4" spellcheck="false"></textarea>
           </div>
 

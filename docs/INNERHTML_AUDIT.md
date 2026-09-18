@@ -24,6 +24,16 @@ Automated grep targets: `innerHTML`, `outerHTML`, `document.write`, `eval(`.
 |----------|---------|
 | Clearing rows via `innerHTML = ""` | **Safe**. |
 
+## Release 1.2.0 additions
+
+| File | Sinks | Verdict |
+|------|-------|---------|
+| `src/content/chat-drawer.ts`, `forget-menu.ts`, `stream-renderer.ts`, `focus-trap.ts` | none (DOM APIs, `textContent`, `createElementNS`) | **Safe** |
+| `src/content/overlay.ts` empty state chips, undo toast, forget status | `textContent` only; the empty-state block no longer uses `innerHTML` | **Safe** |
+| `src/content/overlay.ts` chat history delete icon | `delBtn.innerHTML` with a static SVG string (unchanged from 1.0.x) | **Safe**: no interpolation |
+| `src/options/managed-ui.ts` | `textContent`; managed domains come from admin policy and are rendered with `textContent` | **Safe** |
+| `src/options/options.ts` forget feedback | `textContent` | **Safe** |
+
 ## Follow-up
 
 Re-run when changing hit templates or adding new HTML sinks:

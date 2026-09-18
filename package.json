@@ -18,7 +18,8 @@
     "eval:test": "vitest run --config vitest.config.eval.ts",
     "e2e": "playwright test",
     "check:budget": "node scripts/check-bundle-budget.mjs",
-    "sbom": "cyclonedx-npm --omit dev --output-format JSON --output-file sbom.cdx.json"
+    "sbom": "cyclonedx-npm --omit dev --output-format JSON --output-file sbom.cdx.json",
+    "build:e2e": "webpack --mode production --env e2e"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.0",
@@ -26,6 +27,7 @@
     "dexie": "^4.0.10"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@cyclonedx/cyclonedx-npm": "^6.0.1",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@playwright/test": "^1.63.0",

@@ -36,6 +36,10 @@ Model weights (`models/`) and the ONNX Runtime binary (`wasm/`) are loaded only 
 
 Guarded by `tests/manifest.test.ts`.
 
+## Managed storage (Phase 4.1)
+
+`"storage": { "managed_schema": "managed_schema.json" }` declares the enterprise policy keys. It uses the existing `storage` permission and adds no install warning. The extension can only read `chrome.storage.managed`; values come from Chrome management (Admin console, GPO, policy files). See `docs/ENTERPRISE.md`.
+
 ## Permissions this release deliberately does not add
 
 | Candidate | Decision |

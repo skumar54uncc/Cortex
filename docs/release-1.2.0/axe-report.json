@@ -1,0 +1,62 @@
+[
+  {
+    "surface": "overlay light search idle",
+    "violations": []
+  },
+  {
+    "surface": "overlay light search results",
+    "violations": []
+  },
+  {
+    "surface": "overlay light ask",
+    "violations": []
+  },
+  {
+    "surface": "overlay light digest",
+    "violations": []
+  },
+  {
+    "surface": "overlay light forget menu",
+    "violations": []
+  },
+  {
+    "surface": "overlay dark search idle",
+    "violations": []
+  },
+  {
+    "surface": "overlay dark search results",
+    "violations": []
+  },
+  {
+    "surface": "overlay dark ask",
+    "violations": []
+  },
+  {
+    "surface": "overlay dark digest",
+    "violations": []
+  },
+  {
+    "surface": "overlay dark forget menu",
+    "violations": []
+  },
+  {
+    "surface": "overlay narrow ask drawer",
+    "violations": []
+  },
+  {
+    "surface": "options.html",
+    "violations": []
+  },
+  {
+    "surface": "popup.html",
+    "violations": []
+  },
+  {
+    "surface": "onboarding.html",
+    "violations": []
+  },
+  {
+    "surface": "search-shell.html",
+    "violations": []
+  }
+]

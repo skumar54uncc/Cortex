@@ -22,8 +22,9 @@
   --cx-surface: #f0eee9;
   --cx-surface-raised: #faf8f4;
   --cx-surface-2: #dad8d3;
-  --cx-accent: #c72a09;
-  --cx-accent-hover: #a82207;
+  /* Darkened for 4.5:1 on accent-soft fills (axe, release 1.2.0); was #c72a09 */
+  --cx-accent: #a82207;
+  --cx-accent-hover: #8a1c05;
   --cx-accent-soft: rgba(199, 42, 9, 0.14);
   --cx-accent-strong: rgba(199, 42, 9, 0.28);
   --cx-text: #1c1917;
