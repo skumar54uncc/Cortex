@@ -1,4 +1,5 @@
 import type { ChunkWithDoc } from "../search-engine";
+import { citationHref, snippetLabel } from "../kind-labels";
 
 export const CHAT_SYSTEM_PROMPT = `You are Cortex, a personal browser memory assistant.
 
@@ -53,8 +54,10 @@ export function buildChatPrompt(input: BuildPromptInput): string {
 
   const sources = input.chunks.map((c, i) => ({
     n: i + 1,
+    // Kind and locator (release 1.2.0): "(video 12:40 to 13:40)", "(PDF page 4)".
+    label: snippetLabel(c),
     title: c.document.title,
-    url: c.document.url,
+    url: citationHref(c, c.document.url) ?? c.document.url,
     domain: c.document.domain,
     visitedAt: new Date(c.document.lastVisitedAt).toISOString().split("T")[0],
     text: truncateChunk(c.text, 800),
@@ -63,7 +66,7 @@ export function buildChatPrompt(input: BuildPromptInput): string {
   const sourcesBlock = sources
     .map(
       (s) =>
-        `[${s.n}] "${s.title}" (${s.domain}, visited ${s.visitedAt})
+        `[${s.n}]${s.label ? ` (${s.label})` : ""} "${s.title}" (${s.domain}, visited ${s.visitedAt})
 URL: ${s.url}
 Content: ${s.text}`
     )

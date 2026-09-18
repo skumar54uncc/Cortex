@@ -34,6 +34,7 @@ import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
 import type { ChunkWithDoc } from "../lib/search-engine";
 import { CHAT_LIMITS } from "../lib/limits";
 import { safeHttpHttpsHref } from "../lib/url-security";
+import { buildSourceItem, citationLink, type StoredCitation } from "./citation-cards";
 import { ERROR_CODES } from "../lib/errors";
 
 let overlayHost: HTMLDivElement | null = null;
@@ -877,14 +878,7 @@ ${shadowCss}`;
         firstNum = false;
         const chunk = chunks[n - 1];
         if (chunk) {
-          const link = document.createElement("a");
-          link.className = "cortex-citation";
-          link.href = safeHttpUrl(chunk.document.url);
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.textContent = String(n);
-          link.title = chunk.document.title;
-          root.appendChild(link);
+          root.appendChild(citationLink(chunk, n));
         } else {
           root.appendChild(document.createTextNode(String(n)));
         }
@@ -898,12 +892,7 @@ ${shadowCss}`;
     return root;
   }
 
-  type StoredCited = {
-    chunkId: number;
-    documentId: number;
-    url: string;
-    title: string;
-  };
+  type StoredCited = StoredCitation;
 
   type StoredChatMessage = {
     role: "user" | "assistant";
@@ -918,6 +907,8 @@ ${shadowCss}`;
       documentId: c.documentId,
       ord,
       text: "",
+      ...(c.kind ? { kind: c.kind } : {}),
+      ...(c.locator ? { locator: c.locator } : {}),
       document: {
         id: c.documentId,
         url: c.url,
@@ -946,29 +937,7 @@ ${shadowCss}`;
     list.className = "cortex-sources-list";
 
     for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]!;
-      const item = document.createElement("a");
-      item.className = "cortex-source-item";
-      item.href = safeHttpUrl(chunk.document.url);
-      item.target = "_blank";
-      item.rel = "noopener noreferrer";
-
-      const num = document.createElement("span");
-      num.className = "cortex-source-num";
-      num.textContent = `[${i + 1}]`;
-
-      const titleEl = document.createElement("span");
-      titleEl.className = "cortex-source-title";
-      titleEl.textContent = chunk.document.title;
-
-      const domain = document.createElement("span");
-      domain.className = "cortex-source-domain";
-      domain.textContent = chunk.document.domain;
-
-      item.appendChild(num);
-      item.appendChild(titleEl);
-      item.appendChild(domain);
-      list.appendChild(item);
+      list.appendChild(buildSourceItem(chunks[i]!, i));
     }
 
     details.appendChild(summary);

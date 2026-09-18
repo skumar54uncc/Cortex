@@ -1,6 +1,7 @@
 import type { BrowserContext, Worker } from "@playwright/test";
-import { test, expect } from "./fixtures";
-import { BrowserCdp } from "./cdp";
+import { test, expect, articleHtml, openOverlayViaToolbar } from "./fixtures";
+import { BrowserCdp, FAKE_NANO_SCRIPT } from "./cdp";
+import { clickInShadow, findInShadow, queryInShadow } from "./shadow";
 import { makePdf } from "../tests/helpers/make-pdf";
 
 /** Phase 5.9: PDFs opened in a tab are read in the offscreen document with pdfjs-dist. */
@@ -181,4 +182,51 @@ test("PDFs off or indexing paused: the offscreen document never fetches the PDF"
   }
   expect(seen.urls).toEqual([]);
   expect(await pdfChunks(serviceWorker)).toEqual([]);
+});
+
+test("an answer citing a PDF opens the PDF at the cited page, and the card says which page", async ({
+  context,
+  serviceWorker,
+  extensionId,
+  userDataDir,
+}) => {
+  await routeTab(context);
+  await context.route("http://cortex-e2e.test/**", (r) =>
+    r.fulfill({
+      status: 200,
+      contentType: "text/html; charset=utf-8",
+      body: articleHtml("Reading list", ["A short page used only to open the Cortex panel for this test, about nothing in particular."]),
+    })
+  );
+  await setSettings(serviceWorker, { chatMode: "on-device-only", cloudChatEnabled: false, geminiApiKey: "" });
+  await wakeOffscreen(context, extensionId);
+  const cdp = await BrowserCdp.connect(userDataDir);
+  try {
+    const session = await cdp.attachOffscreen();
+    await interceptOffscreen(cdp, session);
+    await openPdfTab(serviceWorker);
+    await expect
+      .poll(async () => (await pdfChunks(serviceWorker)).filter((c) => c.embedState === "embedded").length, { timeout: 60_000 })
+      .toBe(3);
+    await cdp.evaluate(session, FAKE_NANO_SCRIPT(["The fluxgate was recalibrated on day three [1]."]));
+
+    const page = await context.newPage();
+    await page.goto("http://cortex-e2e.test/reading");
+    await openOverlayViaToolbar(page, serviceWorker);
+    await clickInShadow(page, "cortex-tab", "Ask");
+    await clickInShadow(page, "cortex-ask-input");
+    await page.keyboard.type("When was the fluxgate recalibrated?");
+    await page.keyboard.press("Enter");
+    await expect
+      .poll(async () => (await queryInShadow(page, "cortex-msg--assistant")).map((m) => m.text).join(" "), { timeout: 30_000 })
+      .toContain("recalibrated on day three");
+
+    const cited = await findInShadow(page, (n, a) => n === "A" && (a.class ?? "").split(" ").includes("cortex-citation"));
+    expect(cited[0]?.attrs.href).toBe(`${PDF_URL}#page=2`);
+    const cards = await findInShadow(page, (n, a) => n === "A" && (a.class ?? "").split(" ").includes("cortex-source-item"));
+    expect(cards[0]?.attrs.href).toBe(`${PDF_URL}#page=2`);
+    expect(cards[0]?.text).toContain("PDF page 2");
+  } finally {
+    cdp.close();
+  }
 });

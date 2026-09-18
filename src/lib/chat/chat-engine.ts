@@ -181,6 +181,9 @@ export async function* runChat(
         documentId: c.documentId,
         url: c.document.url,
         title: c.document.title,
+        // Kind and locator keep per-kind citation links in reopened chats.
+        ...(c.kind ? { kind: c.kind } : {}),
+        ...(c.locator ? { locator: c.locator } : {}),
       }));
 
     await addMessageToConversation(convId, {

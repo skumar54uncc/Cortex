@@ -1,4 +1,4 @@
-import { db } from "../../db/schema";
+import { db, type ChunkKind, type ChunkLocator } from "../../db/schema";
 
 export interface Conversation {
   id?: number;
@@ -18,6 +18,8 @@ export interface Message {
     documentId: number;
     url: string;
     title: string;
+    kind?: ChunkKind;
+    locator?: ChunkLocator;
   }>;
   provider?: "nano" | "cloud";
 }
