@@ -36,6 +36,19 @@ export interface DocumentRecord {
 
 export type EmbedState = "pending" | "embedded" | "failed" | "skipped";
 
+/** Where a chunk came from (release 1.2.0). Missing on 1.0.x rows: read as "text". */
+export type ChunkKind = "text" | "transcript" | "table" | "image" | "pdf" | "highlight";
+
+export const CHUNK_KINDS: readonly ChunkKind[] = ["text", "transcript", "table", "image", "pdf", "highlight"];
+
+/** Kind-specific position of a chunk inside its source (serializable). */
+export type ChunkLocator =
+  | { videoId: string; startSec: number; endSec: number }
+  | { tableIndex: number; rowStart: number; rowEnd: number; caption: string }
+  | { page: number }
+  | { images: { src: string; alt: string }[] }
+  | { quote: string; note?: string };
+
 export interface ChunkRecord {
   id?: number;
   documentId: number;
@@ -47,6 +60,50 @@ export interface ChunkRecord {
   embedState?: EmbedState;
   embedModelId?: string;
   embedUpdatedAt?: number;
+  kind?: ChunkKind;
+  locator?: ChunkLocator;
+}
+
+/** Read-time default: 1.0.x chunks have no kind and are plain page text. */
+export function chunkKind(c: Pick<ChunkRecord, "kind">): ChunkKind {
+  return c.kind ?? "text";
+}
+
+/** LinkedIn profile or company seen by the user (Phase 5.1). */
+export interface PersonRecord {
+  id?: number;
+  kind: "person" | "company";
+  name: string;
+  headline: string;
+  company: string;
+  profileUrl: string;
+  firstSeen: number;
+  lastSeen: number;
+  visitCount: number;
+}
+
+export interface CollectionRecord {
+  id?: number;
+  name: string;
+  createdAt: number;
+}
+
+export interface CollectionItemRecord {
+  id?: number;
+  collectionId: number;
+  documentId: number;
+  addedAt: number;
+}
+
+export interface HighlightRecord {
+  id?: number;
+  documentId: number;
+  url: string;
+  quote: string;
+  note?: string;
+  createdAt: number;
+  /** The highlight chunk that makes it searchable. */
+  chunkId?: number;
 }
 
 /** Append-only timeline */
@@ -100,6 +157,10 @@ export class CortexDB extends Dexie {
   conversations!: EntityTable<ConversationRecord, "id">;
   messages!: EntityTable<ConversationMessageRecord, "id">;
   digestCache!: EntityTable<DigestCacheRecord, "range">;
+  people!: EntityTable<PersonRecord, "id">;
+  collections!: EntityTable<CollectionRecord, "id">;
+  collectionItems!: EntityTable<CollectionItemRecord, "id">;
+  highlights!: EntityTable<HighlightRecord, "id">;
 
   constructor() {
     super("cortex-db");
@@ -166,6 +227,21 @@ export class CortexDB extends Dexie {
       messages: "++id, conversationId, timestamp",
       digestCache: "range, generatedAt",
     });
+    // Release 1.2.0: the only schema bump. New stores and a kind index; no
+    // row rewrite (old chunks read as "text" through chunkKind()).
+    this.version(6).stores({
+      pages: "++id, url, visitedAt",
+      visitLog: "++id, visitedAt, hostname, url",
+      documents: "++id, url, domain, lastVisitedAt",
+      chunks: "++id, documentId, ord, kind",
+      conversations: "++id, createdAt, updatedAt, title",
+      messages: "++id, conversationId, timestamp",
+      digestCache: "range, generatedAt",
+      people: "++id, &profileUrl, lastSeen, company",
+      collections: "++id, &name, createdAt",
+      collectionItems: "++id, collectionId, documentId, &[collectionId+documentId], addedAt",
+      highlights: "++id, documentId, url, createdAt",
+    });
   }
 }
 
@@ -213,19 +289,40 @@ export async function upsertDocument(rec: {
   }) as Promise<number>;
 }
 
+export interface NewChunk {
+  ord: number;
+  text: string;
+  kind?: ChunkKind;
+  locator?: ChunkLocator;
+}
+
+/**
+ * Replaces the document's chunks of the given kinds (default: text only) and
+ * leaves other kinds alone, so re-indexing a page keeps its transcript and
+ * highlight chunks.
+ */
 export async function replaceChunksForDocument(
   documentId: number,
-  chunks: { ord: number; text: string }[]
+  chunks: NewChunk[],
+  opts: { kinds?: readonly ChunkKind[] } = {}
 ): Promise<number[]> {
-  await db.chunks.where("documentId").equals(documentId).delete();
+  const kinds = new Set<ChunkKind>(opts.kinds ?? ["text"]);
+  await db.chunks
+    .where("documentId")
+    .equals(documentId)
+    .filter((c) => kinds.has(chunkKind(c)))
+    .delete();
   const ids: number[] = [];
   for (const c of chunks) {
+    const kind = c.kind ?? "text";
     const id = await db.chunks.add({
       documentId,
       ord: c.ord,
       text: c.text,
       embedState: "pending",
       embedUpdatedAt: Date.now(),
+      ...(kind !== "text" ? { kind } : {}),
+      ...(c.locator ? { locator: c.locator } : {}),
     });
     ids.push(id as number);
   }
@@ -299,9 +396,17 @@ export async function clearAllIndexedData(): Promise<void> {
       db.conversations,
       db.messages,
       db.digestCache,
+      db.people,
+      db.collections,
+      db.collectionItems,
+      db.highlights,
     ],
     async () => {
       await db.pages.clear();
+      await db.people.clear();
+      await db.collections.clear();
+      await db.collectionItems.clear();
+      await db.highlights.clear();
       await db.documents.clear();
       await db.chunks.clear();
       await db.visitLog.clear();

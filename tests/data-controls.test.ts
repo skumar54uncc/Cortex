@@ -172,3 +172,47 @@ describe("forgetAll", () => {
     for (const t of db.tables) expect(await t.count()).toBe(0);
   });
 });
+
+describe("release 1.2.0 stores (people, collections, highlights)", () => {
+  async function seedNewStores(docId: number) {
+    await db.people.bulkAdd([
+      { kind: "person", name: "Ana Old", headline: "h", company: "Acme", profileUrl: "https://www.linkedin.com/in/ana-old/", firstSeen: NOW - 50 * DAY, lastSeen: NOW - 50 * DAY, visitCount: 1 },
+      { kind: "person", name: "Bo New", headline: "h", company: "Acme", profileUrl: "https://www.linkedin.com/in/bo-new/", firstSeen: NOW - 10 * 60_000, lastSeen: NOW - 10 * 60_000, visitCount: 1 },
+    ]);
+    const colId = (await db.collections.add({ name: "Job search", createdAt: NOW })) as number;
+    await db.collectionItems.add({ collectionId: colId, documentId: docId, addedAt: NOW });
+    await db.highlights.add({ documentId: docId, url: "https://example.com/a", quote: "q", createdAt: NOW - 5 * 60_000 });
+    return colId;
+  }
+
+  it("retention removes old people, highlights of deleted pages, and dangling collection items; keeps collections", async () => {
+    const oldDoc = await addDoc("https://example.com/a", NOW - 40 * DAY);
+    await seedNewStores(oldDoc);
+    await db.highlights.update((await db.highlights.toCollection().first())!.id!, { createdAt: NOW - 40 * DAY });
+    await applyRetention(30, NOW);
+    expect((await db.people.toArray()).map((p) => p.name)).toEqual(["Bo New"]);
+    expect(await db.highlights.count()).toBe(0);
+    expect(await db.collectionItems.count()).toBe(0);
+    expect(await db.collections.count()).toBe(1);
+  });
+
+  it("forget site removes highlights and collection items of that site, and people when the site is linkedin.com", async () => {
+    const d = await addDoc("https://example.com/a", NOW);
+    await seedNewStores(d);
+    await forgetSite("example.com");
+    expect(await db.highlights.count()).toBe(0);
+    expect(await db.collectionItems.count()).toBe(0);
+    expect(await db.people.count()).toBe(2);
+    await forgetSite("linkedin.com");
+    expect(await db.people.count()).toBe(0);
+  });
+
+  it("forget last hour removes people seen and highlights made in the window", async () => {
+    const d = await addDoc("https://older.test/a", NOW - 3 * 3_600_000);
+    await seedNewStores(d);
+    await forgetSince(NOW - FORGET_WINDOWS_MS.hour);
+    expect((await db.people.toArray()).map((p) => p.name)).toEqual(["Ana Old"]);
+    expect(await db.highlights.count()).toBe(0);
+    expect(await db.collectionItems.count()).toBe(1);
+  });
+});

@@ -9,7 +9,7 @@
  * competes with live indexing; each batch is independent, so it resumes after
  * a service worker restart without any cursor.
  */
-import { db, replaceChunksForDocument } from "../db/schema";
+import { chunkKind, db, replaceChunksForDocument } from "../db/schema";
 import {
   chunkArticle,
   CHUNK_PROFILES,
@@ -48,7 +48,13 @@ export async function rechunkDocument(documentId: number): Promise<RechunkResult
   const doc = await db.documents.get(documentId);
   if (!doc) return { ok: false, chunkIds: [], reason: "missing_document" };
 
-  const existing = await db.chunks.where("documentId").equals(documentId).toArray();
+  // Only page-text chunks are rebuilt; transcript, table, image, PDF and
+  // highlight chunks keep their own boundaries.
+  const existing = await db.chunks
+    .where("documentId")
+    .equals(documentId)
+    .filter((c) => chunkKind(c) === "text")
+    .toArray();
   if (existing.length === 0) {
     // Nothing to rebuild from; mark current so the job does not retry forever.
     await db.documents.update(documentId, { chunkingVersion: CHUNKING_VERSION });

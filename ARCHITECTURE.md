@@ -110,7 +110,7 @@ Customize bindings at `chrome://extensions/shortcuts`.
 
 ## 4. Data model (IndexedDB)
 
-Implemented in `src/db/schema.ts` (Dexie **v5**, `CORTEX_DB_SCHEMA_VERSION` in `shared/cortex-constants.ts`).
+Implemented in `src/db/schema.ts` (Dexie **v6** since 1.2.0; v5 in 1.0.x, `CORTEX_DB_SCHEMA_VERSION` in `shared/cortex-constants.ts`).
 
 | Store | Purpose |
 |-------|---------|

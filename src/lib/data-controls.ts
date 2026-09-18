@@ -26,6 +26,10 @@ export const HANDLED_TABLES = [
   "conversations",
   "messages",
   "digestCache",
+  "people",
+  "collections",
+  "collectionItems",
+  "highlights",
 ] as const;
 
 export const FORGET_WINDOWS_MS = {
@@ -40,10 +44,12 @@ export interface DeleteCounts {
   conversations: number;
   messages: number;
   pages: number;
+  people: number;
+  highlights: number;
 }
 
 function zero(): DeleteCounts {
-  return { documents: 0, chunks: 0, visits: 0, conversations: 0, messages: 0, pages: 0 };
+  return { documents: 0, chunks: 0, visits: 0, conversations: 0, messages: 0, pages: 0, people: 0, highlights: 0 };
 }
 
 function anyDeleted(c: DeleteCounts): boolean {
@@ -58,13 +64,31 @@ const ALL_TABLES = () => [
   db.conversations,
   db.messages,
   db.digestCache,
+  db.people,
+  db.collections,
+  db.collectionItems,
+  db.highlights,
 ];
 
 async function deleteDocumentsById(ids: number[], out: DeleteCounts): Promise<void> {
   if (!ids.length) return;
   out.chunks += await db.chunks.where("documentId").anyOf(ids).delete();
+  out.highlights += await db.highlights.where("documentId").anyOf(ids).delete();
+  await db.collectionItems.where("documentId").anyOf(ids).delete();
   await db.documents.bulkDelete(ids);
   out.documents += ids.length;
+}
+
+/** Deletes highlight rows and the searchable highlight chunks they own. */
+async function deleteHighlights(rows: { id?: number; chunkId?: number }[], out: DeleteCounts): Promise<void> {
+  if (!rows.length) return;
+  const chunkIds = rows.map((h) => h.chunkId).filter((x): x is number => typeof x === "number");
+  if (chunkIds.length) {
+    await db.chunks.bulkDelete(chunkIds);
+    out.chunks += chunkIds.length;
+  }
+  await db.highlights.bulkDelete(rows.map((h) => h.id as number));
+  out.highlights += rows.length;
 }
 
 /** Deletes empty conversations among the given ids. */
@@ -89,6 +113,8 @@ export async function applyRetention(days: number, now: number = Date.now()): Pr
     await deleteDocumentsById(oldDocIds, out);
     out.visits += await db.visitLog.where("visitedAt").below(cutoff).delete();
     out.pages += await db.pages.where("visitedAt").below(cutoff).delete();
+    out.people += await db.people.where("lastSeen").below(cutoff).delete();
+    await deleteHighlights(await db.highlights.where("createdAt").below(cutoff).toArray(), out);
 
     const oldConvs = (await db.conversations.where("updatedAt").below(cutoff).primaryKeys()) as number[];
     if (oldConvs.length) {
@@ -146,6 +172,8 @@ export async function forgetSite(hostname: string): Promise<DeleteCounts> {
     await deleteDocumentsById(docIds, out);
     out.visits += await db.visitLog.filter((v) => hostMatches(v.hostname || safeHost(v.url), site)).delete();
     out.pages += await db.pages.filter((p) => hostMatches(safeHost(p.url), site)).delete();
+    out.people += await db.people.filter((p) => hostMatches(safeHost(p.profileUrl), site)).delete();
+    await deleteHighlights(await db.highlights.filter((h) => hostMatches(safeHost(h.url), site)).toArray(), out);
 
     const citing = await db.messages
       .filter((m) => m.role === "assistant" && citesSite(m, site))
@@ -176,6 +204,8 @@ export async function forgetSince(since: number): Promise<DeleteCounts> {
     await deleteDocumentsById(docIds, out);
     out.visits += await db.visitLog.where("visitedAt").aboveOrEqual(since).delete();
     out.pages += await db.pages.where("visitedAt").aboveOrEqual(since).delete();
+    out.people += await db.people.where("lastSeen").aboveOrEqual(since).delete();
+    await deleteHighlights(await db.highlights.where("createdAt").aboveOrEqual(since).toArray(), out);
 
     const recentMsgs = await db.messages.where("timestamp").aboveOrEqual(since).toArray();
     if (recentMsgs.length) {
