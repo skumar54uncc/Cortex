@@ -93,6 +93,9 @@ import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { saveHighlight } from "../lib/highlights";
 import { sanitizeExtraChunks, sanitizeImageInputs, type ImageInput } from "../lib/capture/extra-chunks";
 import { appendDescriptions, planImageDescriptions, reuseDescribedText } from "../lib/capture/images";
+import { isPdfUrl } from "../lib/capture/pdf";
+import { indexPdfTab, type PdfExtractResult } from "../lib/pdf-indexer";
+import type { ChunkKind } from "../db/schema";
 import type { NewChunk } from "../db/schema";
 import {
   sanitizeTranscriptPayload,
@@ -464,7 +467,7 @@ async function maybeResurface(tabId: number, documentId: number, url: string): P
 
 async function commitIndexPayload(
   p: IndexPayload,
-  opts: { tabId?: number; extraChunks?: NewChunk[]; imageInputs?: ImageInput[] } = {}
+  opts: { tabId?: number; extraChunks?: NewChunk[]; imageInputs?: ImageInput[]; replaceKinds?: ChunkKind[] } = {}
 ): Promise<{
   id: number;
   chunks: number;
@@ -504,7 +507,7 @@ async function commitIndexPayload(
   const chunkIds = await replaceChunksForDocument(
     docId,
     parts,
-    opts.extraChunks ? { kinds: ["text", "table", "image"] } : {}
+    opts.replaceKinds ? { kinds: opts.replaceKinds } : opts.extraChunks ? { kinds: ["text", "table", "image"] } : {}
   );
 
   const embedPairs = chunkIds.map((id, i) => ({
@@ -1039,6 +1042,46 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
   ) {
     void warmContentScriptOnTab(tab.id, tab.url ?? "");
   }
+});
+
+/**
+ * PDFs (Phase 5.9): content scripts do not run in Chrome's PDF viewer, so PDF
+ * tabs are picked up here. indexPdfTab runs the toggle and the full privacy
+ * gate before the offscreen document fetches anything.
+ */
+async function pdfAlreadyIndexed(url: string): Promise<boolean> {
+  const doc = await db.documents.where("url").equals(url).first();
+  if (doc?.id == null) return false;
+  return (await db.chunks.where("documentId").equals(doc.id).filter((c) => c.kind === "pdf").count()) > 0;
+}
+
+function extractPdfViaOffscreen(url: string): Promise<PdfExtractResult> {
+  return ensureOffscreen().then(
+    () =>
+      new Promise<PdfExtractResult>((resolve) => {
+        chrome.runtime.sendMessage({ type: "CORTEX_PDF_EXTRACT", url }, (r: PdfExtractResult | undefined) => {
+          if (chrome.runtime.lastError || !r) resolve({ ok: false, reason: "offscreen_unavailable" });
+          else resolve(r);
+        });
+      })
+  );
+}
+
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+  if (changeInfo.status !== "complete" || !tab.url || !isPdfUrl(tab.url)) return;
+  void indexPdfTab(
+    { url: tab.url, incognito: tab.incognito === true },
+    {
+      pdfEnabled: async () => (await getEffectiveSettings()).pdfEnabled,
+      gate: (url, incognito) => shouldSkipIndexing(url, { tab: { incognito } } as chrome.runtime.MessageSender),
+      alreadyIndexed: pdfAlreadyIndexed,
+      extract: extractPdfViaOffscreen,
+      commit: (payload, chunks) =>
+        commitIndexPayload(payload as IndexPayload, { extraChunks: chunks, replaceKinds: ["pdf"] }),
+    }
+  )
+    .then((r) => devLog.info("[Cortex] pdf:", r))
+    .catch((e) => devLog.warn("[Cortex] pdf index failed:", e));
 });
 
 chrome.runtime.onInstalled.addListener((details) => {

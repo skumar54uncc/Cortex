@@ -32,6 +32,8 @@ module.exports = (env, argv) => {
   output: {
     path: path.resolve(__dirname, e2eAudit ? "dist-e2e" : "dist"),
     filename: "[name].js",
+    /** Lazy chunks (pdf.js for Phase 5.9) sit next to the entry bundles. */
+    chunkFilename: "[name].js",
     /** style-loader breaks in MV3 pages when left as `auto` */
     publicPath: "",
     clean: true,
@@ -91,6 +93,8 @@ module.exports = (env, argv) => {
         { from: "icons", to: "icons", noErrorOnMissing: true },
         { from: "fonts", to: "fonts", noErrorOnMissing: true },
         { from: "vendor/models", to: "models", noErrorOnMissing: true },
+        /** pdfjs-dist worker, loaded by the offscreen document only when a PDF is read. */
+        { from: "node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs", to: "pdf.worker.min.mjs" },
         {
           from: "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
           to: "wasm/ort-wasm-simd-threaded.wasm",

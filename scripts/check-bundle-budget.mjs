@@ -14,6 +14,9 @@ export const BUNDLE_BUDGETS = {
   "overlay.js": 140 * KB,
   "service-worker.js": 220 * KB,
   "offscreen.js": 700 * KB,
+  // pdfjs-dist (Phase 5.9): lazy chunk and worker, loaded only when a PDF is read.
+  "pdf.js": 560 * KB,
+  "pdf.worker.min.mjs": 1400 * KB,
   "search-shell.js": 140 * KB,
   "options.js": 40 * KB,
   "popup.js": 20 * KB,

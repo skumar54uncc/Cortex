@@ -16,6 +16,7 @@ import { ChatRunRegistry } from "../lib/chat/chat-run-registry";
 import { findMostSimilarDocument } from "../lib/resurface";
 import { runImageDescriptions } from "../lib/capture/images";
 import { promptApiImageDescriber } from "./image-describer";
+import { fetchAndExtractPdf } from "./pdf-fetch";
 import { generateDigest } from "../lib/chat/digest-engine";
 import {
   CORTEX_EXTENSION_BUS_CHANNEL,
@@ -149,6 +150,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       }
     })();
 
+    return true;
+  }
+
+  if (msg?.type === "CORTEX_PDF_EXTRACT") {
+    // Phase 5.9: the service worker already ran the privacy gate for this URL.
+    void fetchAndExtractPdf(String(msg.url ?? ""))
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false as const, reason: "parse_failed" }));
     return true;
   }
 
