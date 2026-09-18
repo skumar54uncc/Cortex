@@ -42,6 +42,9 @@
     "page": "options.html",
     "open_in_tab": true
   },
+  "omnibox": {
+    "keyword": "cx"
+  },
   "commands": {
     "open-cortex-search": {
       "suggested_key": {

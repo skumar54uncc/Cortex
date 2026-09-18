@@ -89,6 +89,7 @@ import { openOverlayOnTab } from "../lib/overlay-injector";
 import { requestExtraction } from "../lib/extract-injector";
 import { canonicalLinkedInUrl, type LinkedInEntity } from "../lib/capture/linkedin";
 import { deletePerson, listPeople, upsertPerson } from "../lib/people";
+import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { RateLimiter } from "../lib/rate-limiter";
 import {
@@ -998,6 +999,64 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   void ensureIndexingHeadroom().catch(() => {
     /* ignore */
   });
+});
+
+// ---------------------------------------------------------------------------
+// Address bar: keyword "cx" (Phase 5.2). Local search only.
+// ---------------------------------------------------------------------------
+const OMNIBOX_DEFAULT = "Search your Cortex library for <match>%s</match>";
+let omniboxSeq = 0;
+let omniboxLast: { query: string; bestUrl: string | null } = { query: "", bestUrl: null };
+
+chrome.omnibox?.setDefaultSuggestion({ description: OMNIBOX_DEFAULT });
+
+chrome.omnibox?.onInputChanged.addListener((text, suggest) => {
+  const seq = ++omniboxSeq;
+  void (async () => {
+    const settings = await getEffectiveSettings();
+    if (!settings.omniboxEnabled) {
+      chrome.omnibox.setDefaultSuggestion({
+        description: "Cortex address bar search is off. Turn it on in Cortex settings.",
+      });
+      suggest([]);
+      return;
+    }
+    chrome.omnibox.setDefaultSuggestion({ description: OMNIBOX_DEFAULT });
+    const q = text.trim();
+    if (q.length < 2) {
+      suggest([]);
+      return;
+    }
+    await sleepMs(150);
+    if (seq !== omniboxSeq) return;
+    const res = await searchViaOffscreen(q);
+    if (seq !== omniboxSeq) return;
+    const hits = res.ok ? res.hits : [];
+    omniboxLast = { query: q, bestUrl: hits[0]?.url ?? null };
+    suggest(toSuggestions(hits, q));
+  })().catch((e) => devLog.warn("[Cortex] omnibox:", e));
+});
+
+chrome.omnibox?.onInputEntered.addListener((text, disposition) => {
+  void (async () => {
+    const settings = await getEffectiveSettings();
+    if (!settings.omniboxEnabled) return;
+    const q = text.trim();
+    let best = omniboxLast.query === q ? omniboxLast.bestUrl : null;
+    if (!best && !/^https?:\/\//i.test(q)) {
+      const res = await searchViaOffscreen(q);
+      best = res.ok ? res.hits[0]?.url ?? null : null;
+    }
+    const url = resolveEnteredUrl(q, best);
+    if (!url) return;
+    if (disposition === "currentTab") {
+      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      if (tab?.id != null) await chrome.tabs.update(tab.id, { url });
+      else await chrome.tabs.create({ url });
+    } else {
+      await chrome.tabs.create({ url, active: disposition === "newForegroundTab" });
+    }
+  })().catch((e) => devLog.warn("[Cortex] omnibox enter:", e));
 });
 
 chrome.commands.onCommand.addListener((command) => {
