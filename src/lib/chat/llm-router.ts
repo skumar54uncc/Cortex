@@ -1,5 +1,6 @@
 import { isNanoAvailable, createNanoSession } from "./nano-client";
 import { geminiStream } from "./gemini-client";
+import { stripOnDeviceDescriptions } from "../capture/images";
 import type { ParsedQuestion } from "./question-parser";
 import type { ChatSettings } from "./types";
 
@@ -120,7 +121,8 @@ export async function* streamAnswer(
       destroyOnce();
     }
   } else {
-    yield* geminiStream(prompt, {
+    // On-device image descriptions (Phase 5.8) never leave the device.
+    yield* geminiStream(stripOnDeviceDescriptions(prompt), {
       apiKey: settings.geminiApiKey,
       systemPrompt,
       temperature: 0.3,

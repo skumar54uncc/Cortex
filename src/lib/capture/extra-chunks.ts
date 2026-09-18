@@ -11,6 +11,9 @@ export const EXTRA_CHUNK_LIMITS = {
   imageChunks: 2,
   imagesPerChunk: 20,
   chars: 8000,
+  /** Downscaled image for on-device description, as a data URL (about 450 KB). */
+  imageInputChars: 600_000,
+  imageInputs: 5,
 } as const;
 
 function httpUrl(u: unknown): string | null {
@@ -69,6 +72,37 @@ export function sanitizeExtraChunks(
       out.push({ ord, text, kind: "image", locator });
       images += 1;
     }
+  }
+  return out;
+}
+
+export interface ImageInput {
+  src: string;
+  dataUrl: string;
+}
+
+const IMAGE_DATA_URL = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
+
+/**
+ * Pixels for on-device descriptions (Phase 5.8). Only JPEG or PNG data URLs
+ * of images the page's own image chunk lists are kept, one per image, capped
+ * in count and size. They go to the offscreen Prompt API and are never stored.
+ */
+export function sanitizeImageInputs(raw: unknown, locatorSrcs: readonly string[]): ImageInput[] {
+  if (!Array.isArray(raw)) return [];
+  const allowed = new Set(locatorSrcs);
+  const seen = new Set<string>();
+  const out: ImageInput[] = [];
+  for (const r of raw) {
+    if (out.length >= EXTRA_CHUNK_LIMITS.imageInputs) break;
+    const o = r as { src?: unknown; dataUrl?: unknown } | null;
+    const src = httpUrl(o?.src);
+    const dataUrl = o?.dataUrl;
+    if (!src || !allowed.has(src) || seen.has(src)) continue;
+    if (typeof dataUrl !== "string" || dataUrl.length > EXTRA_CHUNK_LIMITS.imageInputChars) continue;
+    if (!IMAGE_DATA_URL.test(dataUrl)) continue;
+    seen.add(src);
+    out.push({ src, dataUrl });
   }
   return out;
 }

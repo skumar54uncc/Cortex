@@ -14,6 +14,8 @@ import { agentDebugLog } from "../lib/agent-debug-log";
 import { runChat } from "../lib/chat/chat-engine";
 import { ChatRunRegistry } from "../lib/chat/chat-run-registry";
 import { findMostSimilarDocument } from "../lib/resurface";
+import { runImageDescriptions } from "../lib/capture/images";
+import { promptApiImageDescriber } from "./image-describer";
 import { generateDigest } from "../lib/chat/digest-engine";
 import {
   CORTEX_EXTENSION_BUS_CHANNEL,
@@ -147,6 +149,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       }
     })();
 
+    return true;
+  }
+
+  if (msg?.type === "CORTEX_DESCRIBE_IMAGES") {
+    // Phase 5.8: the service worker already applied the user setting, the
+    // policy and the 5-image cap; runImageDescriptions caps again.
+    const images = Array.isArray(msg.images) ? msg.images : [];
+    void runImageDescriptions(images, promptApiImageDescriber())
+      .then((descriptions) => sendResponse({ ok: true as const, descriptions }))
+      .catch(() => sendResponse({ ok: false as const, descriptions: [] }));
     return true;
   }
 

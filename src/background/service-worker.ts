@@ -91,7 +91,8 @@ import { canonicalLinkedInUrl, type LinkedInEntity } from "../lib/capture/linked
 import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { saveHighlight } from "../lib/highlights";
-import { sanitizeExtraChunks } from "../lib/capture/extra-chunks";
+import { sanitizeExtraChunks, sanitizeImageInputs, type ImageInput } from "../lib/capture/extra-chunks";
+import { appendDescriptions, planImageDescriptions, reuseDescribedText } from "../lib/capture/images";
 import type { NewChunk } from "../db/schema";
 import {
   sanitizeTranscriptPayload,
@@ -164,6 +165,8 @@ export interface IndexPayload {
   person?: LinkedInEntity;
   /** Table / image chunks built by extract.js (Phase 5.7, 5.8); validated before use. */
   extraChunks?: unknown;
+  /** Downscaled pixels for on-device descriptions (Phase 5.8); never stored. */
+  imageInputs?: unknown;
 }
 
 /**
@@ -360,6 +363,44 @@ function queueEmbeddingsForChunkIds(
   }
 }
 
+/**
+ * Optional on-device image descriptions (Phase 5.8): the offscreen document
+ * asks the Prompt API (image input) about at most 5 images, then the image
+ * chunk text gains the descriptions and is embedded again. Never sent to Gemini.
+ */
+/** One description run per document at a time; re-index passes join it. */
+const describingDocs = new Set<number>();
+
+async function describeImagesOnDevice(docId: number, baseText: string, images: ImageInput[]): Promise<void> {
+  if (describingDocs.has(docId)) return;
+  describingDocs.add(docId);
+  try {
+    await ensureOffscreen();
+    const res = await new Promise<{ descriptions?: { src: string; description: string }[] } | undefined>((resolve) => {
+      chrome.runtime.sendMessage({ type: "CORTEX_DESCRIBE_IMAGES", images }, (r) => {
+        if (chrome.runtime.lastError) resolve(undefined);
+        else resolve(r);
+      });
+    });
+    const descs = Array.isArray(res?.descriptions) ? res.descriptions : [];
+    if (!descs.length) return;
+    const next = appendDescriptions(
+      baseText,
+      descs.map((d) => ({ src: d.src, description: redactPII(String(d.description)).redacted }))
+    );
+    // Later passes may have replaced the chunk: update the current image
+    // chunk of this document, and only if its images are still the same.
+    const current = (await db.chunks.where("documentId").equals(docId).toArray()).find((c) => c.kind === "image");
+    if (current?.id == null || current.text !== baseText) return;
+    await db.chunks.update(current.id, { text: next });
+    queueEmbeddingsForChunkIds([{ chunkId: current.id, text: next }]);
+  } catch (e) {
+    devLog.warn("[Cortex] image descriptions skipped:", e);
+  } finally {
+    describingDocs.delete(docId);
+  }
+}
+
 /** Persist document + chunks + embedding queue + visit log (shared by live indexing and history import). */
 /**
  * "Seen this before" (Phase 5.5): after this page's embeddings finish, look
@@ -423,7 +464,7 @@ async function maybeResurface(tabId: number, documentId: number, url: string): P
 
 async function commitIndexPayload(
   p: IndexPayload,
-  opts: { tabId?: number; extraChunks?: NewChunk[] } = {}
+  opts: { tabId?: number; extraChunks?: NewChunk[]; imageInputs?: ImageInput[] } = {}
 ): Promise<{
   id: number;
   chunks: number;
@@ -446,6 +487,18 @@ async function commitIndexPayload(
     ...chunkArticle(p.text).map((c) => ({ ord: c.ord, text: c.text })),
     ...(opts.extraChunks ?? []),
   ];
+  // Image descriptions (Phase 5.8): keep stored ones when the images did not
+  // change, so re-index passes do not ask the model again.
+  const imageIdx = parts.findIndex((c) => c.kind === "image");
+  let describe = imageIdx >= 0 && (opts.imageInputs?.length ?? 0) > 0;
+  if (describe) {
+    const prev = (await db.chunks.where("documentId").equals(docId).toArray()).find((c) => c.kind === "image");
+    const kept = reuseDescribedText(prev?.text, parts[imageIdx]!.text);
+    if (kept) {
+      parts[imageIdx] = { ...parts[imageIdx]!, text: kept };
+      describe = false;
+    }
+  }
   // Live page visits rewrite text, table and image chunks; transcript,
   // highlight and PDF chunks of the same document are kept.
   const chunkIds = await replaceChunksForDocument(
@@ -460,6 +513,7 @@ async function commitIndexPayload(
   }));
   queueEmbeddingsForChunkIds(embedPairs);
   if (opts.tabId != null) scheduleResurface(opts.tabId, docId, p.url);
+  if (describe && opts.imageInputs) void describeImagesOnDevice(docId, parts[imageIdx]!.text, opts.imageInputs);
 
   await appendVisit({
     url: p.url,
@@ -1109,7 +1163,7 @@ async function requestTabExtraction(
     gate: () => shouldSkipIndexing(url, sender, gateOpts),
     deliver: (id) =>
       new Promise<boolean>((resolve) => {
-        chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW", youtube, tables: settings.tablesEnabled, images: settings.imagesEnabled }, { frameId: 0 }, (res) => {
+        chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW", youtube, tables: settings.tablesEnabled, images: settings.imagesEnabled, imageDescriptions: settings.imagesEnabled && settings.imageDescriptionsEnabled }, { frameId: 0 }, (res) => {
           if (chrome.runtime.lastError) {
             resolve(false);
             return;
@@ -1522,7 +1576,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           return;
         }
 
-        const { id: docId, chunks } = await commitIndexPayload(p, { tabId: sender.tab?.id, extraChunks });
+        const imageChunk = extraChunks.find((c) => c.kind === "image");
+        const imageSrcs =
+          (imageChunk?.locator as { images?: { src: string }[] } | undefined)?.images?.map((i) => i.src) ?? [];
+        const imageInputs = planImageDescriptions(
+          {
+            enabled: settingsForExtras.imageDescriptionsEnabled,
+            policyAllows: settingsForExtras.policy.imageDescriptionsAllowed !== false,
+          },
+          sanitizeImageInputs(p.imageInputs, imageSrcs)
+        );
+        delete p.imageInputs;
+        const { id: docId, chunks } = await commitIndexPayload(p, {
+          tabId: sender.tab?.id,
+          extraChunks,
+          imageInputs,
+        });
         sendResponse({ ok: true, id: docId, chunks });
       } catch (e) {
         // #region agent log

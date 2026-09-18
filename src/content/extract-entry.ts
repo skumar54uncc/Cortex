@@ -19,6 +19,8 @@ import { devLog } from "../lib/extension-logger";
 import { parseLinkedInPage } from "../lib/capture/linkedin";
 import { armYouTubeCapture } from "./youtube-capture";
 import { extractTables } from "../lib/capture/tables";
+import { extractImages } from "../lib/capture/images";
+import { collectImageInputs } from "./image-inputs";
 import type { NewChunk } from "../db/schema";
 
 declare global {
@@ -38,6 +40,9 @@ let running = false;
 /** Which optional captures the service worker enabled for this page. */
 interface CaptureFlags {
   tables: boolean;
+  images: boolean;
+  /** On-device descriptions: user setting and policy both allow it. */
+  imageDescriptions: boolean;
 }
 
 async function extractAndIndex(flags: CaptureFlags): Promise<void> {
@@ -47,6 +52,11 @@ async function extractAndIndex(flags: CaptureFlags): Promise<void> {
     // Tables first (Phase 5.7): captured tables are left out of the article text.
     const tables = flags.tables ? extractTables(document) : { chunks: [], capturedTableIndexes: [] };
     const extraChunks: NewChunk[] = tables.chunks.map((c) => ({ ...c, text: redactPII(c.text).redacted }));
+    // Images (Phase 5.8): alt, caption, title and heading text only.
+    const images = flags.images ? extractImages(document, location.href) : null;
+    if (images) extraChunks.push({ ...images, text: redactPII(images.text).redacted });
+    const imageSrcs = (images?.locator as { images?: { src: string }[] } | undefined)?.images?.map((i) => i.src) ?? [];
+    const imageInputs = images && flags.imageDescriptions ? collectImageInputs(document, imageSrcs) : [];
     const raw = extractPageText(document, undefined, { dropTableIndexes: tables.capturedTableIndexes });
     const title = redactPII(raw.title).redacted;
     const text = redactPII(raw.text).redacted;
@@ -73,6 +83,7 @@ async function extractAndIndex(flags: CaptureFlags): Promise<void> {
         visitedAt: Date.now(),
         ...(person ? { person } : {}),
         ...(extraChunks.length ? { extraChunks } : {}),
+        ...(imageInputs.length ? { imageInputs } : {}),
       },
     });
   } catch (e) {
@@ -90,7 +101,11 @@ if (!window.__cortexExtractLoaded) {
     sendResponse({ ok: true as const });
     // YouTube watch page with transcripts on (decided by the service worker).
     if (msg.youtube === true) armYouTubeCapture();
-    void extractAndIndex({ tables: msg.tables === true });
+    void extractAndIndex({
+      tables: msg.tables === true,
+      images: msg.images === true,
+      imageDescriptions: msg.imageDescriptions === true,
+    });
     return undefined;
   });
 }
