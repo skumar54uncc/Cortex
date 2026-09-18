@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Fails when a shipped bundle exceeds its byte budget. Run after `npm run build`. */
-import { statSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const KB = 1024;
@@ -38,6 +38,12 @@ for (const [file, budget] of Object.entries(BUNDLE_BUDGETS)) {
   console.log(
     `${status.padEnd(7)} ${file.padEnd(20)} ${String(size).padStart(8)} / ${String(budget).padStart(8)} bytes`
   );
+}
+// The ONNX Runtime binary must ship exactly once, under wasm/ (Phase 6).
+const strayWasm = readdirSync(dist).filter((f) => f.endsWith(".wasm"));
+if (strayWasm.length) {
+  failed = true;
+  console.error(`FAIL    duplicate .wasm at the package root: ${strayWasm.join(", ")}`);
 }
 if (failed) {
   console.error("Bundle budget check FAILED");

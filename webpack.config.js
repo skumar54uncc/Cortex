@@ -47,6 +47,13 @@ module.exports = (env, argv) => {
         generator: { filename: "fonts/[name][contenthash][ext]" },
       },
       { test: /\.shadow\.css$/i, type: "asset/source" },
+      /**
+       * onnxruntime-web references its .wasm through new URL(..., import.meta.url).
+       * The binary already ships once as wasm/ort-wasm-simd-threaded.wasm
+       * (CopyWebpackPlugin below), so point the reference there and do not emit
+       * a second, hashed 14 MB copy.
+       */
+      { test: /\.wasm$/, type: "asset/resource", generator: { emit: false, filename: "wasm/[name][ext]" } },
       {
         test: /\.css$/,
         exclude: /\.shadow\.css$/i,
