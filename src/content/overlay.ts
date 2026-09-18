@@ -25,6 +25,7 @@ import {
 } from "./chat-stream-controller";
 import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
 import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
+import { createForgetMenu } from "./forget-menu";
 import { applyThemeToHost, themeTokensCss } from "../shared/theme";
 import { getUserSettings } from "../shared/extension-settings";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
@@ -288,6 +289,7 @@ ${shadowCss}`;
           <button type="button" class="cortex-x" data-act="close" aria-label="Close">×</button>
         </div>
       </div>
+      <p id="cortex-forget-status" class="cortex-forget-status" role="status" hidden></p>
       <div class="cortex-tabs" role="tablist"></div>
       <div class="cortex-body"></div>
     </div>
@@ -321,6 +323,27 @@ ${shadowCss}`;
       el.textContent = text;
     });
   };
+
+  // Forget controls in the header (Phase 4.3).
+  const forgetMenu = createForgetMenu({
+    shell: overlayShellMode,
+    send: (m) => sendRuntimeMessage(m),
+    onDone: (message) => {
+      announcePolite(message);
+      const status = shell.querySelector<HTMLElement>("#cortex-forget-status");
+      if (status) {
+        status.textContent = message;
+        status.hidden = false;
+        window.setTimeout(() => {
+          status.hidden = true;
+        }, 6000);
+      }
+      if (currentMode === "ask") void refreshChatSidebar();
+    },
+  });
+  shell
+    .querySelector<HTMLElement>(".cortex-head-actions")
+    ?.insertBefore(forgetMenu.root, shell.querySelector("[data-cortex-open-options]"));
 
   let currentMode: OverlayMode = "search";
   let currentConversationId: number | null = null;
@@ -369,6 +392,8 @@ ${shadowCss}`;
 
   const onOverlayNavKey = (ev: KeyboardEvent): void => {
     if (!overlayHost || currentMode !== "search") return;
+    // Arrow keys belong to the forget menu while it has focus.
+    if (shadow.activeElement?.closest(".cortex-menu")) return;
     const input = getSearchInput();
     if (!input) return;
 

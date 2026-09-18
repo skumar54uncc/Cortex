@@ -1,7 +1,7 @@
 import { extractPageText } from "./extract";
 import { redactPII } from "../lib/pii-filter";
 import { summarizeBestEffort } from "../lib/summarize";
-import { getUserSettings } from "../shared/extension-settings";
+import { getEffectiveSettings } from "../shared/managed-policy";
 import {
   isExtensionRuntimeAlive,
   isInvalidatedExtensionError,
@@ -46,7 +46,7 @@ async function indexPage(): Promise<void> {
   try {
     if (!isExtensionRuntimeAlive()) return;
 
-    const settings = await getUserSettings();
+    const settings = await getEffectiveSettings();
     if (!isExtensionRuntimeAlive()) return;
     if (settings.indexingPaused) return;
 

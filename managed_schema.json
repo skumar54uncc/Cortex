@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "properties": {
+    "geminiAllowed": {
+      "title": "Allow Gemini cloud chat",
+      "description": "When false, Cortex never sends anything to Gemini. Cloud chat is turned off and locked for the user.",
+      "type": "boolean"
+    },
+    "blockedDomains": {
+      "title": "Blocked domains",
+      "description": "Hostnames (and their subdomains) that Cortex must never index. Added to the user's own blocklist.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowedDomainsOnly": {
+      "title": "Allowed domains only",
+      "description": "When non-empty, Cortex indexes only these hostnames (and their subdomains).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "retentionDays": {
+      "title": "Retention in days",
+      "description": "Delete indexed pages, chunks and visits older than this many days. Minimum 1.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "indexingDisabled": {
+      "title": "Disable indexing",
+      "description": "When true, Cortex stops indexing pages. Search over existing data still works.",
+      "type": "boolean"
+    },
+    "imageDescriptionsAllowed": {
+      "title": "Allow on-device image descriptions",
+      "description": "When false, Cortex never generates image descriptions, even on device.",
+      "type": "boolean"
+    }
+  }
+}

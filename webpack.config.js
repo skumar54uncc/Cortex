@@ -67,6 +67,7 @@ module.exports = (env, argv) => {
     new CopyWebpackPlugin({
       patterns: [
         { from: "manifest.json", to: "." },
+        { from: "managed_schema.json", to: "." },
         { from: "src/offscreen/offscreen.html", to: "." },
         { from: "src/popup/popup.html", to: "." },
         { from: "src/popup/popup.css", to: "." },

@@ -1,7 +1,10 @@
 import {
   getUserSettings,
   setUserSettings,
+  type CortexUserSettings,
 } from "../shared/extension-settings";
+import { getEffectiveSettings } from "../shared/managed-policy";
+import { applyManagedLockout, stripLockedFields } from "./managed-ui";
 import type { HistoryImportProgress } from "../lib/history-import";
 import { injectBrandFontFacesInto } from "../styles/brand-fonts";
 
@@ -401,6 +404,12 @@ function startHistoryPolling(): void {
   historyPollId = window.setInterval(() => void tickHistoryPoll(), 750);
 }
 
+/** Saves only the fields the user may change under the current policy. */
+async function saveUserSettings(partial: Partial<CortexUserSettings>): Promise<void> {
+  const [user, eff] = await Promise.all([getUserSettings(), getEffectiveSettings()]);
+  await setUserSettings(stripLockedFields(partial, eff, user));
+}
+
 async function loadSettingsUi(): Promise<void> {
   try {
     const v = chrome.runtime.getManifest().version;
@@ -426,8 +435,38 @@ async function loadSettingsUi(): Promise<void> {
     });
   (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked = s.cloudChatEnabled;
   (qs("#cx-opt-gemini-key") as HTMLInputElement).value = s.geminiApiKey ?? "";
+  qs<HTMLSelectElement>("#cx-opt-retention").value = String(s.retentionDays ?? 0);
 
   renderBlocklistChips();
+
+  // Enterprise policy: lock and label managed fields (Phase 4.1).
+  applyManagedLockout(document, await getEffectiveSettings());
+}
+
+async function runForget(scope: "site" | "hour" | "day", hostname?: string): Promise<void> {
+  const fb = qs<HTMLElement>("#cx-forget-feedback");
+  fb.classList.remove("is-error");
+  fb.hidden = true;
+  const res = (await chrome.runtime.sendMessage({
+    type: "CORTEX_FORGET",
+    scope,
+    hostname,
+  })) as
+    | { ok?: boolean; error?: string; site?: string; counts?: { documents?: number; messages?: number } }
+    | undefined;
+  if (res?.ok) {
+    const pages = res.counts?.documents ?? 0;
+    const what =
+      scope === "site" ? `${res.site}` : scope === "hour" ? "the last hour" : "the last day";
+    fb.textContent = `Forgot ${what}: ${pages} page${pages === 1 ? "" : "s"} removed.`;
+    fb.hidden = false;
+    void refreshStats();
+  } else {
+    fb.textContent =
+      res?.error === "bad_hostname" ? "Enter a site like example.com." : "Could not forget that data.";
+    fb.classList.add("is-error");
+    fb.hidden = false;
+  }
 }
 
 function hideDeleteConfirm(): void {
@@ -486,9 +525,26 @@ document.addEventListener("DOMContentLoaded", () => {
     void refreshStats();
   });
 
+  qs<HTMLSelectElement>("#cx-opt-retention").addEventListener("change", (e) => {
+    const v = Number((e.target as HTMLSelectElement).value);
+    void saveUserSettings({ retentionDays: Number.isFinite(v) && v >= 1 ? v : 0 });
+  });
+
+  qs<HTMLButtonElement>("#cx-forget-site-btn").addEventListener("click", () => {
+    const host = qs<HTMLInputElement>("#cx-forget-site").value.trim();
+    void runForget("site", host);
+  });
+  qs<HTMLButtonElement>("#cx-forget-hour").addEventListener("click", () => void runForget("hour"));
+  qs<HTMLButtonElement>("#cx-forget-day").addEventListener("click", () => void runForget("day"));
+
+  // Policy pushed while the page is open: re-apply the lockout.
+  chrome.storage?.onChanged?.addListener((_changes, area) => {
+    if (area === "managed") void loadSettingsUi();
+  });
+
   qs<HTMLButtonElement>("#cx-opt-chat-save").addEventListener("click", () => {
     void runSave("#cx-opt-chat-save", "#cx-opt-chat-save-msg", "Save chat settings", () =>
-      setUserSettings({
+      saveUserSettings({
         chatMode: readChatModeFromForm(),
         cloudChatEnabled: (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked,
         geminiApiKey: (qs("#cx-opt-gemini-key") as HTMLInputElement).value.trim(),
@@ -498,7 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   qs<HTMLButtonElement>("#cx-opt-save").addEventListener("click", () => {
     void runSave("#cx-opt-save", "#cx-opt-save-msg", "Save privacy settings", async () => {
-      await setUserSettings({
+      await saveUserSettings({
         indexingPaused: (qs("#cx-opt-pause") as HTMLInputElement).checked,
         blocklist: domainsFromTextarea(qs("#cx-opt-blocklist")),
         chatMode: readChatModeFromForm(),

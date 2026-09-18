@@ -18,6 +18,10 @@ export interface CortexUserSettings {
   geminiApiKey: string;
   /** Overlay and side panel theme (Phase 2.6). */
   theme: ThemeSetting;
+  /** Delete pages, chunks and visits older than N days; 0 = keep forever (Phase 4.2). */
+  retentionDays: number;
+  /** On-device image descriptions via the Prompt API (Phase 5.8); off by default. */
+  imageDescriptionsEnabled: boolean;
 }
 
 const KEY = "cortex_user_settings";
@@ -31,6 +35,8 @@ export const DEFAULT_USER_SETTINGS: CortexUserSettings = {
   cloudChatEnabled: false,
   geminiApiKey: "",
   theme: "system",
+  retentionDays: 0,
+  imageDescriptionsEnabled: false,
 };
 
 let memorySettings: CortexUserSettings | null = null;
@@ -53,6 +59,13 @@ function normalizeSettings(
     geminiApiKey:
       typeof raw?.geminiApiKey === "string" ? raw.geminiApiKey : "",
     theme: normalizeThemeSetting(raw?.theme),
+    retentionDays:
+      typeof raw?.retentionDays === "number" &&
+      Number.isFinite(raw.retentionDays) &&
+      raw.retentionDays >= 1
+        ? Math.floor(raw.retentionDays)
+        : 0,
+    imageDescriptionsEnabled: raw?.imageDescriptionsEnabled === true,
   };
 }
 
@@ -80,6 +93,13 @@ export async function getUserSettings(): Promise<CortexUserSettings> {
   const loaded = await loadUserSettingsFromStorage();
   memorySettings = loaded;
   return { ...loaded };
+}
+
+/** Reads storage directly (bypasses the in-memory cache) and refreshes the cache. */
+export async function getUserSettingsFresh(): Promise<CortexUserSettings> {
+  const s = await loadUserSettingsFromStorage();
+  memorySettings = s;
+  return { ...s };
 }
 
 export async function getChatSettings(): Promise<ChatSettings> {

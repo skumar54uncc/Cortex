@@ -29,6 +29,14 @@
           </p>
         </header>
 
+        <div id="cx-managed-banner" class="cx-managed-banner" role="note" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Some settings are managed by your organization and cannot be changed here.</span>
+        </div>
+
         <section class="cx-card cx-card-elevated cx-library-card" aria-labelledby="cx-library-h">
           <h2 id="cx-library-h" class="cx-section-label cx-library-label">Library overview</h2>
           <p id="cx-opt-storage-line" class="cx-library-storage">Storage: …</p>
@@ -294,8 +302,22 @@
           </div>
 
           <div class="cx-field">
+            <label class="cx-field-label" for="cx-opt-retention">Keep indexed pages for</label>
+            <select id="cx-opt-retention" class="cx-input cx-select">
+              <option value="0">Forever (retention off)</option>
+              <option value="7">7 days</option>
+              <option value="30">30 days</option>
+              <option value="90">90 days</option>
+              <option value="180">180 days</option>
+              <option value="365">1 year</option>
+            </select>
+            <p class="cx-field-hint">Older pages, chunks, visits and chats are deleted once a day.</p>
+          </div>
+
+          <div class="cx-field">
             <label class="cx-field-label" for="cx-opt-blocklist">Blocked domains</label>
             <p class="cx-field-hint">One domain per line. Click × on a chip to remove.</p>
+            <div id="cx-opt-managed-blocklist" class="cx-chip-row" aria-label="Domains blocked by your organization" hidden></div>
             <div id="cx-opt-blocklist-chips" class="cx-chip-row" aria-label="Blocked domains"></div>
             <textarea id="cx-opt-blocklist" class="cx-input cx-textarea" rows="4" spellcheck="false"></textarea>
           </div>
@@ -310,8 +332,25 @@
 
         <section class="cx-opt-section cx-section-muted" aria-labelledby="cx-data-h">
           <h2 id="cx-data-h" class="cx-section-heading">Data</h2>
+
+          <h3 class="cx-subheading">Forget</h3>
+          <div class="cx-field">
+            <label class="cx-field-label" for="cx-forget-site">Forget a site</label>
+            <p class="cx-field-hint">Removes the site and its subdomains from pages, visits and chat answers that cite it.</p>
+            <div class="cx-inline-form">
+              <input type="text" id="cx-forget-site" class="cx-input" placeholder="example.com" autocomplete="off" spellcheck="false" />
+              <button type="button" id="cx-forget-site-btn" class="cx-btn cx-btn-secondary">Forget site</button>
+            </div>
+          </div>
+          <div class="cx-actions-row">
+            <button type="button" id="cx-forget-hour" class="cx-btn cx-btn-secondary">Forget last hour</button>
+            <button type="button" id="cx-forget-day" class="cx-btn cx-btn-secondary">Forget last day</button>
+          </div>
+          <p id="cx-forget-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+
+          <h3 class="cx-subheading">Forget all</h3>
           <p class="cx-section-desc">
-            Deletes all indexed pages, text chunks, and visit history from this browser. Your
+            Deletes all indexed pages, text chunks, visit history and chats from this browser. Your
             extension settings (blocklist, chat mode) are kept.
           </p>
           <button type="button" id="cx-opt-delete-all" class="cx-btn cx-btn-danger">

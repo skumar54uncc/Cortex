@@ -981,3 +981,55 @@ body {
     animation: none !important;
   }
 }
+
+/* Enterprise policy lockout (release 1.2.0, Phase 4.1) */
+.cx-managed-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-sm);
+}
+
+.cx-managed-banner[hidden] {
+  display: none;
+}
+
+.cx-managed-note {
+  display: inline-block;
+  margin-left: var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cx-chip--managed {
+  background: var(--bg);
+  border-style: dashed;
+  color: var(--text-secondary);
+}
+
+.cx-toggle:disabled,
+.cx-select:disabled,
+.cx-input:disabled,
+.cx-radio-card.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cx-inline-form {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cx-inline-form .cx-input {
+  flex: 1 1 220px;
+  min-width: 0;
+}

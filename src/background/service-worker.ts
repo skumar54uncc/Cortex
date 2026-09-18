@@ -8,9 +8,16 @@ import {
   appendVisit,
   getRecentVisits,
   hostnameFromUrl,
-  clearAllIndexedData,
 } from "../db/schema";
 import { chunkArticle } from "../lib/chunking";
+import {
+  applyRetention,
+  forgetAll,
+  forgetSince,
+  forgetSite,
+  FORGET_WINDOWS_MS,
+} from "../lib/data-controls";
+import { resolveForgetRequest } from "../lib/forget-request";
 import {
   RECHUNK_ALARM,
   RECHUNK_ALARM_PERIOD_MIN,
@@ -21,10 +28,11 @@ import {
   looksSensitiveHostname,
 } from "../lib/privacy";
 import { shouldAlwaysSkipUrl } from "../lib/sensitive-domains";
+import { getUserSettings } from "../shared/extension-settings";
 import {
-  getChatSettings,
-  getUserSettings,
-} from "../shared/extension-settings";
+  getEffectiveChatSettings,
+  getEffectiveSettings,
+} from "../shared/managed-policy";
 import {
   deliverOverlayMessage,
   resolveOverlayTabId,
@@ -556,7 +564,11 @@ async function shouldSkipIndexing(
   sender: chrome.runtime.MessageSender,
   opts?: { bypassIndexingPause?: boolean; historyImport?: boolean }
 ): Promise<{ skip: true; reason: string } | { skip: false }> {
-  const settings = await getUserSettings();
+  const settings = await getEffectiveSettings();
+  // Policy indexingDisabled wins over every bypass (history import included).
+  if (settings.policy.indexingDisabled === true) {
+    return { skip: true, reason: "managed_indexing_disabled" };
+  }
   if (settings.indexingPaused && !opts?.bypassIndexingPause) {
     return { skip: true, reason: "paused" };
   }
@@ -886,6 +898,8 @@ chrome.runtime.onStartup.addListener(() => {
 
 function scheduleStorageMaintenanceAlarm(): void {
   chrome.alarms.create("cortex-evict-storage", { periodInMinutes: 360 });
+  // Phase 4.2: daily retention sweep (no-op while retention is off).
+  chrome.alarms.create(RETENTION_ALARM, { delayInMinutes: 2, periodInMinutes: 24 * 60 });
   // Phase 3.4: upgrade pages chunked with an older profile, a few per tick.
   chrome.alarms.create(RECHUNK_ALARM, {
     delayInMinutes: 1,
@@ -893,12 +907,28 @@ function scheduleStorageMaintenanceAlarm(): void {
   });
 }
 
+const RETENTION_ALARM = "cortex-retention";
+
+async function runRetentionSweep(): Promise<void> {
+  try {
+    const settings = await getEffectiveSettings({ fresh: true });
+    if (settings.retentionDays < 1) return;
+    const res = await applyRetention(settings.retentionDays);
+    if (res.documents || res.visits || res.conversations || res.pages) {
+      devLog.info("[Cortex] retention removed", res);
+      await refreshSnapshotNow({}).catch(() => undefined);
+    }
+  } catch (e) {
+    devLog.warn("[Cortex] retention sweep:", e);
+  }
+}
+
 /** True while the previous re-chunk batch still has embeddings in the queue. */
 let rechunkBusy = false;
 
 async function runRechunkTick(): Promise<void> {
   if (rechunkBusy) return;
-  const settings = await getUserSettings();
+  const settings = await getEffectiveSettings();
   if (settings.indexingPaused) return;
   rechunkBusy = true;
   try {
@@ -928,6 +958,10 @@ async function runRechunkTick(): Promise<void> {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === RECHUNK_ALARM) {
     void runRechunkTick();
+    return;
+  }
+  if (alarm.name === RETENTION_ALARM) {
+    void runRetentionSweep();
     return;
   }
   if (alarm.name !== "cortex-evict-storage") return;
@@ -1066,7 +1100,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     void (async () => {
       try {
         await ensureOffscreen();
-        const settings = await getChatSettings();
+        const settings = await getEffectiveChatSettings();
         const conversationIdRaw = (msg as { conversationId?: unknown })
           .conversationId;
         const conversationId =
@@ -1210,7 +1244,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     void (async () => {
       try {
         await ensureOffscreen();
-        const settings = await getChatSettings();
+        const settings = await getEffectiveChatSettings();
         const inbound: CortexBusInbound = {
           kind: "digest-run",
           tabId,
@@ -1379,13 +1413,46 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     }
     void (async () => {
       try {
-        await clearAllIndexedData();
+        await forgetAll();
+        await refreshSnapshotNow({}).catch(() => undefined);
         sendResponse({ ok: true });
       } catch (e) {
         sendResponse({
           ok: false,
           error: e instanceof Error ? e.message : String(e),
         });
+      }
+    })();
+    return true;
+  }
+
+  if (type === "CORTEX_FORGET") {
+    const decision = resolveForgetRequest(
+      msg as { scope?: unknown; hostname?: unknown },
+      sender,
+      chrome.runtime.getURL("")
+    );
+    if (!decision.ok) {
+      sendResponse({ ok: false, error: decision.error });
+      return true;
+    }
+    if (!rateLimitHit("forget", 20, sendResponse)) return true;
+    void (async () => {
+      try {
+        let counts: unknown = null;
+        if (decision.scope === "site") counts = await forgetSite(decision.site);
+        else if (decision.scope === "hour") counts = await forgetSince(Date.now() - FORGET_WINDOWS_MS.hour);
+        else if (decision.scope === "day") counts = await forgetSince(Date.now() - FORGET_WINDOWS_MS.day);
+        else await forgetAll();
+        await refreshSnapshotNow({}).catch(() => undefined);
+        sendResponse({
+          ok: true,
+          scope: decision.scope,
+          site: decision.scope === "site" ? decision.site : undefined,
+          counts,
+        });
+      } catch (e) {
+        sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) });
       }
     })();
     return true;

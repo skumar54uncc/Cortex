@@ -292,6 +292,7 @@ export async function clearAllIndexedData(): Promise<void> {
   await db.transaction(
     "rw",
     [
+      db.pages,
       db.documents,
       db.chunks,
       db.visitLog,
@@ -300,6 +301,7 @@ export async function clearAllIndexedData(): Promise<void> {
       db.digestCache,
     ],
     async () => {
+      await db.pages.clear();
       await db.documents.clear();
       await db.chunks.clear();
       await db.visitLog.clear();

@@ -17,6 +17,9 @@
     "notifications",
     "sidePanel"
   ],
+  "storage": {
+    "managed_schema": "managed_schema.json"
+  },
   "side_panel": {
     "default_path": "search-shell.html"
   },

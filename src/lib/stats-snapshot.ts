@@ -4,7 +4,7 @@ import {
   documentCount,
   getRecentVisits,
 } from "../db/schema";
-import { getUserSettings } from "../shared/extension-settings";
+import { getEffectiveSettings } from "../shared/managed-policy";
 import { describeTabForPopup } from "./stats-tab-context";
 import { CORTEX_DB_SCHEMA_VERSION } from "../shared/cortex-constants";
 import type { StatsSnapshot } from "./stats-snapshot-types";
@@ -50,7 +50,7 @@ export async function computeFreshSnapshot(
     chunkCount(),
     db.visitLog.count(),
     getRecentVisits(12),
-    getUserSettings(),
+    getEffectiveSettings(),
     storageEstimate(),
   ]);
 
