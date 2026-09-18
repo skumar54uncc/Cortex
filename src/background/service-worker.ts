@@ -86,6 +86,7 @@ import {
 } from "../lib/side-panel-launcher";
 import { openCortexSearchForTab } from "../lib/open-cortex-search";
 import { openOverlayOnTab } from "../lib/overlay-injector";
+import { requestExtraction } from "../lib/extract-injector";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { RateLimiter } from "../lib/rate-limiter";
 import {
@@ -1004,6 +1005,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   const type = (msg as { type: string }).type;
+
+  if (type === "CORTEX_INDEX_REQUEST") {
+    const tabId = sender.tab?.id;
+    const url = String((msg as { url?: unknown }).url ?? "");
+    if (tabId == null || !indexPayloadUrlMatchesTab(url, sender)) {
+      sendResponse({ ok: false, error: "bad_index_request" });
+      return true;
+    }
+    if (!rateLimitHit(`extract:${tabId}`, 20, sendResponse)) return true;
+    void requestExtraction(tabId, {
+      gate: () => shouldSkipIndexing(url, sender),
+      deliver: (id) =>
+        new Promise<boolean>((resolve) => {
+          chrome.tabs.sendMessage(id, { type: "CORTEX_EXTRACT_NOW" }, { frameId: 0 }, (res) => {
+            if (chrome.runtime.lastError) {
+              resolve(false);
+              return;
+            }
+            resolve((res as { ok?: boolean } | undefined)?.ok === true);
+          });
+        }),
+      inject: async (id, files) => {
+        await chrome.scripting.executeScript({ target: { tabId: id, frameIds: [0] }, files });
+      },
+    }).then(sendResponse);
+    return true;
+  }
 
   if (type === "CORTEX_INDEX") {
     const p = (msg as { payload: IndexPayload }).payload;

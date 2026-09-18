@@ -1,7 +1,3 @@
-import { extractPageText } from "./extract";
-import { redactPII } from "../lib/pii-filter";
-import { summarizeBestEffort } from "../lib/summarize";
-import { getEffectiveSettings } from "../shared/managed-policy";
 import {
   isExtensionRuntimeAlive,
   isInvalidatedExtensionError,
@@ -42,44 +38,18 @@ function scheduleCaptureRetries(): void {
   }
 }
 
+/**
+ * Asks the service worker to index this page. The worker runs the privacy
+ * gate and, only if allowed, injects extract.js to do the actual extraction.
+ */
 async function indexPage(): Promise<void> {
   try {
     if (!isExtensionRuntimeAlive()) return;
-
-    const settings = await getEffectiveSettings();
-    if (!isExtensionRuntimeAlive()) return;
-    if (settings.indexingPaused) return;
-
-    const raw = extractPageText(document);
-    const titleRed = redactPII(raw.title);
-    const textRed = redactPII(raw.text);
-    const title = titleRed.redacted;
-    const text = textRed.redacted;
-    const url = normalizedUrl();
-
-    const host = location.hostname;
-    const localMin =
-      host.includes("linkedin.com") ? 28 : host.includes("twitter.com") || host === "x.com" ? 38 : 72;
-
-    if (text.length < localMin) return;
-
-    const summary = await summarizeBestEffort(text);
-    if (!isExtensionRuntimeAlive()) return;
-
-    await sendRuntimeMessage({
-      type: "CORTEX_INDEX",
-      payload: {
-        url,
-        title,
-        text,
-        summary,
-        visitedAt: Date.now(),
-      },
-    });
+    await sendRuntimeMessage({ type: "CORTEX_INDEX_REQUEST", url: normalizedUrl() });
   } catch (e) {
     if (isInvalidatedExtensionError(e)) return;
     if (!isExtensionRuntimeAlive()) return;
-    devLog.warn("[Cortex] index:", e);
+    devLog.warn("[Cortex] index request:", e);
   }
 }
 
