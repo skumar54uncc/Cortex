@@ -90,6 +90,7 @@ import { requestExtraction } from "../lib/extract-injector";
 import { canonicalLinkedInUrl, type LinkedInEntity } from "../lib/capture/linkedin";
 import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
+import { saveHighlight } from "../lib/highlights";
 import { safeHttpHttpsHref } from "../lib/url-security";
 import { RateLimiter } from "../lib/rate-limiter";
 import {
@@ -928,6 +929,7 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 function scheduleStorageMaintenanceAlarm(): void {
+  void syncContextMenus().catch(() => undefined);
   chrome.alarms.create("cortex-evict-storage", { periodInMinutes: 360 });
   // Phase 4.2: daily retention sweep (no-op while retention is off).
   chrome.alarms.create(RETENTION_ALARM, { delayInMinutes: 2, periodInMinutes: 24 * 60 });
@@ -999,6 +1001,80 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   void ensureIndexingHeadroom().catch(() => {
     /* ignore */
   });
+});
+
+// ---------------------------------------------------------------------------
+// Context menus (Phase 5.3 highlights, 5.4 collections). Rebuilt from settings.
+// ---------------------------------------------------------------------------
+const HIGHLIGHT_MENU_ID = "cortex-save-highlight";
+const WEB_PATTERNS = ["http://*/*", "https://*/*"];
+
+async function syncContextMenus(): Promise<void> {
+  if (!chrome.contextMenus) return;
+  const settings = await getEffectiveSettings();
+  await new Promise<void>((resolve) => chrome.contextMenus.removeAll(() => resolve()));
+  if (settings.highlightsEnabled) {
+    chrome.contextMenus.create({
+      id: HIGHLIGHT_MENU_ID,
+      title: "Save to Cortex",
+      contexts: ["selection"],
+      documentUrlPatterns: WEB_PATTERNS,
+    });
+  }
+}
+
+function flashBadge(tabId: number, text: string): void {
+  void chrome.action.setBadgeText({ tabId, text }).catch(() => undefined);
+  setTimeout(() => void chrome.action.setBadgeText({ tabId, text: "" }).catch(() => undefined), 2500);
+}
+
+async function handleSaveHighlight(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): Promise<void> {
+  if (tab?.id == null || !tab.url) return;
+  const settings = await getEffectiveSettings();
+  if (!settings.highlightsEnabled) return;
+  // Explicit user action: the user's own pause does not block it, but policy,
+  // incognito, blocklist, allowlist and sensitive sites do.
+  const gate = await shouldSkipIndexing(tab.url, { tab } as chrome.runtime.MessageSender, {
+    bypassIndexingPause: true,
+  });
+  if (gate.skip) {
+    flashBadge(tab.id, "!");
+    return;
+  }
+  const quote = String(info.selectionText ?? "");
+  let note: string | null = "";
+  try {
+    const [r] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: (q: string) =>
+        window.prompt(`Save to Cortex:\n"${q.slice(0, 140)}"\n\nAdd a note (optional):`, ""),
+      args: [quote],
+    });
+    // prompt() returns null on Cancel; executeScript reports that as a missing
+    // result. A string (possibly empty) means OK.
+    const value = r?.result;
+    note = typeof value === "string" ? value : null;
+  } catch {
+    // The prompt could not run (restricted frame): save without a note.
+    note = "";
+  }
+  if (note === null) return; // cancelled
+  const saved = await saveHighlight({ url: tab.url, title: tab.title ?? "", quote, note });
+  const chunk = await db.chunks.get(saved.chunkId);
+  if (chunk) queueEmbeddingsForChunkIds([{ chunkId: saved.chunkId, text: chunk.text }]);
+  flashBadge(tab.id, "+");
+}
+
+chrome.contextMenus?.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === HIGHLIGHT_MENU_ID) {
+    void handleSaveHighlight(info, tab).catch((e) => devLog.warn("[Cortex] highlight:", e));
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if ((area === "local" && changes.cortex_user_settings) || area === "managed") {
+    void syncContextMenus().catch(() => undefined);
+  }
 });
 
 // ---------------------------------------------------------------------------

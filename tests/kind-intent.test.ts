@@ -25,6 +25,8 @@ describe("detectKindIntent", () => {
     expect(i).toEqual({ kinds: [], person: false });
     expect(kindBoost("text", i)).toBe(1);
     expect(kindBoost("transcript", i)).toBe(1);
+    // Saved highlights always carry a small boost, intent or not.
+    expect(kindBoost("highlight", i)).toBeGreaterThan(1);
   });
 
   it("boosts only chunks of an intended kind", () => {

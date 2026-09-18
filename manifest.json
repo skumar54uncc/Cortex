@@ -15,7 +15,8 @@
     "storage",
     "history",
     "notifications",
-    "sidePanel"
+    "sidePanel",
+    "contextMenus"
   ],
   "storage": {
     "managed_schema": "managed_schema.json"

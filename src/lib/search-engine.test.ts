@@ -279,3 +279,26 @@ describe("chunk kinds in search (Phase 5 task 0.3)", () => {
     expect(res.hits[0].locator).toEqual({ videoId: "abc", startSec: 60, endSec: 120 });
   });
 });
+
+describe("highlight boost (Phase 5.3)", () => {
+  const now = 1_700_000_000_000;
+  beforeEach(() => {
+    mocks.docs = [];
+    mocks.chunks = [];
+    mocks.urlsInRange = new Set();
+  });
+
+  it("a saved highlight outranks the same text in a plain page chunk (no intent words needed)", async () => {
+    mocks.docs = [
+      doc(1, "https://a.test/plain", "Notes A", now),
+      doc(2, "https://b.test/highlighted", "Notes B", now - 5 * 86_400_000),
+    ];
+    mocks.chunks = [
+      ch(1, 1, "slack tide is the best time to service tidal turbines"),
+      { ...ch(2, 2, "slack tide is the best time to service tidal turbines"), kind: "highlight", locator: { quote: "slack tide" } },
+    ];
+    const res = await runAdvancedSearch("service tidal turbines slack tide", async () => null, { abstainFloor: 0 });
+    expect(res.hits[0].url).toBe("https://b.test/highlighted");
+    expect(res.hits[0].kind).toBe("highlight");
+  });
+});

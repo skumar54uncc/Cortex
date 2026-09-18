@@ -14,6 +14,7 @@ Every entry in `manifest.json` `permissions`, `host_permissions` and `web_access
 | `history` | Optional history backfill during onboarding (user opt-in). | "Read your browsing history" | existing |
 | `notifications` | One notification when the first-install history scan starts and finishes. | "Display notifications" | existing |
 | `sidePanel` | Cortex UI on pages where content scripts cannot run (`chrome://newtab`, the Web Store). | none | existing |
+| `contextMenus` | "Save to Cortex" on selected text (highlights, Phase 5.3) and "Add page to collection" (Phase 5.4). Items are removed when the user turns those features off. | none | **new** |
 
 ## host_permissions
 
@@ -48,4 +49,8 @@ Guarded by `tests/manifest.test.ts`.
 | `declarativeNetRequest` | Not needed. |
 | `identity` | No accounts. |
 
-Later phases add `omnibox` (keyword `cx`, no warning) and `contextMenus` (no warning). They will be appended to the table above with their justification when implemented.
+## Manifest keys without a permission
+
+| Key | Why | Warning |
+|-----|-----|---------|
+| `omnibox: { keyword: "cx" }` (**new**, Phase 5.2) | Typing `cx` and a query in the address bar searches the local library; suggestions come from IndexedDB only. Turning the feature off in settings makes it return no suggestions. | none |

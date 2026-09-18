@@ -23,6 +23,9 @@ const PERSON_RE = /\b(person|people|profiles?|who)\b/i;
 
 export const KIND_INTENT_BOOST = 1.25;
 
+/** Text the user explicitly saved ranks slightly above the same text on a page. */
+export const HIGHLIGHT_BOOST = 1.15;
+
 export function detectKindIntent(query: string): KindIntent {
   const q = String(query ?? "");
   const kinds: ChunkKind[] = [];
@@ -33,5 +36,6 @@ export function detectKindIntent(query: string): KindIntent {
 }
 
 export function kindBoost(kind: ChunkKind, intent: KindIntent): number {
-  return intent.kinds.includes(kind) ? KIND_INTENT_BOOST : 1;
+  const base = kind === "highlight" ? HIGHLIGHT_BOOST : 1;
+  return intent.kinds.includes(kind) ? base * KIND_INTENT_BOOST : base;
 }
