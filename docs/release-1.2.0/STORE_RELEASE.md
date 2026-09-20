@@ -54,7 +54,32 @@ Everything below is stored only in the browser's local storage (IndexedDB) on th
 | Exported files | none | the user can save a Markdown export or a JSON backup to their own disk. Backups never contain settings or the Gemini key. |
 | Analytics, telemetry, ads, sale or transfer of data | none | none |
 
-For the Web Store "data usage" form: declare **Web history** and **Website content** (as in 1.0.1). The only transmission is the optional, user-initiated Gemini request with the user's own key. Certify that data is not sold, not used for unrelated purposes, and not used for creditworthiness or lending. **Owner check:** people memory stores names and headlines of LinkedIn profiles the user viewed, locally. Decide whether to also declare **Personally identifiable information**; declaring it is the conservative choice.
+### Privacy practices form: the answers to submit
+
+Fill the "Privacy practices" tab exactly like this.
+
+**Single purpose**: Cortex is a private, on-device memory of what the user reads in Chrome. It indexes pages, videos, PDFs, tables and images the user opens, and lets the user search and ask questions about them.
+
+**Data types collected** (tick these three, leave every other box clear):
+
+| Type | Tick | Why |
+|------|------|-----|
+| Web history | yes | Cortex stores the URLs, titles and visit times of pages the user reads, so it can search them. |
+| Website content | yes | Page text, YouTube captions, table rows, PDF text, image alt text, and text the user highlights. |
+| Personally identifiable information | yes | People memory stores the name, headline, company, location and role history of LinkedIn profiles the user opens. It stays on the device, and the feature can be turned off in settings. |
+
+Leave unticked: health information, financial and payment information, authentication information, personal communications, location, user activity (no clicks, keystrokes or analytics are recorded), website content of other users.
+
+**Certifications** (all three can be certified):
+- Data is not being sold to third parties, and is not transferred for purposes unrelated to the item's single purpose.
+- Data is not used or transferred to determine creditworthiness or for lending purposes.
+- The item's use of the data is limited to the single purpose above.
+
+**Remote code**: no. Every script and the WebAssembly runtime ship inside the package; the model weights are bundled. Content Security Policy is `script-src 'self' 'wasm-unsafe-eval'`.
+
+**Data transmission**: nothing is sent anywhere by default. The one exception is optional cloud chat: if the user turns it on and adds their own Google Gemini API key, the question and the retrieved text snippets go to Google's Gemini API under that key. Never whole pages, never PDFs or images, and on-device image descriptions are removed before the request. Describe this in the justification box for "Website content".
+
+**Privacy policy URL**: the listing needs a public privacy policy page that matches the answers above (the repo has one in the extension's privacy page; publish it at a stable URL and paste that link).
 
 ## Listing copy
 

@@ -26,6 +26,23 @@ const jonas = {
   company: "Brewlog",
   profileUrl: "https://www.linkedin.com/in/jonas/",
 };
+const avery = {
+  kind: "person" as const,
+  name: "Avery Nakamura",
+  headline: "Building grid tooling",
+  company: "Brewlog",
+  profileUrl: "https://www.linkedin.com/in/avery/",
+  location: "Durham, North Carolina",
+  about: "Co-founder at heart. I like slow hardware and fast feedback.",
+  roleTitle: "Staff Engineer",
+  pastRoles: [
+    { title: "Co-founder", company: "PolyWise" },
+    { title: "Field Engineer", company: "Havstrom AS" },
+  ],
+  education: ["Duke University, BSc Computer Science"],
+  connectionDegree: "2nd",
+  connectionCount: 611,
+};
 
 beforeEach(async () => {
   await db.people.clear();
@@ -58,6 +75,96 @@ describe("people store", () => {
   });
 });
 
+describe("people detail merge", () => {
+  it("stores the detail a profile page carried", async () => {
+    await upsertPerson(avery, NOW);
+    const row = (await db.people.toArray())[0]!;
+    expect(row).toMatchObject({
+      location: "Durham, North Carolina",
+      roleTitle: "Staff Engineer",
+      connectionDegree: "2nd",
+      connectionCount: 611,
+      education: ["Duke University, BSc Computer Science"],
+    });
+    expect(row.pastRoles).toEqual(avery.pastRoles);
+  });
+
+  it("fills empty fields on a later visit without losing what an earlier visit saw", async () => {
+    // First visit: a thin render (LinkedIn lazy loads the lower sections).
+    await upsertPerson({ ...mira, location: "Bergen, Norway" }, NOW - 2 * DAY);
+    // Second visit: the full page, minus the location the first visit caught.
+    await upsertPerson(
+      {
+        ...mira,
+        about: "Runs field crews for tidal microgrids.",
+        roleTitle: "Head of Field Programs",
+        pastRoles: [{ title: "Co-founder", company: "PolyWise" }],
+        education: ["NTNU, MSc Electrical Engineering"],
+        connectionDegree: "2nd",
+        connectionCount: 842,
+      },
+      NOW
+    );
+    const row = (await db.people.toArray())[0]!;
+    expect(row).toMatchObject({
+      location: "Bergen, Norway",
+      about: "Runs field crews for tidal microgrids.",
+      roleTitle: "Head of Field Programs",
+      connectionCount: 842,
+      visitCount: 2,
+      lastSeen: NOW,
+      firstSeen: NOW - 2 * DAY,
+    });
+    expect(row.pastRoles).toEqual([{ title: "Co-founder", company: "PolyWise" }]);
+  });
+
+  it("updates a field the new page has a value for, and keeps the old value when it does not", async () => {
+    await upsertPerson({ ...avery, roleTitle: "Senior Engineer" }, NOW - DAY);
+    await upsertPerson({ ...mira, profileUrl: avery.profileUrl, name: avery.name, roleTitle: "Principal Engineer" }, NOW);
+    const row = (await db.people.toArray())[0]!;
+    expect(row.roleTitle).toBe("Principal Engineer");
+    expect(row.location).toBe("Durham, North Carolina");
+    expect(row.connectionCount).toBe(611);
+    expect(row.education).toEqual(["Duke University, BSc Computer Science"]);
+  });
+
+  it("caps past roles at five and education at three", async () => {
+    await upsertPerson(
+      {
+        ...mira,
+        pastRoles: Array.from({ length: 9 }, (_, i) => ({ title: `Role ${i}`, company: `Co ${i}` })),
+        education: ["A", "B", "C", "D", "E"],
+      },
+      NOW
+    );
+    const row = (await db.people.toArray())[0]!;
+    expect(row.pastRoles).toHaveLength(5);
+    expect(row.education).toEqual(["A", "B", "C"]);
+  });
+});
+
+describe("people search over the captured detail", () => {
+  beforeEach(async () => {
+    await upsertPerson(mira, NOW - DAY);
+    await upsertPerson(avery, NOW);
+  });
+
+  it("matches on location, about, current role, past roles and education", async () => {
+    expect((await listPeople({ q: "north carolina" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect((await listPeople({ q: "co-founder" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect((await listPeople({ q: "polywise" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect((await listPeople({ q: "staff engineer" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect((await listPeople({ q: "duke" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect((await listPeople({ q: "NORTH carolina co-founder" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect(await listPeople({ q: "reykjavik" })).toEqual([]);
+  });
+
+  it("treats a past employer as a company match too", async () => {
+    expect((await listPeople({ company: "polywise" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect((await listPeople({ company: "tidora" })).map((p) => p.name)).toEqual(["Mira Okafor-Lind"]);
+  });
+});
+
 describe("parsePeopleQuery", () => {
   it("detects 'who did I view / search / look at' with an optional company and time", () => {
     expect(parsePeopleQuery("who did I view from Tidora last week")).toMatchObject({ company: "Tidora" });
@@ -66,6 +173,14 @@ describe("parsePeopleQuery", () => {
     expect(parsePeopleQuery("who did I look at at Brewlog")).toMatchObject({ company: "Brewlog" });
     expect(parsePeopleQuery("which profiles did I visit from Brewlog")).toMatchObject({ company: "Brewlog" });
     expect(parsePeopleQuery("people I viewed at Tidora")).toMatchObject({ company: "Tidora" });
+  });
+
+  it("detects 'who works at X' and 'people in <place>'", () => {
+    expect(parsePeopleQuery("who works at PolyWise")).toMatchObject({ company: "PolyWise" });
+    expect(parsePeopleQuery("Who worked at PolyWise?")).toMatchObject({ company: "PolyWise" });
+    expect(parsePeopleQuery("people in North Carolina")).toMatchObject({ q: "North Carolina" });
+    expect(parsePeopleQuery("people based in Bergen last month")?.q).toBe("Bergen");
+    expect(parsePeopleQuery("people based in Bergen last month")?.timeRange?.label).toBeTruthy();
   });
 
   it("ignores questions that are not about people", () => {
@@ -84,6 +199,26 @@ describe("answerPeopleQuery", () => {
     expect(a?.text).toContain("Mira Okafor-Lind");
     expect(a?.text).toContain("https://www.linkedin.com/in/mira/");
     expect(a?.text).not.toContain("Jonas");
+  });
+
+  it("adds the captured detail to the answer in plain sentences, with no em dash", async () => {
+    await upsertPerson(avery, NOW);
+    const a = await answerPeopleQuery({ q: "north carolina" }, NOW);
+    expect(a?.people.map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect(a!.text).toContain("Based in Durham, North Carolina.");
+    expect(a!.text).toContain("Currently Staff Engineer at Brewlog.");
+    expect(a!.text).toContain("Previously Co-founder at PolyWise, Field Engineer at Havstrom AS.");
+    expect(a!.text).toContain("Studied at Duke University, BSc Computer Science.");
+    expect(a!.text).toContain("2nd degree connection");
+    expect(a!.text).toContain("611 connections");
+    expect(a!.text).not.toContain(String.fromCharCode(0x2014));
+  });
+
+  it("keeps the old one line shape for a person with no extra detail", async () => {
+    await upsertPerson(jonas, NOW);
+    const a = await answerPeopleQuery({ company: "Brewlog" }, NOW);
+    expect(a!.text.split("\n")).toHaveLength(2);
+    expect(a!.text.split("\n")[1]).toMatch(/^- Jonas Veldt, Engineer at Brewlog \(last viewed .+\): https:/);
   });
 
   it("returns null when nobody matches, so Ask falls back to RAG", async () => {

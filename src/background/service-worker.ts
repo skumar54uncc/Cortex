@@ -87,16 +87,21 @@ import {
 import { openCortexSearchForTab } from "../lib/open-cortex-search";
 import { openOverlayOnTab } from "../lib/overlay-injector";
 import { requestExtraction } from "../lib/extract-injector";
-import { canonicalLinkedInUrl, type LinkedInEntity } from "../lib/capture/linkedin";
+import { canonicalLinkedInUrl, sanitizePersonDetail, type LinkedInEntity } from "../lib/capture/linkedin";
 import { deletePerson, listPeople, upsertPerson } from "../lib/people";
 import { resolveEnteredUrl, toSuggestions } from "../lib/omnibox";
 import { saveHighlight } from "../lib/highlights";
 import { sanitizeExtraChunks, sanitizeImageInputs, type ImageInput } from "../lib/capture/extra-chunks";
 import { appendDescriptions, planImageDescriptions, reuseDescribedText } from "../lib/capture/images";
 import { isPdfUrl } from "../lib/capture/pdf";
-import { collectBackup, restoreBackup, validateBackup } from "../lib/export/backup";
-import { buildVault } from "../lib/export/markdown-vault";
-import { createZip } from "../lib/export/zip";
+import {
+  BACKUP_GATE_MESSAGE,
+  BACKUP_WORK_MESSAGE,
+  forwardBackupRequest,
+  isBackupRequestType,
+  type BackupRequestType,
+  type BackupWorkMessage,
+} from "../lib/export/backup-router";
 import { indexPdfTab, type PdfExtractResult } from "../lib/pdf-indexer";
 import type { ChunkKind } from "../db/schema";
 import type { NewChunk } from "../db/schema";
@@ -196,6 +201,9 @@ async function maybeRecordPerson(person: unknown, pageUrl: string): Promise<bool
     headline: cap(p.headline, 220),
     company: cap(p.company, 120),
     profileUrl: canonical,
+    // Location, about, roles, education and company detail (validated here
+    // because the payload comes from the page).
+    ...sanitizePersonDetail(person),
   });
   return true;
 }
@@ -413,7 +421,6 @@ async function describeImagesOnDevice(docId: number, baseText: string, images: I
  * and schedules the next until nothing is pending.
  */
 const PENDING_EMBEDS_KEY = "cortex_pending_embeds";
-const BACKUP_MAX_CHARS = 60 * 1024 * 1024;
 
 async function drainPendingEmbeddings(): Promise<void> {
   const flag = (await storageLocalGet([PENDING_EMBEDS_KEY]))[PENDING_EMBEDS_KEY];
@@ -427,10 +434,48 @@ async function drainPendingEmbeddings(): Promise<void> {
   void embedChain.then(() => drainPendingEmbeddings()).catch(() => undefined);
 }
 
-function bytesToBase64(bytes: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(s);
+/**
+ * Export and backup (Phase 6.7): the library work runs in the offscreen
+ * document. Authorization cannot, because only the service worker sees the
+ * original sender, so the forwarder below keeps the options-page check and the
+ * rate limit, and the privacy gate answers from here too.
+ *
+ * A ticket is minted per authorized restore and accepted once: it is what
+ * stops any other privileged context from driving the gate.
+ */
+const restoreGateTickets = new Set<string>();
+
+function mintRestoreGateTicket(op: BackupRequestType): string {
+  if (op !== "CORTEX_BACKUP_RESTORE") return "";
+  const token = crypto.randomUUID();
+  restoreGateTickets.add(token);
+  return token;
+}
+
+function sendBackupWorkToOffscreen(message: BackupWorkMessage): Promise<unknown> {
+  return ensureOffscreen()
+    .then(
+      () =>
+        new Promise<unknown>((resolve) => {
+          chrome.runtime.sendMessage(message, (r: unknown) => {
+            resolve(chrome.runtime.lastError ? undefined : r);
+          });
+        })
+    )
+    .catch(() => undefined)
+    .finally(() => {
+      if (message.token) restoreGateTickets.delete(message.token);
+    });
+}
+
+/** What the service worker still owns once the offscreen document has written the rows. */
+async function finishRestore(): Promise<void> {
+  const settings = await getEffectiveSettings();
+  await applyRetention(settings.retentionDays);
+  await db.digestCache.clear();
+  await storageLocalSet({ [PENDING_EMBEDS_KEY]: true });
+  void drainPendingEmbeddings();
+  await refreshSnapshotNow({}).catch(() => undefined);
 }
 
 /** Persist document + chunks + embedding queue + visit log (shared by live indexing and history import). */
@@ -1483,7 +1528,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   const msgType = (msg as { type?: string }).type;
   if (
     msgType === "CORTEX_EMBED_TEXT" ||
-    msgType === "CORTEX_SEARCH_RUN"
+    msgType === "CORTEX_SEARCH_RUN" ||
+    msgType === BACKUP_WORK_MESSAGE
   ) {
     if (!isPrivilegedExtensionSender(sender)) {
       sendResponse({
@@ -2045,10 +2091,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     return true;
   }
 
-  // Export and backup (Phase 5.10): options page only. The library leaves the
-  // device only as a file the user saves; restore goes through the privacy gate.
-  if (type === "CORTEX_EXPORT" || type === "CORTEX_BACKUP_VALIDATE" || type === "CORTEX_BACKUP_RESTORE") {
-    if (!isOptionsPageSender(sender)) {
+  // Export and backup (Phase 5.10, moved out in 6.7): options page only. The
+  // library leaves the device only as a file the user saves; restore goes
+  // through the privacy gate below. The work itself runs in the offscreen
+  // document — everything before the forward is the unchanged authorization.
+  if (isBackupRequestType(type)) {
+    return forwardBackupRequest(type, msg as { text?: unknown }, sendResponse, {
+      isOptionsPage: () => isOptionsPageSender(sender),
+      foreignSender: () => ({
+        ok: false,
+        error: ERROR_CODES.FOREIGN_SENDER,
+        ...payloadFromCode(ERROR_CODES.FOREIGN_SENDER),
+      }),
+      rateLimit: (respond) => rateLimitHit("export", 10, respond),
+      newToken: mintRestoreGateTicket,
+      forward: sendBackupWorkToOffscreen,
+      afterRestore: finishRestore,
+      onError: (e) => devLog.warn("[Cortex] export/backup:", e),
+    });
+  }
+
+  // The offscreen document asks back mid-restore, because the gate needs the
+  // effective settings and the managed policy, which only live here. The
+  // one-time ticket proves this is the restore the options page authorized.
+  if (type === BACKUP_GATE_MESSAGE) {
+    const token = String((msg as { token?: unknown }).token ?? "");
+    if (!isPrivilegedExtensionSender(sender) || !token || !restoreGateTickets.has(token)) {
       sendResponse({
         ok: false,
         error: ERROR_CODES.FOREIGN_SENDER,
@@ -2056,66 +2124,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       });
       return true;
     }
-    if (!rateLimitHit("export", 10, sendResponse)) return true;
     void (async () => {
       try {
-        const m = msg as { format?: unknown; text?: unknown; mode?: unknown; confirmed?: unknown };
-        if (type === "CORTEX_EXPORT") {
-          const backup = await collectBackup();
-          const stamp = new Date(backup.exportedAt).toISOString().slice(0, 10);
-          if (m.format === "markdown") {
-            const zip = createZip(buildVault(backup));
-            sendResponse({ ok: true, filename: `cortex-notes-${stamp}.zip`, mime: "application/zip", base64: bytesToBase64(zip) });
-          } else {
-            sendResponse({ ok: true, filename: `cortex-backup-${stamp}.json`, mime: "application/json", text: JSON.stringify(backup) });
-          }
-          return;
-        }
-        const text = typeof m.text === "string" ? m.text : "";
-        if (text.length > BACKUP_MAX_CHARS) {
-          sendResponse({ ok: false, error: "This file is too large to restore here (limit 60 MB)." });
-          return;
-        }
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(text);
-        } catch {
-          sendResponse({ ok: false, error: "This file is not a Cortex backup (it is not valid JSON)." });
-          return;
-        }
-        const v = validateBackup(parsed);
-        if (!v.ok) {
-          sendResponse({ ok: false, error: v.error });
-          return;
-        }
-        if (type === "CORTEX_BACKUP_VALIDATE") {
-          sendResponse({ ok: true, counts: v.counts, exportedAt: v.backup.exportedAt });
-          return;
-        }
-        if (m.confirmed !== true) {
-          sendResponse({ ok: false, error: "Confirm the restore first." });
-          return;
-        }
         const settings = await getEffectiveSettings();
         if (settings.policy.indexingDisabled === true) {
           sendResponse({ ok: false, error: "Your administrator has turned off indexing, so backups cannot be restored." });
           return;
         }
-        const res = await restoreBackup(v.backup, {
-          mode: m.mode === "replace" ? "replace" : "merge",
+        const urls = (msg as { urls?: unknown }).urls;
+        const list = Array.isArray(urls) ? urls : [];
+        const allowed: boolean[] = [];
+        for (const u of list) {
           // Restoring is an explicit user action: it bypasses the user's own
           // pause, never the policy, blocklist, allowlist or sensitive hosts.
-          allowUrl: async (u) =>
-            !(await shouldSkipIndexing(u, {} as chrome.runtime.MessageSender, { bypassIndexingPause: true })).skip,
-        });
-        await applyRetention(settings.retentionDays);
-        await db.digestCache.clear();
-        await storageLocalSet({ [PENDING_EMBEDS_KEY]: true });
-        void drainPendingEmbeddings();
-        await refreshSnapshotNow({}).catch(() => undefined);
-        sendResponse({ ok: true, added: res.added, blocked: res.blocked });
+          allowed.push(
+            typeof u === "string" &&
+              !(await shouldSkipIndexing(u, {} as chrome.runtime.MessageSender, { bypassIndexingPause: true })).skip
+          );
+        }
+        sendResponse({ ok: true, allowed });
       } catch (e) {
-        devLog.warn("[Cortex] export/backup:", e);
+        devLog.warn("[Cortex] backup gate:", e);
         sendResponse({ ok: false, error: "Could not finish. Try again." });
       }
     })();

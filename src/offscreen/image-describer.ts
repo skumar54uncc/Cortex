@@ -14,7 +14,12 @@ interface ImageLanguageModel {
   create(o: unknown): Promise<{ prompt(input: unknown): Promise<string>; destroy(): void }>;
 }
 
+/**
+ * `outputLanguage` is required on every request: without it Chrome logs
+ * "No output language was specified in a LanguageModel API request".
+ */
 const IMAGE_MODEL_OPTIONS = {
+  outputLanguage: NANO_OUTPUT_LANGUAGE,
   expectedInputs: [{ type: "text" }, { type: "image" }],
   expectedOutputs: [{ type: "text", languages: [NANO_OUTPUT_LANGUAGE] }],
 };

@@ -1,45 +1,37 @@
 /**
- * Wordmark stack prefers Garet (optional `fonts/Garet-Heavy.woff2` in the package —
- * license from Type Forward / Font Squirrel webfont kit). Bundled Plus Jakarta Sans
- * fills Latin glyphs until that file is added.
+ * Panel typography: Inter, bundled with the extension (no CDN, no network).
+ * Inter is the plain, dense UI face used across enterprise tools; it carries
+ * both the interface text and the wordmark, with tighter tracking on the
+ * wordmark (see overlay.shadow.css).
+ *
+ * Weights: 400 body, 500 labels and buttons, 600 titles, 700 wordmark.
  */
-import jakartaLatin400Url from "@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff2";
-import jakartaLatin700Url from "@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff2";
+import inter400Url from "@fontsource/inter/files/inter-latin-400-normal.woff2";
+import inter500Url from "@fontsource/inter/files/inter-latin-500-normal.woff2";
+import inter600Url from "@fontsource/inter/files/inter-latin-600-normal.woff2";
+import inter700Url from "@fontsource/inter/files/inter-latin-700-normal.woff2";
+
+const WEIGHTS: [number, string][] = [
+  [400, inter400Url as string],
+  [500, inter500Url as string],
+  [600, inter600Url as string],
+  [700, inter700Url as string],
+];
 
 export function getBrandFontFaceCss(): string {
-  const jakarta400 = jakartaLatin400Url as string;
-  const jakarta700 = jakartaLatin700Url as string;
-  let garet = "";
-  if (typeof chrome !== "undefined" && chrome.runtime?.getURL) {
-    const u = chrome.runtime.getURL("fonts/Garet-Heavy.woff2");
-    garet = `
+  return WEIGHTS.map(
+    ([weight, url]) => `
 @font-face {
-  font-family: 'Garet';
+  font-family: 'Inter';
   font-style: normal;
   font-display: swap;
-  font-weight: 700;
-  src: url('${u}') format('woff2');
-}`;
-  }
-  return `
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400;
-  src: url('${jakarta400}') format('woff2');
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 700;
-  src: url('${jakarta700}') format('woff2');
-}
-${garet}`;
+  font-weight: ${weight};
+  src: url('${url}') format('woff2');
+}`
+  ).join("\n");
 }
 
-/** Popup / options pages (document head). */
+/** Popup / options / onboarding pages (document head). */
 export function injectBrandFontFacesInto(target: ParentNode): void {
   if (target.querySelector?.("style[data-cortex-brand-fonts]")) return;
   const el = document.createElement("style");

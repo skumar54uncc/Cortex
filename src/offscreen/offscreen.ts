@@ -25,6 +25,22 @@ import {
 } from "../lib/extension-bus";
 import { isPrivilegedExtensionSender } from "../lib/message-security";
 import { SEARCH_LIMITS } from "../lib/limits";
+import {
+  backupGateUrls,
+  collectBackup,
+  restoreBackup,
+  validateBackup,
+} from "../lib/export/backup";
+import { buildVault } from "../lib/export/markdown-vault";
+import { createZip } from "../lib/export/zip";
+import {
+  BACKUP_FAILED,
+  BACKUP_GATE_MESSAGE,
+  BACKUP_MAX_CHARS,
+  BACKUP_TOO_LARGE,
+  BACKUP_WORK_MESSAGE,
+  type BackupWorkMessage,
+} from "../lib/export/backup-router";
 import type { ChatSettings } from "../lib/chat/types";
 
 /** Bundled weights under dist/models/ and ORT binary under dist/wasm/: zero CDN or Hub fetch. */
@@ -101,9 +117,113 @@ async function embedQueryForSearch(text: string): Promise<number[] | null> {
 }
 
 
+// ------------------------------------------------- export and backup (6.7)
+
+const SERVICE_WORKER_URL = chrome.runtime.getURL("service-worker.js");
+
+/**
+ * Stricter than `isPrivilegedExtensionSender` for the backup work message:
+ * only the service worker may ask for it. A content script is already out
+ * (it has a tab), and so is every extension page, because a page carries a
+ * `documentId` and its own URL while the service worker carries neither.
+ * The options-page check and the rate limit have already run there.
+ */
+function isServiceWorkerSender(sender: chrome.runtime.MessageSender): boolean {
+  if (!isPrivilegedExtensionSender(sender)) return false;
+  if (sender.documentId != null) return false;
+  return sender.url === undefined || sender.url === SERVICE_WORKER_URL;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+/**
+ * The privacy gate lives in the service worker: it needs the effective
+ * settings and the managed policy, and it must refuse outright when policy
+ * `indexingDisabled` is set. One call decides every URL in the file.
+ */
+function askPrivacyGate(
+  token: string,
+  urls: string[]
+): Promise<{ ok: true; allowed: boolean[] } | { ok: false; error: string }> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      { type: BACKUP_GATE_MESSAGE, token, urls },
+      (r: { ok?: boolean; allowed?: unknown; error?: unknown } | undefined) => {
+        if (chrome.runtime.lastError || !r) {
+          resolve({ ok: false, error: BACKUP_FAILED });
+          return;
+        }
+        if (r.ok !== true || !Array.isArray(r.allowed)) {
+          resolve({ ok: false, error: typeof r.error === "string" ? r.error : BACKUP_FAILED });
+          return;
+        }
+        resolve({ ok: true, allowed: r.allowed as boolean[] });
+      }
+    );
+  });
+}
+
+/**
+ * Same order of checks as the Phase 5.10 service worker handler: size, JSON,
+ * shape, then (restore only) the confirmation, the policy and the gate.
+ */
+async function runBackupWork(m: BackupWorkMessage): Promise<unknown> {
+  if (m.op === "CORTEX_EXPORT") {
+    const backup = await collectBackup();
+    const stamp = new Date(backup.exportedAt).toISOString().slice(0, 10);
+    if (m.format === "markdown") {
+      const zip = createZip(buildVault(backup));
+      return { ok: true, filename: `cortex-notes-${stamp}.zip`, mime: "application/zip", base64: bytesToBase64(zip) };
+    }
+    return { ok: true, filename: `cortex-backup-${stamp}.json`, mime: "application/json", text: JSON.stringify(backup) };
+  }
+
+  const text = typeof m.text === "string" ? m.text : "";
+  if (text.length > BACKUP_MAX_CHARS) return { ok: false, error: BACKUP_TOO_LARGE };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { ok: false, error: "This file is not a Cortex backup (it is not valid JSON)." };
+  }
+  const v = validateBackup(parsed);
+  if (!v.ok) return { ok: false, error: v.error };
+  if (m.op === "CORTEX_BACKUP_VALIDATE") {
+    return { ok: true, counts: v.counts, exportedAt: v.backup.exportedAt };
+  }
+  if (m.confirmed !== true) return { ok: false, error: "Confirm the restore first." };
+
+  const urls = backupGateUrls(v.backup);
+  const gate = await askPrivacyGate(m.token, urls);
+  if (!gate.ok) return { ok: false, error: gate.error };
+  // Anything the gate did not explicitly allow stays out and is counted in
+  // `blocked`, exactly as before: the default here is "not allowed".
+  const allowed = new Map(urls.map((u, i) => [u, gate.allowed[i] === true]));
+  const res = await restoreBackup(v.backup, {
+    mode: m.mode === "replace" ? "replace" : "merge",
+    allowUrl: async (u) => allowed.get(u) === true,
+  });
+  return { ok: true, added: res.added, blocked: res.blocked };
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   if (!isPrivilegedExtensionSender(sender)) {
     return false;
+  }
+
+  if (msg?.type === BACKUP_WORK_MESSAGE) {
+    if (!isServiceWorkerSender(sender)) {
+      sendResponse({ ok: false, error: "foreign_sender" });
+      return true;
+    }
+    void runBackupWork(msg as BackupWorkMessage)
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false, error: BACKUP_FAILED }));
+    return true;
   }
 
   if (msg?.type === "CORTEX_EMBED_TEXT") {

@@ -4,6 +4,8 @@ import { getBrandFontFaceCss } from "../styles/brand-fonts";
 
 import { confidenceTier } from "./confidence";
 import { observePanelLayout } from "./layout-mode";
+import { installKeyShield } from "./key-shield";
+import { renderMarkdown } from "./markdown-render";
 import { createChatDrawerToggle, type ChatDrawerToggle } from "./chat-drawer";
 import {
   createPendingDelete,
@@ -565,6 +567,9 @@ ${shadowCss}`;
 
   document.addEventListener("keydown", onOverlayNavKey, true);
   document.addEventListener("keydown", onKeyCaptureRedirect, true);
+  // Pages bind their own keys (YouTube plays or pauses on Space): keep every
+  // key pressed inside the panel away from them (src/content/key-shield.ts).
+  const removeKeyShield = installKeyShield(host);
   focusTrap.activate();
 
   function rebuildTabs(): void {
@@ -858,39 +863,25 @@ ${shadowCss}`;
     if (chatNearBottom(el)) scrollChatToBottom(el);
   }
 
+  /**
+   * Model answers are markdown: bullets, bold, code. renderMarkdown builds
+   * the DOM with element APIs only (never innerHTML) and calls back for each
+   * [N] so citations become links to the cited page, video moment or PDF page.
+   */
   function renderAnswerWithCitations(
     text: string,
     chunks: ChunkWithDoc[]
   ): HTMLElement {
     const root = document.createElement("div");
     root.className = "cortex-msg-rich";
-
-    const citationBlockRe = /(\[\d+(?:,\s*\d+)*\])/g;
-    let last = 0;
-    let m: RegExpExecArray | null;
-    while ((m = citationBlockRe.exec(text)) !== null) {
-      if (m.index > last) {
-        appendTextWithUrls(root, text.slice(last, m.index), "cortex-inline-link");
-      }
-      const nums = [...m[1]!.matchAll(/\d+/g)].map((x) => parseInt(x[0]!, 10));
-      root.appendChild(document.createTextNode("["));
-      let firstNum = true;
-      for (const n of nums) {
-        if (!firstNum) root.appendChild(document.createTextNode(", "));
-        firstNum = false;
-        const chunk = chunks[n - 1];
-        if (chunk) {
-          root.appendChild(citationLink(chunk, n));
-        } else {
-          root.appendChild(document.createTextNode(String(n)));
-        }
-      }
-      root.appendChild(document.createTextNode("]"));
-      last = m.index + m[0].length;
-    }
-    if (last < text.length) {
-      appendTextWithUrls(root, text.slice(last), "cortex-inline-link");
-    }
+    root.appendChild(
+      renderMarkdown(text, {
+        citation: (n) => {
+          const chunk = chunks[n - 1];
+          return chunk ? citationLink(chunk, n) : null;
+        },
+      })
+    );
     return root;
   }
 
@@ -1230,6 +1221,34 @@ ${shadowCss}`;
     return "Last 7 days";
   }
 
+  /**
+   * Digest narrative with its sources named and linked: each sentence is
+   * followed by numbered chips that open the page it came from (Phase 6).
+   */
+  function renderDigestNarrative(el: HTMLElement, digest: DigestResult): void {
+    el.textContent = "";
+    const sources = new Map((digest.sources ?? []).map((s) => [s.n, s]));
+    const parts = digest.narrativeParts?.length
+      ? digest.narrativeParts
+      : [{ text: digest.narrative, sourceIndexes: [] }];
+    for (const part of parts) {
+      if (!part.text.trim()) continue;
+      el.appendChild(document.createTextNode(`${el.childNodes.length ? " " : ""}${part.text} `));
+      for (const n of part.sourceIndexes) {
+        const src = sources.get(n);
+        if (!src) continue;
+        const chip = document.createElement("a");
+        chip.className = "cortex-citation cortex-digest-cite";
+        chip.href = safeHttpUrl(src.url);
+        chip.target = "_blank";
+        chip.rel = "noopener noreferrer";
+        chip.textContent = String(n);
+        chip.title = `${src.title} (${src.domain})`;
+        el.appendChild(chip);
+      }
+    }
+  }
+
   function renderDigestUI(digest: DigestResult): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "cortex-digest";
@@ -1263,7 +1282,7 @@ ${shadowCss}`;
     heroLabel.textContent = "Your reading focus";
     const narrative = document.createElement("p");
     narrative.className = "cortex-digest-narrative";
-    narrative.textContent = digest.narrative;
+    renderDigestNarrative(narrative, digest);
     hero.append(heroLabel, narrative);
     wrapper.appendChild(hero);
 
@@ -1877,6 +1896,7 @@ ${shadowCss}`;
     cancelInitialFocus = null;
     document.removeEventListener("keydown", onOverlayNavKey, true);
     document.removeEventListener("keydown", onKeyCaptureRedirect, true);
+    removeKeyShield();
     panel.classList.remove("is-visible");
     host.remove();
     overlayHost = null;

@@ -30,6 +30,7 @@ import {
   type VisitLogEntry,
 } from "../../db/schema";
 import { safeHttpHttpsHref } from "../url-security";
+import { sanitizePersonDetail } from "../capture/linkedin";
 
 export const BACKUP_FORMAT = "cortex-backup";
 export const BACKUP_VERSION = 1;
@@ -307,6 +308,9 @@ export function validateBackup(raw: unknown): ValidateResult {
         firstSeen: num(o, "firstSeen", w),
         lastSeen: num(o, "lastSeen", w),
         visitCount: optNum(o, "visitCount", w) ?? 1,
+        // Optional profile detail, validated and capped the same way as a
+        // live capture so a backup round trip keeps it.
+        ...sanitizePersonDetail(o),
       } as PersonRecord;
     });
 
@@ -380,11 +384,28 @@ export interface RestoreResult {
   chunkIdsToEmbed: number[];
 }
 
+/**
+ * Every URL a restore puts through the privacy gate, deduplicated. Exported so
+ * the offscreen document can ask the service worker — the only context with the
+ * effective settings and the managed policy — about exactly this list, in one
+ * call, before it starts writing rows.
+ */
+export function backupGateUrls(backup: CortexBackup): string[] {
+  const s = backup.stores;
+  return [
+    ...new Set([
+      ...s.documents.map((d) => d.url),
+      ...s.visitLog.map((v) => v.url),
+      ...s.people.map((p) => p.profileUrl),
+    ]),
+  ];
+}
+
 export async function restoreBackup(backup: CortexBackup, opts: RestoreOptions): Promise<RestoreResult> {
   const s = backup.stores;
   // The gate is async and outside Dexie: decide every URL before the transaction.
   const allowed = new Map<string, boolean>();
-  const urls = new Set([...s.documents.map((d) => d.url), ...s.visitLog.map((v) => v.url), ...s.people.map((p) => p.profileUrl)]);
+  const urls = backupGateUrls(backup);
   for (const u of urls) allowed.set(u, await opts.allowUrl(u));
   const blocked = s.documents.filter((d) => !allowed.get(d.url)).length;
 

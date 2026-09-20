@@ -3,11 +3,11 @@
  * Imported before popup/options component CSS.
  */
 :root {
-  /* Prefer Garet when fonts/Garet-Heavy.woff2 is bundled; else Plus Jakarta Sans */
+  /* Inter ships with the extension (src/styles/brand-fonts.ts). */
   --cx-brand-font:
-    "Garet", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --cx-font-body:
-    "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --cx-font-mono:
     ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
 

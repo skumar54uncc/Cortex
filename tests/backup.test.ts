@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
 import { db, clearAllIndexedData } from "../src/db/schema";
 import {
+  backupGateUrls,
   collectBackup,
   validateBackup,
   restoreBackup,
@@ -74,6 +75,12 @@ async function seed(): Promise<void> {
     firstSeen: T,
     lastSeen: T,
     visitCount: 2,
+    location: "Troms, Norway",
+    roleTitle: "Field lead",
+    pastRoles: [{ title: "Researcher", company: "Ice Institute" }],
+    education: ["University of Troms, MSc"],
+    connectionDegree: "2nd",
+    connectionCount: 611,
   });
   await db.visitLog.bulkAdd([
     { url: "https://a.test/aurora", title: "Aurora notes", hostname: "a.test", visitedAt: T, textLength: 100 },
@@ -185,6 +192,48 @@ describe("restoreBackup", () => {
     expect((await db.documents.toArray()).map((d) => d.url)).toEqual(["https://a.test/aurora"]);
     expect((await db.chunks.toArray()).some((c) => c.text.includes("Balance"))).toBe(false);
     expect((await db.visitLog.toArray()).map((v) => v.hostname)).toEqual(["a.test"]);
+  });
+
+  /**
+   * Phase 6.7: the gate now answers from the service worker, over a message,
+   * for the list `backupGateUrls` produces. If that list stopped matching the
+   * URLs restoreBackup asks about, pages would silently lose their decision,
+   * so pin the two together.
+   */
+  it("asks the gate about exactly the URLs backupGateUrls lists, each once", async () => {
+    await seed();
+    const backup = validateBackup(JSON.parse(JSON.stringify(await collectBackup(T))));
+    if (!backup.ok) throw new Error(backup.error);
+    await clearAllIndexedData();
+    const asked: string[] = [];
+    const listed = backupGateUrls(backup.backup);
+    await restoreBackup(backup.backup, {
+      mode: "replace",
+      allowUrl: async (url) => {
+        asked.push(url);
+        return true;
+      },
+    });
+    expect(asked).toEqual(listed);
+    expect(new Set(asked).size).toBe(asked.length);
+    expect(listed).toContain("https://a.test/aurora");
+    expect(listed).toContain("https://b.test/bank");
+  });
+
+  it("blocks every page the gate did not answer for (the offscreen default is 'not allowed')", async () => {
+    await seed();
+    const backup = validateBackup(JSON.parse(JSON.stringify(await collectBackup(T))));
+    if (!backup.ok) throw new Error(backup.error);
+    await clearAllIndexedData();
+    // An answer list that is short, or out of step, must fail closed.
+    const answers = new Map<string, boolean>();
+    const res = await restoreBackup(backup.backup, {
+      mode: "replace",
+      allowUrl: async (url) => answers.get(url) === true,
+    });
+    expect(res.blocked).toBe(2);
+    expect(await db.documents.count()).toBe(0);
+    expect(await db.visitLog.count()).toBe(0);
   });
 });
 

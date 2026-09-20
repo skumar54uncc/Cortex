@@ -69,7 +69,18 @@ export function chunkKind(c: Pick<ChunkRecord, "kind">): ChunkKind {
   return c.kind ?? "text";
 }
 
-/** LinkedIn profile or company seen by the user (Phase 5.1). */
+/** One experience row on a profile (release 1.2.x). */
+export interface PersonRole {
+  title: string;
+  company: string;
+}
+
+/**
+ * LinkedIn profile or company seen by the user (Phase 5.1).
+ * Everything after visitCount is profile detail added in 1.2.x: optional, so
+ * rows written by 1.2.0 still read, and indexed only through a table scan in
+ * lib/people.ts (no new Dexie version, no new index).
+ */
 export interface PersonRecord {
   id?: number;
   kind: "person" | "company";
@@ -80,6 +91,22 @@ export interface PersonRecord {
   firstSeen: number;
   lastSeen: number;
   visitCount: number;
+  location?: string;
+  /** Trimmed about/summary text, capped at 600 characters. */
+  about?: string;
+  /** Current role title. */
+  roleTitle?: string;
+  /** Earlier roles, newest first, at most 5. */
+  pastRoles?: PersonRole[];
+  /** School plus degree lines, at most 3. */
+  education?: string[];
+  /** "1st", "2nd" or "3rd". */
+  connectionDegree?: string;
+  connectionCount?: number;
+  /** Company pages only. */
+  industry?: string;
+  companySize?: string;
+  tagline?: string;
 }
 
 export interface CollectionRecord {
