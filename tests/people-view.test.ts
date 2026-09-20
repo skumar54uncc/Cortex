@@ -59,6 +59,51 @@ describe("People view", () => {
     expect(container.textContent).toContain("LinkedIn");
   });
 
+  it("shows the captured detail as text: where they are, what they do now, and how connected", async () => {
+    const { container, deps } = setup([
+      {
+        id: 1,
+        kind: "person",
+        name: "Aiden Schlotterback",
+        headline: "Co-founder of PolyWise",
+        company: "PolyWise",
+        profileUrl: "https://www.linkedin.com/in/aiden/",
+        lastSeen: Date.parse("2026-09-19T10:00:00Z"),
+        visitCount: 18,
+        location: "Indian Trail, North Carolina",
+        roleTitle: "Co-founder",
+        pastRoles: [{ title: "Analyst", company: "Walker Group" }],
+        education: ["Appalachian State University"],
+        connectionDegree: "1st",
+        connectionCount: 317,
+      },
+    ]);
+    await renderPeopleView(container, deps);
+    const detail = container.querySelector(".cortex-person-detail")!;
+    expect(detail.textContent).toContain("Indian Trail, North Carolina");
+    expect(detail.textContent).toContain("Co-founder at PolyWise");
+    expect(detail.textContent).toContain("1st");
+    expect(detail.textContent).toContain("317 connections");
+    expect(detail.querySelector("img")).toBeNull();
+  });
+
+  it("leaves the detail line out for a person captured before the detail existed", async () => {
+    const { container, deps } = setup([
+      {
+        id: 2,
+        kind: "person",
+        name: "Ada Field",
+        headline: "Glaciologist",
+        company: "Polar Lab",
+        profileUrl: "https://www.linkedin.com/in/ada/",
+        lastSeen: 0,
+        visitCount: 1,
+      },
+    ]);
+    await renderPeopleView(container, deps);
+    expect(container.querySelector(".cortex-person-detail")).toBeNull();
+  });
+
   it("drops profile links that are not http(s)", async () => {
     const { container, deps } = setup([{ ...rows[0], profileUrl: "javascript:alert(1)" }]);
     await renderPeopleView(container, deps);

@@ -11,6 +11,32 @@ export interface PersonRow {
   profileUrl: string;
   lastSeen: number;
   visitCount: number;
+  /** Detail captured from the profile, when the page showed it. */
+  location?: string;
+  roleTitle?: string;
+  pastRoles?: { title: string; company: string }[];
+  education?: string[];
+  connectionDegree?: string;
+  connectionCount?: number;
+  industry?: string;
+  companySize?: string;
+}
+
+/** One plain line of captured detail, or "" when the profile had none. */
+export function personDetailLine(p: PersonRow): string {
+  const parts: string[] = [];
+  if (p.location) parts.push(p.location);
+  if (p.roleTitle) parts.push(p.company ? `${p.roleTitle} at ${p.company}` : p.roleTitle);
+  const past = p.pastRoles?.[0];
+  if (past) parts.push(`previously ${[past.title, past.company].filter(Boolean).join(" at ")}`);
+  if (p.education?.[0]) parts.push(p.education[0]);
+  if (p.industry) parts.push(p.industry);
+  if (p.companySize) parts.push(p.companySize);
+  const connection = [p.connectionDegree, p.connectionCount ? `${p.connectionCount} connections` : ""]
+    .filter(Boolean)
+    .join(", ");
+  if (connection) parts.push(connection);
+  return parts.join(" · ");
 }
 
 export interface PeopleViewDeps {
@@ -36,7 +62,7 @@ export async function renderPeopleView(container: HTMLElement, deps: PeopleViewD
   const input = document.createElement("input");
   input.type = "search";
   input.className = "cortex-input cortex-people-filter";
-  input.placeholder = "Filter by name, headline or company";
+  input.placeholder = "Filter by name, role, company or place";
   input.setAttribute("aria-label", "Filter people");
   input.autocomplete = "off";
 
@@ -86,7 +112,15 @@ export async function renderPeopleView(container: HTMLElement, deps: PeopleViewD
       ]
         .filter(Boolean)
         .join(" · ");
-      main.append(name, headline, meta);
+      main.append(name, headline);
+      const detailText = personDetailLine(p);
+      if (detailText) {
+        const detail = document.createElement("span");
+        detail.className = "cortex-person-detail cortex-muted";
+        detail.textContent = detailText;
+        main.appendChild(detail);
+      }
+      main.appendChild(meta);
 
       const del = document.createElement("button");
       del.type = "button";
