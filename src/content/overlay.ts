@@ -1046,6 +1046,8 @@ ${shadowCss}`;
     cursor: HTMLElement;
     renderer: StreamRenderer;
     citedChunks: ChunkWithDoc[];
+    /** Status line shown until the first token arrives. */
+    waiting: HTMLElement;
   };
   let activeStream: ActiveStream | null = null;
 
@@ -1105,6 +1107,7 @@ ${shadowCss}`;
   function showStreamError(data: ChatErrorData): void {
     const st = activeStream;
     if (!st) return;
+    st.waiting.remove();
     st.renderer.cancel();
     st.contentEl.textContent = "";
     st.contentEl.appendChild(renderErrorBlock(data));
@@ -1123,14 +1126,21 @@ ${shadowCss}`;
           void refreshChatSidebar();
         },
         onSources: (chunks) => {
-          if (activeStream) activeStream.citedChunks = chunks as ChunkWithDoc[];
+          if (!activeStream) return;
+          activeStream.citedChunks = chunks as ChunkWithDoc[];
+          activeStream.waiting.textContent = chunks.length
+            ? "Reading what it found..."
+            : "Searching your library...";
         },
         onToken: (text) => {
-          activeStream?.renderer.push(text);
+          if (!activeStream) return;
+          activeStream.waiting.remove();
+          activeStream.renderer.push(text);
         },
         onDone: () => {
           const st = activeStream;
           if (!st) return;
+          st.waiting.remove();
           // Final rich render happens in the same frame as the last flush: no jump.
           st.renderer.finish((full) => renderAnswerWithCitations(full, st.citedChunks));
           renderSources(st.sourcesEl, st.citedChunks);
@@ -1143,6 +1153,7 @@ ${shadowCss}`;
         onAborted: () => {
           const st = activeStream;
           if (!st) return;
+          st.waiting.remove();
           st.renderer.finish((full) =>
             full ? renderAnswerWithCitations(full, st.citedChunks) : document.createTextNode("")
           );
@@ -1204,6 +1215,14 @@ ${shadowCss}`;
         stickToBottom = chatNearBottom(messagesContainer);
       },
     });
+    // Until the first token arrives the bubble would be empty next to a Stop
+    // button, which reads as stuck. Show what Cortex is doing instead.
+    const waiting = document.createElement("p");
+    waiting.className = "cortex-chat-waiting cortex-muted";
+    waiting.setAttribute("role", "status");
+    waiting.textContent = "Searching your library...";
+    contentEl.insertBefore(waiting, cursor);
+
     activeStream = {
       messagesContainer,
       contentEl,
@@ -1211,6 +1230,7 @@ ${shadowCss}`;
       cursor,
       renderer,
       citedChunks: [],
+      waiting,
     };
     ctl.submit(question, currentConversationId, { collectionId: activeCollectionId });
   }
@@ -1362,7 +1382,12 @@ ${shadowCss}`;
 
       const summary = document.createElement("summary");
       summary.className = "cortex-digest-sources-toggle";
-      summary.textContent = `Show all pages (${digest.sources.length})`;
+      // The source list is capped, so do not call it "all pages" when the
+      // period had more (the header already shows the real page count).
+      summary.textContent =
+        digest.sources.length < digest.pageCount
+          ? `Show sources (${digest.sources.length} of ${digest.pageCount} pages)`
+          : `Show all pages (${digest.sources.length})`;
 
       const list = document.createElement("ul");
       list.className = "cortex-digest-sources";

@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <div class="cx-opt-page">
-      <header class="cx-opt-topbar">
+    <a class="cx-skip-link" href="#cx-opt-main">Skip to settings</a>
+
+    <header class="cx-opt-topbar">
+      <div class="cx-opt-topbar-inner">
         <div class="cx-opt-brand" aria-label="Cortex">
           <img
             class="cx-opt-brand-mark"
@@ -19,16 +21,30 @@
           />
           <span class="cx-opt-brand-wordmark">Cortex</span>
         </div>
-      </header>
-
-      <main class="cx-opt-main">
-        <header class="cx-opt-page-head">
+        <div class="cx-opt-page-head">
           <h1 class="cx-opt-title">Settings</h1>
           <p class="cx-opt-subtitle">
             Configure how Cortex indexes and answers from your browsing.
           </p>
-        </header>
+        </div>
+      </div>
+    </header>
 
+    <div class="cx-opt-layout">
+      <nav class="cx-opt-nav" aria-label="Settings sections">
+        <p class="cx-nav-title" id="cx-nav-title">On this page</p>
+        <ul class="cx-nav-list">
+          <li><a class="cx-nav-link" href="#cx-sec-library">Library</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-appearance">Appearance</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-capture">Capture</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-intelligence">Intelligence</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-privacy">Privacy and data</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-backup">Backup</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-about">About</a></li>
+        </ul>
+      </nav>
+
+      <main class="cx-opt-main" id="cx-opt-main">
         <div id="cx-managed-banner" class="cx-managed-banner" role="note" hidden>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="11" width="18" height="11" rx="2"></rect>
@@ -37,503 +53,585 @@
           <span>Some settings are managed by your organization and cannot be changed here.</span>
         </div>
 
-        <section class="cx-card cx-card-elevated cx-library-card" aria-labelledby="cx-library-h">
-          <h2 id="cx-library-h" class="cx-section-label cx-library-label">Library overview</h2>
-          <p id="cx-opt-storage-line" class="cx-library-storage">Storage: …</p>
-          <div class="cx-stats-row" id="cx-stats-row">
-            <div class="cx-stat">
-              <span class="cx-stat-label">Pages indexed</span>
-              <span class="cx-stat-value" id="cx-opt-pages" data-stat>
-                <span class="cx-stat-skeleton" aria-hidden="true"></span>
-              </span>
-            </div>
-            <div class="cx-stat">
-              <span class="cx-stat-label">Chunks</span>
-              <span class="cx-stat-value" id="cx-opt-chunks" data-stat>
-                <span class="cx-stat-skeleton" aria-hidden="true"></span>
-              </span>
-            </div>
-            <div class="cx-stat">
-              <span class="cx-stat-label">Visits logged</span>
-              <span class="cx-stat-value" id="cx-opt-visits" data-stat>
-                <span class="cx-stat-skeleton" aria-hidden="true"></span>
-              </span>
-            </div>
+        <!-- 1. Library ------------------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-library" tabindex="-1" aria-labelledby="cx-library-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-library-h">Library</h2>
+            <p class="cx-sec-desc">What Cortex has indexed on this device.</p>
           </div>
-          <p id="cx-opt-stats-error" class="cx-alert" hidden>
-            Couldn’t load overview.
-            <button type="button" id="cx-opt-retry-stats" class="cx-btn cx-btn-ghost cx-btn-sm">
-              Retry
-            </button>
-          </p>
-        </section>
 
-        <details class="cx-disclosure" id="cx-about-disclosure">
-          <summary class="cx-disclosure-summary">
-            <span>About Cortex</span>
-            <svg class="cx-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M6 9l6 6 6-6"></path>
-            </svg>
-          </summary>
-          <div class="cx-disclosure-body cx-prose">
-            <p>
-              Cortex helps you search and ask questions about pages you have visited. Your library
-              of saved pages stays on this computer. Indexing does not upload your browsing history.
-            </p>
-            <p>
-              If you turn on Cloud Chat and add a Google API key, Cortex can use Google’s Gemini
-              service to answer harder questions. In that case, only the short passages needed to
-              answer your question are sent, not your full library.
-            </p>
-          </div>
-        </details>
-
-        <section class="cx-opt-section" aria-labelledby="cx-shortcuts-h">
-          <h2 id="cx-shortcuts-h" class="cx-section-heading">Keyboard shortcuts</h2>
-          <p class="cx-section-desc">
-            Open Search, Ask, or Digest from anywhere while you browse.
-          </p>
-          <div class="cx-shortcuts-grid">
-            <div class="cx-shortcut-block">
-              <span class="cx-field-label">Primary</span>
-              <div class="cx-kbd-row">
-                <kbd>Ctrl</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>K</kbd>
-                <span class="cx-kbd-meta">Windows / Linux</span>
+          <div class="cx-panel">
+            <div class="cx-group">
+              <div class="cx-stats-row" id="cx-stats-row">
+                <div class="cx-stat">
+                  <span class="cx-stat-label">Pages indexed</span>
+                  <span class="cx-stat-value" id="cx-opt-pages" data-stat>
+                    <span class="cx-stat-skeleton" aria-hidden="true"></span>
+                  </span>
+                </div>
+                <div class="cx-stat">
+                  <span class="cx-stat-label">Chunks</span>
+                  <span class="cx-stat-value" id="cx-opt-chunks" data-stat>
+                    <span class="cx-stat-skeleton" aria-hidden="true"></span>
+                  </span>
+                </div>
+                <div class="cx-stat">
+                  <span class="cx-stat-label">Visits logged</span>
+                  <span class="cx-stat-value" id="cx-opt-visits" data-stat>
+                    <span class="cx-stat-skeleton" aria-hidden="true"></span>
+                  </span>
+                </div>
               </div>
-              <div class="cx-kbd-row">
-                <kbd>⌘</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>K</kbd>
-                <span class="cx-kbd-meta">macOS</span>
-              </div>
+              <p id="cx-opt-storage-line" class="cx-library-storage">Storage: …</p>
+              <p id="cx-opt-stats-error" class="cx-alert" hidden>
+                Couldn’t load overview.
+                <button type="button" id="cx-opt-retry-stats" class="cx-btn cx-btn-ghost cx-btn-sm">
+                  Retry
+                </button>
+              </p>
             </div>
-            <div class="cx-shortcut-block">
-              <span class="cx-field-label">Alternate</span>
-              <div class="cx-kbd-row">
-                <kbd>Alt</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>C</kbd>
-              </div>
-            </div>
-          </div>
-          <p class="cx-section-desc cx-shortcuts-customize">
-            Customize in Chrome: open a new tab, paste
-            <code>chrome://extensions/shortcuts</code> in the address bar, press
-            <strong>Enter</strong>, find <strong>Cortex</strong>, then edit the command.
-          </p>
-        </section>
 
-        <section class="cx-opt-section" aria-labelledby="cx-theme-h">
-          <h2 id="cx-theme-h" class="cx-section-heading">Appearance</h2>
-          <h3 class="cx-subheading">Theme for the Cortex panel</h3>
-          <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-theme-h">
-            <label class="cx-radio-card">
-              <input type="radio" name="cx-theme" value="system" checked />
-              <span class="cx-radio-card-inner">
-                <span class="cx-radio-card-title">System</span>
-                <span class="cx-radio-card-desc">Follows your operating system setting.</span>
-                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5"></path>
-                </svg>
-              </span>
-            </label>
-            <label class="cx-radio-card">
-              <input type="radio" name="cx-theme" value="light" />
-              <span class="cx-radio-card-inner">
-                <span class="cx-radio-card-title">Light</span>
-                <span class="cx-radio-card-desc">Always light.</span>
-                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5"></path>
-                </svg>
-              </span>
-            </label>
-            <label class="cx-radio-card">
-              <input type="radio" name="cx-theme" value="dark" />
-              <span class="cx-radio-card-inner">
-                <span class="cx-radio-card-title">Dark</span>
-                <span class="cx-radio-card-desc">Always dark.</span>
-                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5"></path>
-                </svg>
-              </span>
-            </label>
-          </div>
-          <p class="cx-field-hint">Saved as soon as you pick one.</p>
-        </section>
-
-        <section class="cx-opt-section" aria-labelledby="cx-features-h">
-          <h2 id="cx-features-h" class="cx-section-heading">Features</h2>
-          <p class="cx-section-desc">Everything runs on this device. Changes save immediately.</p>
-          <div class="cx-feature-list">
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-peopleMemoryEnabled" class="cx-check-native" data-feature="peopleMemoryEnabled" />
-              <label for="cx-feat-peopleMemoryEnabled" class="cx-feature-label">
-                <span class="cx-field-label">People and companies</span>
-                <span class="cx-field-hint">Remember LinkedIn profiles and company pages you open, so you can ask who you viewed.</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-youtubeTranscriptsEnabled" class="cx-check-native" data-feature="youtubeTranscriptsEnabled" />
-              <label for="cx-feat-youtubeTranscriptsEnabled" class="cx-feature-label">
-                <span class="cx-field-label">YouTube transcripts</span>
-                <span class="cx-field-hint">Index captions of videos you watch for at least 30 seconds.</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-tablesEnabled" class="cx-check-native" data-feature="tablesEnabled" />
-              <label for="cx-feat-tablesEnabled" class="cx-feature-label">
-                <span class="cx-field-label">Tables</span>
-                <span class="cx-field-hint">Index data tables row by row so their values are searchable.</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-imagesEnabled" class="cx-check-native" data-feature="imagesEnabled" />
-              <label for="cx-feat-imagesEnabled" class="cx-feature-label">
-                <span class="cx-field-label">Image text</span>
-                <span class="cx-field-hint">Index alt text and captions of images in articles.</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-imageDescriptionsEnabled" class="cx-check-native" data-feature="imageDescriptionsEnabled" />
-              <label for="cx-feat-imageDescriptionsEnabled" class="cx-feature-label">
-                <span class="cx-field-label">On-device image descriptions</span>
-                <span class="cx-field-hint">Describe up to 5 images per page with Chrome built-in AI. Never sent to the cloud. Off by default.</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-pdfEnabled" class="cx-check-native" data-feature="pdfEnabled" />
-              <label for="cx-feat-pdfEnabled" class="cx-feature-label">
-                <span class="cx-field-label">PDFs</span>
-                <span class="cx-field-hint">Index text from PDFs you open in Chrome (up to 30 MB).</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-highlightsEnabled" class="cx-check-native" data-feature="highlightsEnabled" />
-              <label for="cx-feat-highlightsEnabled" class="cx-feature-label">
-                <span class="cx-field-label">Highlights</span>
-                <span class="cx-field-hint">Add "Save to Cortex" to the right-click menu for selected text.</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-omniboxEnabled" class="cx-check-native" data-feature="omniboxEnabled" />
-              <label for="cx-feat-omniboxEnabled" class="cx-feature-label">
-                <span class="cx-field-label">Address bar</span>
-                <span class="cx-field-hint">Type cx and a question in the address bar to search your library.</span>
-              </label>
-            </div>
-            <div class="cx-feature-row">
-              <input type="checkbox" id="cx-feat-resurfacingEnabled" class="cx-check-native" data-feature="resurfacingEnabled" />
-              <label for="cx-feat-resurfacingEnabled" class="cx-feature-label">
-                <span class="cx-field-label">Seen this before</span>
-                <span class="cx-field-hint">Show a small reminder when a page is very similar to something you read earlier. Off by default.</span>
-              </label>
-            </div>
-          </div>
-        </section>
-
-        <section class="cx-opt-section" aria-labelledby="cx-collections-h">
-          <h2 id="cx-collections-h" class="cx-section-heading">Collections</h2>
-          <p class="cx-section-desc">
-            Group pages, for example "Job search", then search or ask within one collection. Add the page
-            you are on from the Cortex panel or the right-click menu.
-          </p>
-          <div class="cx-inline-form">
-            <label class="cx-visually-hidden" for="cx-collection-name">New collection name</label>
-            <input type="text" id="cx-collection-name" class="cx-input" maxlength="60" placeholder="New collection name" autocomplete="off" />
-            <button type="button" id="cx-collection-create" class="cx-btn cx-btn-secondary">Create collection</button>
-          </div>
-          <p id="cx-collection-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
-          <ul id="cx-collection-list" class="cx-collection-list" aria-label="Your collections"></ul>
-        </section>
-
-        <section class="cx-opt-section" aria-labelledby="cx-chat-h">
-          <h2 id="cx-chat-h" class="cx-section-heading">Chat</h2>
-
-          <h3 class="cx-subheading">Default chat mode</h3>
-          <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-chat-h">
-            <label class="cx-radio-card">
-              <input type="radio" name="cx-chat-mode" value="auto" checked />
-              <span class="cx-radio-card-inner">
-                <span class="cx-radio-card-title">Auto <span class="cx-badge">Recommended</span></span>
-                <span class="cx-radio-card-desc">On-device when possible; cloud for heavier prompts if enabled.</span>
-                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5"></path>
-                </svg>
-              </span>
-            </label>
-            <label class="cx-radio-card">
-              <input type="radio" name="cx-chat-mode" value="on-device-only" />
-              <span class="cx-radio-card-inner">
-                <span class="cx-radio-card-title">On-device only</span>
-                <span class="cx-radio-card-desc">Strict privacy. Requires Chrome built-in AI.</span>
-                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5"></path>
-                </svg>
-              </span>
-            </label>
-            <label class="cx-radio-card">
-              <input type="radio" name="cx-chat-mode" value="cloud-only" />
-              <span class="cx-radio-card-inner">
-                <span class="cx-radio-card-title">Cloud only</span>
-                <span class="cx-radio-card-desc">Uses Gemini when an API key is set.</span>
-                <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5"></path>
-                </svg>
-              </span>
-            </label>
-          </div>
-
-          <h3 class="cx-subheading">Cloud chat (Gemini)</h3>
-          <label class="cx-check-row" for="cx-opt-cloud-chat">
-            <input type="checkbox" id="cx-opt-cloud-chat" class="cx-check-native" />
-            <span class="cx-check-label">Enable cloud chat</span>
-          </label>
-
-          <div class="cx-field">
-            <label class="cx-field-label" for="cx-opt-gemini-key">Gemini API key</label>
-            <input
-              type="password"
-              id="cx-opt-gemini-key"
-              class="cx-input"
-              spellcheck="false"
-              autocomplete="off"
-            />
-            <p class="cx-field-hint">
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"
-                >Get a free API key from Google AI Studio</a
-              >
-            </p>
-          </div>
-
-          <div class="cx-actions-row">
-            <button type="button" id="cx-opt-chat-save" class="cx-btn cx-btn-primary">
-              <span class="cx-btn-label">Save chat settings</span>
-            </button>
-          </div>
-          <p id="cx-opt-chat-save-msg" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
-          <p class="cx-section-desc">
-            Cloud chat sends retrieved passages only. Your library stays on this device.
-          </p>
-        </section>
-
-        <section class="cx-opt-section" aria-labelledby="cx-history-h">
-          <h2 id="cx-history-h" class="cx-section-heading">History import</h2>
-          <p class="cx-section-desc">
-            Backfill pages you already visited. Runs locally; embeddings stay on-device. Blocklist
-            and privacy skips still apply.
-          </p>
-          <div class="cx-field-row">
-            <div class="cx-field">
-              <label class="cx-field-label" for="cx-opt-history-days">Time range</label>
-              <select id="cx-opt-history-days" class="cx-input cx-select">
-                <option value="7">Last 7 days</option>
-                <option value="30" selected>Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="365">Last year</option>
-              </select>
-            </div>
-            <div class="cx-field">
-              <label class="cx-field-label" for="cx-opt-history-cap">Max URLs to try</label>
-              <select id="cx-opt-history-cap" class="cx-input cx-select">
-                <option value="50">50</option>
-                <option value="150">150</option>
-                <option value="300" selected>300</option>
-                <option value="500">500</option>
-              </select>
-            </div>
-          </div>
-          <div class="cx-actions-row">
-            <button type="button" id="cx-opt-history-start" class="cx-btn cx-btn-secondary">
-              <span class="cx-btn-label">Scan history</span>
-            </button>
-            <button type="button" id="cx-opt-history-cancel" class="cx-btn cx-btn-ghost" hidden>
-              Stop
-            </button>
-          </div>
-          <div id="cx-opt-history-status" class="cx-history-status" aria-live="polite"></div>
-          <div id="cx-history-result-card" class="cx-card cx-history-result" hidden>
-            <div class="cx-history-result-grid">
-              <div class="cx-history-metric">
-                <strong id="cx-h-attempted">0</strong><span>Attempted</span>
-              </div>
-              <div class="cx-history-metric">
-                <strong id="cx-h-indexed">0</strong><span>Indexed</span>
-              </div>
-              <div class="cx-history-metric">
-                <strong id="cx-h-skipped">0</strong><span>Skipped</span>
-              </div>
-              <div class="cx-history-metric">
-                <strong id="cx-h-failed">0</strong><span>Fetch failed</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="cx-opt-section" aria-labelledby="cx-privacy-h">
-          <h2 id="cx-privacy-h" class="cx-section-heading">Privacy</h2>
-
-          <div class="cx-toggle-row">
-            <div class="cx-toggle-copy">
-              <span class="cx-field-label">Pause indexing</span>
-              <span class="cx-field-hint">Search still works on existing content.</span>
-            </div>
-            <button
-              type="button"
-              id="cx-opt-pause-toggle"
-              class="cx-toggle"
-              role="switch"
-              aria-checked="false"
-              aria-labelledby="cx-privacy-h"
-            >
-              <span class="cx-toggle-thumb"></span>
-            </button>
-            <input type="checkbox" id="cx-opt-pause" class="cx-visually-hidden" tabindex="-1" aria-label="Pause indexing" />
-          </div>
-
-          <div class="cx-field">
-            <label class="cx-field-label" for="cx-opt-retention">Keep indexed pages for</label>
-            <select id="cx-opt-retention" class="cx-input cx-select">
-              <option value="0">Forever (retention off)</option>
-              <option value="7">7 days</option>
-              <option value="30">30 days</option>
-              <option value="90">90 days</option>
-              <option value="180">180 days</option>
-              <option value="365">1 year</option>
-            </select>
-            <p class="cx-field-hint">Older pages, chunks, visits and chats are deleted once a day.</p>
-          </div>
-
-          <div class="cx-field">
-            <label class="cx-field-label" for="cx-opt-blocklist">Blocked domains</label>
-            <p class="cx-field-hint">One domain per line. Click × on a chip to remove.</p>
-            <div id="cx-opt-managed-blocklist" class="cx-chip-row" role="group" aria-label="Domains blocked by your organization" hidden></div>
-            <div id="cx-opt-blocklist-chips" class="cx-chip-row" role="group" aria-label="Blocked domains"></div>
-            <textarea id="cx-opt-blocklist" class="cx-input cx-textarea" rows="4" spellcheck="false"></textarea>
-          </div>
-
-          <div class="cx-actions-row">
-            <button type="button" id="cx-opt-save" class="cx-btn cx-btn-primary">
-              <span class="cx-btn-label">Save privacy settings</span>
-            </button>
-          </div>
-          <p id="cx-opt-save-msg" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
-        </section>
-
-        <section class="cx-opt-section cx-section-muted" aria-labelledby="cx-data-h">
-          <h2 id="cx-data-h" class="cx-section-heading">Data</h2>
-
-          <h3 class="cx-subheading">Export and backup</h3>
-          <p class="cx-section-desc">
-            Files are made on this device and saved where you choose. Backups leave out embeddings and
-            your settings, including any Gemini key.
-          </p>
-          <div class="cx-actions-row">
-            <button type="button" id="cx-export-md" class="cx-btn cx-btn-secondary">Export notes (Markdown)</button>
-            <button type="button" id="cx-export-json" class="cx-btn cx-btn-secondary">Download backup (JSON)</button>
-          </div>
-          <p id="cx-export-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
-
-          <div class="cx-field">
-            <label class="cx-field-label" for="cx-restore-file">Restore from a backup</label>
-            <p class="cx-field-hint" id="cx-restore-hint">Choose a Cortex backup file (.json). Nothing changes until you confirm.</p>
-            <input type="file" id="cx-restore-file" class="cx-input cx-file-input" accept=".json,application/json" aria-describedby="cx-restore-hint" />
-          </div>
-          <div id="cx-restore-confirm" class="cx-restore-confirm" hidden>
-            <p id="cx-restore-summary" class="cx-delete-confirm-text" tabindex="-1"></p>
-            <p id="cx-restore-mode-h" class="cx-field-label">How to restore</p>
-            <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-restore-mode-h">
-              <label class="cx-radio-card">
-                <input type="radio" name="cx-restore-mode" value="merge" checked />
-                <span class="cx-radio-card-inner">
-                  <span class="cx-radio-card-title">Merge</span>
-                  <span class="cx-radio-card-desc">Adds what is missing. Pages already in your library are kept.</span>
-                  <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                    <path d="M20 6L9 17l-5-5"></path>
+            <div class="cx-group">
+              <details class="cx-disclosure" id="cx-recent-disclosure">
+                <summary class="cx-disclosure-summary">
+                  <span>Recent activity</span>
+                  <span id="cx-recent-count" class="cx-count-badge">(0)</span>
+                  <svg class="cx-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6"></path>
                   </svg>
-                </span>
-              </label>
-              <label class="cx-radio-card">
-                <input type="radio" name="cx-restore-mode" value="replace" />
-                <span class="cx-radio-card-inner">
-                  <span class="cx-radio-card-title">Replace</span>
-                  <span class="cx-radio-card-desc">Deletes your current pages, chats and highlights first. Cannot be undone.</span>
-                  <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                    <path d="M20 6L9 17l-5-5"></path>
-                  </svg>
-                </span>
-              </label>
+                </summary>
+                <div class="cx-disclosure-body">
+                  <ul id="cx-opt-recent" class="cx-recent-list" role="list"></ul>
+                  <p id="cx-opt-recent-empty" class="cx-field-hint" hidden>No visits logged yet.</p>
+                </div>
+              </details>
             </div>
-            <div class="cx-actions-row">
-              <button type="button" id="cx-restore-btn" class="cx-btn cx-btn-primary">Restore</button>
-              <button type="button" id="cx-restore-cancel" class="cx-btn cx-btn-ghost">Cancel</button>
-            </div>
-          </div>
-          <p id="cx-restore-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
-
-          <h3 class="cx-subheading">Forget</h3>
-          <div class="cx-field">
-            <label class="cx-field-label" for="cx-forget-site">Forget a site</label>
-            <p class="cx-field-hint">Removes the site and its subdomains from pages, visits and chat answers that cite it.</p>
-            <div class="cx-inline-form">
-              <input type="text" id="cx-forget-site" class="cx-input" placeholder="example.com" autocomplete="off" spellcheck="false" />
-              <button type="button" id="cx-forget-site-btn" class="cx-btn cx-btn-secondary">Forget site</button>
-            </div>
-          </div>
-          <div class="cx-actions-row">
-            <button type="button" id="cx-forget-hour" class="cx-btn cx-btn-secondary">Forget last hour</button>
-            <button type="button" id="cx-forget-day" class="cx-btn cx-btn-secondary">Forget last day</button>
-          </div>
-          <p id="cx-forget-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
-
-          <h3 class="cx-subheading">Forget all</h3>
-          <p class="cx-section-desc">
-            Deletes all indexed pages, text chunks, visit history and chats from this browser. Your
-            extension settings (blocklist, chat mode) are kept.
-          </p>
-          <button type="button" id="cx-opt-delete-all" class="cx-btn cx-btn-danger">
-            Delete all indexed data
-          </button>
-          <div id="cx-delete-confirm" class="cx-delete-confirm" hidden>
-            <p class="cx-delete-confirm-text">
-              This cannot be undone. Type <strong>DELETE</strong> to confirm, or click Confirm
-              again within 5 seconds.
-            </p>
-            <label class="cx-visually-hidden" for="cx-delete-input">Confirmation</label>
-            <input type="text" id="cx-delete-input" class="cx-input" autocomplete="off" spellcheck="false" />
-            <div class="cx-actions-row">
-              <button type="button" id="cx-delete-confirm-btn" class="cx-btn cx-btn-danger" disabled>
-                Confirm delete
-              </button>
-              <button type="button" id="cx-delete-cancel-btn" class="cx-btn cx-btn-ghost">
-                Cancel
-              </button>
-            </div>
-            <p id="cx-delete-feedback" class="cx-form-feedback" hidden role="alert"></p>
           </div>
         </section>
 
-        <details class="cx-disclosure" id="cx-recent-disclosure">
-          <summary class="cx-disclosure-summary">
-            <span>Recent activity</span>
-            <span id="cx-recent-count" class="cx-count-badge">(0)</span>
-            <svg class="cx-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M6 9l6 6 6-6"></path>
-            </svg>
-          </summary>
-          <div class="cx-disclosure-body">
-            <ul id="cx-opt-recent" class="cx-recent-list" role="list"></ul>
-            <p id="cx-opt-recent-empty" class="cx-section-desc" hidden>No visits logged yet.</p>
+        <!-- 2. Appearance ---------------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-appearance" tabindex="-1" aria-labelledby="cx-theme-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-theme-h">Appearance</h2>
+            <p class="cx-sec-desc">How the Cortex panel looks while you browse.</p>
           </div>
-        </details>
 
-        <section class="cx-opt-section" aria-labelledby="cx-about-h">
-          <h2 id="cx-about-h" class="cx-section-heading">About</h2>
-          <p class="cx-section-desc">
-            Cortex <span id="cx-about-version">1.2.0</span>. Private memory for everything you read: indexing,
-            embeddings and search run on this device.
-          </p>
-          <p class="cx-section-desc">
-            Built by
-            <a href="https://www.linkedin.com/in/shailesh-entrant/" target="_blank" rel="noopener noreferrer"
-              >Shailesh Kumar</a
-            >.
-          </p>
+          <div class="cx-panel">
+            <div class="cx-group">
+              <h3 class="cx-group-title" id="cx-theme-sub">Theme</h3>
+              <p class="cx-group-desc">Saved as soon as you pick one.</p>
+              <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-theme-sub">
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-theme" value="system" checked />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">System</span>
+                    <span class="cx-radio-card-desc">Follows your operating system setting.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-theme" value="light" />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">Light</span>
+                    <span class="cx-radio-card-desc">Always light.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-theme" value="dark" />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">Dark</span>
+                    <span class="cx-radio-card-desc">Always dark.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Capture ------------------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-capture" tabindex="-1" aria-labelledby="cx-features-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-features-h">Capture</h2>
+            <p class="cx-sec-desc">Choose what Cortex indexes as you browse. Changes save immediately.</p>
+          </div>
+
+          <div class="cx-panel">
+            <div class="cx-group">
+              <h3 class="cx-group-title">What to index</h3>
+              <p class="cx-group-desc">Everything here runs on this device.</p>
+              <div class="cx-feature-list">
+                <div class="cx-feature-row">
+                  <label for="cx-feat-peopleMemoryEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">People and companies</span>
+                    <span class="cx-field-hint">Remember LinkedIn profiles and company pages you open, so you can ask who you viewed.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-peopleMemoryEnabled" class="cx-check-native cx-switch" data-feature="peopleMemoryEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-youtubeTranscriptsEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">YouTube transcripts</span>
+                    <span class="cx-field-hint">Index captions of videos you watch for at least 30 seconds.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-youtubeTranscriptsEnabled" class="cx-check-native cx-switch" data-feature="youtubeTranscriptsEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-tablesEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">Tables</span>
+                    <span class="cx-field-hint">Index data tables row by row so their values are searchable.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-tablesEnabled" class="cx-check-native cx-switch" data-feature="tablesEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-imagesEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">Image text</span>
+                    <span class="cx-field-hint">Index alt text and captions of images in articles.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-imagesEnabled" class="cx-check-native cx-switch" data-feature="imagesEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-imageDescriptionsEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">On-device image descriptions</span>
+                    <span class="cx-field-hint">Describe up to 5 images per page with Chrome built-in AI. Never sent to the cloud. Off by default.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-imageDescriptionsEnabled" class="cx-check-native cx-switch" data-feature="imageDescriptionsEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-pdfEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">PDFs</span>
+                    <span class="cx-field-hint">Index text from PDFs you open in Chrome (up to 30 MB).</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-pdfEnabled" class="cx-check-native cx-switch" data-feature="pdfEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-highlightsEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">Highlights</span>
+                    <span class="cx-field-hint">Add "Save to Cortex" to the right-click menu for selected text.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-highlightsEnabled" class="cx-check-native cx-switch" data-feature="highlightsEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-omniboxEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">Address bar</span>
+                    <span class="cx-field-hint">Type cx and a question in the address bar to search your library.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-omniboxEnabled" class="cx-check-native cx-switch" data-feature="omniboxEnabled" />
+                </div>
+                <div class="cx-feature-row">
+                  <label for="cx-feat-resurfacingEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">Seen this before</span>
+                    <span class="cx-field-hint">Show a small reminder when a page is very similar to something you read earlier. Off by default.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-resurfacingEnabled" class="cx-check-native cx-switch" data-feature="resurfacingEnabled" />
+                </div>
+              </div>
+            </div>
+
+            <div class="cx-group" id="cx-collections-group">
+              <h3 class="cx-group-title" id="cx-collections-h">Collections</h3>
+              <p class="cx-group-desc">
+                Group pages, for example "Job search", then search or ask within one collection. Add the
+                page you are on from the Cortex panel or the right-click menu.
+              </p>
+              <div class="cx-inline-form">
+                <label class="cx-visually-hidden" for="cx-collection-name">New collection name</label>
+                <input type="text" id="cx-collection-name" class="cx-input" maxlength="60" placeholder="New collection name" autocomplete="off" />
+                <button type="button" id="cx-collection-create" class="cx-btn cx-btn-secondary">Create collection</button>
+              </div>
+              <p id="cx-collection-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+              <ul id="cx-collection-list" class="cx-collection-list" aria-label="Your collections"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Intelligence -------------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-intelligence" tabindex="-1" aria-labelledby="cx-chat-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-chat-h">Intelligence</h2>
+            <p class="cx-sec-desc">How Cortex answers your questions.</p>
+          </div>
+
+          <div class="cx-panel">
+            <div class="cx-group">
+              <h3 class="cx-group-title" id="cx-chat-mode-h">Default chat mode</h3>
+              <p class="cx-group-desc">Applies to new chats. You can still switch mode inside a chat.</p>
+              <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-chat-mode-h">
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-chat-mode" value="auto" checked />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">Auto <span class="cx-badge">Recommended</span></span>
+                    <span class="cx-radio-card-desc">On-device when possible; cloud for heavier prompts if enabled.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-chat-mode" value="on-device-only" />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">On-device only</span>
+                    <span class="cx-radio-card-desc">Strict privacy. Requires Chrome built-in AI.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-chat-mode" value="cloud-only" />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">Cloud only</span>
+                    <span class="cx-radio-card-desc">Uses Gemini when an API key is set.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div class="cx-group">
+              <h3 class="cx-group-title">Cloud chat (Gemini)</h3>
+              <p class="cx-group-desc">
+                Cloud chat sends retrieved passages only. Your library stays on this device.
+              </p>
+
+              <div class="cx-setting-row">
+                <label class="cx-check-row" for="cx-opt-cloud-chat">
+                  <span class="cx-check-label">Enable cloud chat</span>
+                  <input type="checkbox" id="cx-opt-cloud-chat" class="cx-check-native cx-switch" />
+                </label>
+              </div>
+
+              <div class="cx-field">
+                <label class="cx-field-label" for="cx-opt-gemini-key">Gemini API key</label>
+                <input
+                  type="password"
+                  id="cx-opt-gemini-key"
+                  class="cx-input"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+                <p class="cx-field-hint">
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"
+                    >Get a free API key from Google AI Studio</a
+                  >
+                </p>
+              </div>
+
+              <div class="cx-actions-row">
+                <button type="button" id="cx-opt-chat-save" class="cx-btn cx-btn-primary">
+                  <span class="cx-btn-label">Save chat settings</span>
+                </button>
+                <p id="cx-opt-chat-save-msg" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Privacy and data ---------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-privacy" tabindex="-1" aria-labelledby="cx-privacy-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-privacy-h">Privacy and data</h2>
+            <p class="cx-sec-desc">Control what is kept, for how long, and what to remove.</p>
+          </div>
+
+          <div class="cx-panel">
+            <div class="cx-group">
+              <h3 class="cx-group-title">Indexing and retention</h3>
+              <p class="cx-group-desc">Pause new indexing or set how long pages are kept.</p>
+
+              <div class="cx-toggle-row">
+                <div class="cx-toggle-copy">
+                  <span class="cx-field-label" id="cx-pause-label">Pause indexing</span>
+                  <span class="cx-field-hint">Search still works on existing content.</span>
+                </div>
+                <button
+                  type="button"
+                  id="cx-opt-pause-toggle"
+                  class="cx-toggle"
+                  role="switch"
+                  aria-checked="false"
+                  aria-labelledby="cx-pause-label"
+                >
+                  <span class="cx-toggle-thumb"></span>
+                </button>
+                <input type="checkbox" id="cx-opt-pause" class="cx-visually-hidden" tabindex="-1" aria-label="Pause indexing" />
+              </div>
+
+              <div class="cx-field cx-field-narrow">
+                <label class="cx-field-label" for="cx-opt-retention">Keep indexed pages for</label>
+                <select id="cx-opt-retention" class="cx-input cx-select">
+                  <option value="0">Forever (retention off)</option>
+                  <option value="7">7 days</option>
+                  <option value="30">30 days</option>
+                  <option value="90">90 days</option>
+                  <option value="180">180 days</option>
+                  <option value="365">1 year</option>
+                </select>
+                <p class="cx-field-hint">Older pages, chunks, visits and chats are deleted once a day.</p>
+              </div>
+            </div>
+
+            <div class="cx-group">
+              <h3 class="cx-group-title">Blocked domains</h3>
+              <p class="cx-group-desc">Cortex never indexes these sites. One domain per line.</p>
+              <div class="cx-field">
+                <label class="cx-field-label" for="cx-opt-blocklist">Domains to block</label>
+                <p class="cx-field-hint">Click × on a chip to remove it from the list.</p>
+                <div id="cx-opt-managed-blocklist" class="cx-chip-row" role="group" aria-label="Domains blocked by your organization" hidden></div>
+                <div id="cx-opt-blocklist-chips" class="cx-chip-row" role="group" aria-label="Blocked domains"></div>
+                <textarea id="cx-opt-blocklist" class="cx-input cx-textarea" rows="4" spellcheck="false"></textarea>
+              </div>
+              <div class="cx-actions-row">
+                <button type="button" id="cx-opt-save" class="cx-btn cx-btn-primary">
+                  <span class="cx-btn-label">Save privacy settings</span>
+                </button>
+                <p id="cx-opt-save-msg" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+              </div>
+            </div>
+
+            <div class="cx-group">
+              <h3 class="cx-group-title" id="cx-history-h">History import</h3>
+              <p class="cx-group-desc">
+                Backfill pages you already visited. Runs locally; embeddings stay on-device. Blocklist
+                and privacy skips still apply.
+              </p>
+              <div class="cx-field-row">
+                <div class="cx-field">
+                  <label class="cx-field-label" for="cx-opt-history-days">Time range</label>
+                  <select id="cx-opt-history-days" class="cx-input cx-select">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="365">Last year</option>
+                  </select>
+                </div>
+                <div class="cx-field">
+                  <label class="cx-field-label" for="cx-opt-history-cap">Max URLs to try</label>
+                  <select id="cx-opt-history-cap" class="cx-input cx-select">
+                    <option value="50">50</option>
+                    <option value="150">150</option>
+                    <option value="300" selected>300</option>
+                    <option value="500">500</option>
+                  </select>
+                </div>
+              </div>
+              <div class="cx-actions-row">
+                <button type="button" id="cx-opt-history-start" class="cx-btn cx-btn-secondary">
+                  <span class="cx-btn-label">Scan history</span>
+                </button>
+                <button type="button" id="cx-opt-history-cancel" class="cx-btn cx-btn-ghost" hidden>
+                  Stop
+                </button>
+              </div>
+              <div id="cx-opt-history-status" class="cx-history-status" aria-live="polite"></div>
+              <div id="cx-history-result-card" class="cx-card cx-history-result" hidden>
+                <div class="cx-history-result-grid">
+                  <div class="cx-history-metric">
+                    <strong id="cx-h-attempted">0</strong><span>Attempted</span>
+                  </div>
+                  <div class="cx-history-metric">
+                    <strong id="cx-h-indexed">0</strong><span>Indexed</span>
+                  </div>
+                  <div class="cx-history-metric">
+                    <strong id="cx-h-skipped">0</strong><span>Skipped</span>
+                  </div>
+                  <div class="cx-history-metric">
+                    <strong id="cx-h-failed">0</strong><span>Fetch failed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cx-group">
+              <h3 class="cx-group-title">Forget</h3>
+              <p class="cx-group-desc">Remove part of your library without clearing everything.</p>
+              <div class="cx-field">
+                <label class="cx-field-label" for="cx-forget-site">Forget a site</label>
+                <p class="cx-field-hint">Removes the site and its subdomains from pages, visits and chat answers that cite it.</p>
+                <div class="cx-inline-form">
+                  <input type="text" id="cx-forget-site" class="cx-input" placeholder="example.com" autocomplete="off" spellcheck="false" />
+                  <button type="button" id="cx-forget-site-btn" class="cx-btn cx-btn-secondary">Forget site</button>
+                </div>
+              </div>
+              <div class="cx-actions-row">
+                <button type="button" id="cx-forget-hour" class="cx-btn cx-btn-secondary">Forget last hour</button>
+                <button type="button" id="cx-forget-day" class="cx-btn cx-btn-secondary">Forget last day</button>
+              </div>
+              <p id="cx-forget-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+            </div>
+
+            <div class="cx-group cx-danger-zone">
+              <h3 class="cx-group-title cx-danger-title">Forget all</h3>
+              <p class="cx-group-desc">
+                Deletes all indexed pages, text chunks, visit history and chats from this browser. Your
+                extension settings (blocklist, chat mode) are kept. This cannot be undone.
+              </p>
+              <button type="button" id="cx-opt-delete-all" class="cx-btn cx-btn-danger">
+                Delete all indexed data
+              </button>
+              <div id="cx-delete-confirm" class="cx-delete-confirm" hidden>
+                <p class="cx-delete-confirm-text">
+                  This cannot be undone. Type <strong>DELETE</strong> to confirm, or click Confirm
+                  again within 5 seconds.
+                </p>
+                <label class="cx-visually-hidden" for="cx-delete-input">Confirmation</label>
+                <input type="text" id="cx-delete-input" class="cx-input cx-field-narrow" autocomplete="off" spellcheck="false" />
+                <div class="cx-actions-row">
+                  <button type="button" id="cx-delete-confirm-btn" class="cx-btn cx-btn-danger" disabled>
+                    Confirm delete
+                  </button>
+                  <button type="button" id="cx-delete-cancel-btn" class="cx-btn cx-btn-ghost">
+                    Cancel
+                  </button>
+                </div>
+                <p id="cx-delete-feedback" class="cx-form-feedback" hidden role="alert"></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. Backup --------------------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-backup" tabindex="-1" aria-labelledby="cx-data-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-data-h">Backup</h2>
+            <p class="cx-sec-desc">Take your library with you, or bring it back.</p>
+          </div>
+
+          <div class="cx-panel">
+            <div class="cx-group">
+              <h3 class="cx-group-title">Export</h3>
+              <p class="cx-group-desc">
+                Files are made on this device and saved where you choose. Backups leave out embeddings
+                and your settings, including any Gemini key.
+              </p>
+              <div class="cx-actions-row">
+                <button type="button" id="cx-export-md" class="cx-btn cx-btn-secondary">Export notes (Markdown)</button>
+                <button type="button" id="cx-export-json" class="cx-btn cx-btn-secondary">Download backup (JSON)</button>
+              </div>
+              <p id="cx-export-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+            </div>
+
+            <div class="cx-group">
+              <h3 class="cx-group-title">Restore</h3>
+              <p class="cx-group-desc">Nothing changes until you confirm the restore.</p>
+              <div class="cx-field">
+                <label class="cx-field-label" for="cx-restore-file">Restore from a backup</label>
+                <p class="cx-field-hint" id="cx-restore-hint">Choose a Cortex backup file (.json).</p>
+                <input type="file" id="cx-restore-file" class="cx-input cx-file-input" accept=".json,application/json" aria-describedby="cx-restore-hint" />
+              </div>
+              <div id="cx-restore-confirm" class="cx-restore-confirm" hidden>
+                <p id="cx-restore-summary" class="cx-delete-confirm-text" tabindex="-1"></p>
+                <p id="cx-restore-mode-h" class="cx-field-label">How to restore</p>
+                <div class="cx-radio-cards cx-radio-cards-2" role="radiogroup" aria-labelledby="cx-restore-mode-h">
+                  <label class="cx-radio-card">
+                    <input type="radio" name="cx-restore-mode" value="merge" checked />
+                    <span class="cx-radio-card-inner">
+                      <span class="cx-radio-card-title">Merge</span>
+                      <span class="cx-radio-card-desc">Adds what is missing. Pages already in your library are kept.</span>
+                      <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                        <path d="M20 6L9 17l-5-5"></path>
+                      </svg>
+                    </span>
+                  </label>
+                  <label class="cx-radio-card">
+                    <input type="radio" name="cx-restore-mode" value="replace" />
+                    <span class="cx-radio-card-inner">
+                      <span class="cx-radio-card-title">Replace</span>
+                      <span class="cx-radio-card-desc">Deletes your current pages, chats and highlights first. Cannot be undone.</span>
+                      <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                        <path d="M20 6L9 17l-5-5"></path>
+                      </svg>
+                    </span>
+                  </label>
+                </div>
+                <div class="cx-actions-row">
+                  <button type="button" id="cx-restore-btn" class="cx-btn cx-btn-primary">Restore</button>
+                  <button type="button" id="cx-restore-cancel" class="cx-btn cx-btn-ghost">Cancel</button>
+                </div>
+              </div>
+              <p id="cx-restore-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. About ---------------------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-about" tabindex="-1" aria-labelledby="cx-about-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-about-h">About</h2>
+            <p class="cx-sec-desc">Version, shortcuts and how Cortex handles your data.</p>
+          </div>
+
+          <div class="cx-panel">
+            <div class="cx-group">
+              <h3 class="cx-group-title" id="cx-shortcuts-h">Keyboard shortcuts</h3>
+              <p class="cx-group-desc">Open Search, Ask, or Digest from anywhere while you browse.</p>
+              <div class="cx-shortcuts-grid">
+                <div class="cx-shortcut-block">
+                  <span class="cx-field-label">Primary</span>
+                  <div class="cx-kbd-row">
+                    <kbd>Ctrl</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>K</kbd>
+                    <span class="cx-kbd-meta">Windows / Linux</span>
+                  </div>
+                  <div class="cx-kbd-row">
+                    <kbd>⌘</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>K</kbd>
+                    <span class="cx-kbd-meta">macOS</span>
+                  </div>
+                </div>
+                <div class="cx-shortcut-block">
+                  <span class="cx-field-label">Alternate</span>
+                  <div class="cx-kbd-row">
+                    <kbd>Alt</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd><span class="cx-kbd-plus">+</span><kbd>C</kbd>
+                  </div>
+                </div>
+              </div>
+              <p class="cx-field-hint">
+                Customize in Chrome: open a new tab, paste
+                <code>chrome://extensions/shortcuts</code> in the address bar, press
+                <strong>Enter</strong>, find <strong>Cortex</strong>, then edit the command.
+              </p>
+            </div>
+
+            <div class="cx-group">
+              <h3 class="cx-group-title">How Cortex works</h3>
+              <div class="cx-prose">
+                <p>
+                  Cortex helps you search and ask questions about pages you have visited. Your library
+                  of saved pages stays on this computer. Indexing does not upload your browsing history.
+                </p>
+                <p>
+                  If you turn on Cloud Chat and add a Google API key, Cortex can use Google’s Gemini
+                  service to answer harder questions. In that case, only the short passages needed to
+                  answer your question are sent, not your full library.
+                </p>
+              </div>
+            </div>
+
+            <div class="cx-group">
+              <h3 class="cx-group-title">Version and credit</h3>
+              <dl class="cx-meta-list">
+                <div class="cx-meta-row">
+                  <dt>Version</dt>
+                  <dd id="cx-about-version">1.2.0</dd>
+                </div>
+                <div class="cx-meta-row">
+                  <dt>Built by</dt>
+                  <dd>
+                    <a href="https://www.linkedin.com/in/shailesh-entrant/" target="_blank" rel="noopener noreferrer"
+                      >Shailesh Kumar</a
+                    >
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
         </section>
       </main>
     </div>

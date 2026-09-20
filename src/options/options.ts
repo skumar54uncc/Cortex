@@ -543,6 +543,62 @@ function showDeleteConfirm(): void {
   updateDeleteConfirmEnabled();
 }
 
+/**
+ * Sticky section nav: marks the section the reader is in with aria-current so
+ * it is announced as well as highlighted. Links stay plain anchors, so jumping
+ * works with the keyboard and without this script.
+ */
+function initSectionNav(): void {
+  const links = [...document.querySelectorAll<HTMLAnchorElement>(".cx-nav-link")];
+  const pairs: { id: string; link: HTMLAnchorElement; section: HTMLElement }[] = [];
+  for (const link of links) {
+    const id = link.getAttribute("href")?.slice(1) ?? "";
+    const section = id ? document.getElementById(id) : null;
+    if (section) pairs.push({ id, link, section });
+  }
+  if (!pairs.length) return;
+
+  const setCurrent = (id: string): void => {
+    for (const p of pairs) {
+      if (p.id === id) p.link.setAttribute("aria-current", "true");
+      else p.link.removeAttribute("aria-current");
+    }
+  };
+
+  // Move focus to the section so the keyboard lands where the eye does.
+  for (const p of pairs) {
+    p.link.addEventListener("click", () => {
+      setCurrent(p.id);
+      window.setTimeout(() => p.section.focus({ preventScroll: true }), 0);
+    });
+  }
+
+  // The section whose top has passed just under the sticky bar wins. At the
+  // very bottom the last section is short and never gets there, so pin it.
+  const LINE = 140;
+  let frame = 0;
+  const update = (): void => {
+    frame = 0;
+    const doc = document.documentElement;
+    const atBottom =
+      window.innerHeight + Math.ceil(window.scrollY) >= doc.scrollHeight - 2;
+    let id = pairs[pairs.length - 1].id;
+    if (!atBottom) {
+      id = pairs[0].id;
+      for (const p of pairs) {
+        if (p.section.getBoundingClientRect().top <= LINE) id = p.id;
+      }
+    }
+    setCurrent(id);
+  };
+  const schedule = (): void => {
+    if (!frame) frame = requestAnimationFrame(update);
+  };
+  window.addEventListener("scroll", schedule, { passive: true });
+  window.addEventListener("resize", schedule, { passive: true });
+  update();
+}
+
 function updateDeleteConfirmEnabled(): void {
   const input = qs<HTMLInputElement>("#cx-delete-input");
   const btn = qs<HTMLButtonElement>("#cx-delete-confirm-btn");
@@ -556,6 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
     download: saveBlob,
     onRestored: () => void refreshStats(),
   });
+  initSectionNav();
   void refreshStats();
   void loadSettingsUi();
   void (async () => {
