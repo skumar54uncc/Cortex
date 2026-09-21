@@ -87,6 +87,55 @@ describe("People view", () => {
     expect(detail.querySelector("img")).toBeNull();
   });
 
+  it("shows the summary under the name, as text", async () => {
+    const summary = "Clinical Research Coordinator at Harbor Point Health, based in Raleigh, North Carolina.";
+    const { container, deps } = setup([
+      {
+        id: 7,
+        kind: "person",
+        name: "Jenna Leigh Hornbeak",
+        headline: "Clinical Research Coordinator",
+        company: "Harbor Point Health",
+        profileUrl: "https://www.linkedin.com/in/jenna-leigh-hornbeak/",
+        lastSeen: Date.parse("2026-09-20T10:00:00Z"),
+        visitCount: 29,
+        summary: `<img src=x onerror=alert(1)> ${summary}`,
+      },
+    ]);
+    await renderPeopleView(container, deps);
+    const el = container.querySelector(".cortex-person-summary")!;
+    expect(el.textContent).toContain(summary);
+    expect(el.querySelector("img")).toBeNull();
+    expect(container.querySelector("img")).toBeNull();
+    // Under the name, above the meta line.
+    const main = container.querySelector(".cortex-person-main")!;
+    const order = Array.from(main.children).map((c) => c.className.split(" ")[0]);
+    expect(order.indexOf("cortex-person-summary")).toBeGreaterThan(order.indexOf("cortex-person-name"));
+    expect(order.indexOf("cortex-person-summary")).toBeLessThan(order.indexOf("cortex-person-meta"));
+  });
+
+  it("leaves the summary out for a row that has none", async () => {
+    const { container, deps } = setup();
+    await renderPeopleView(container, deps);
+    expect(container.querySelector(".cortex-person-summary")).toBeNull();
+  });
+
+  it("does not repeat the headline as a summary", async () => {
+    const { container, deps } = setup([
+      { ...rows[0], headline: "Head of Field Programs", summary: "Head of Field Programs." },
+    ]);
+    await renderPeopleView(container, deps);
+    expect(container.querySelector(".cortex-person-summary")).toBeNull();
+  });
+
+  it("says the filter also searches what people do", async () => {
+    const { container, deps } = setup();
+    await renderPeopleView(container, deps);
+    const input = container.querySelector<HTMLInputElement>("input[type=search]")!;
+    expect(input.placeholder).toContain("what they do");
+    expect(input.placeholder).not.toContain(String.fromCharCode(0x2014));
+  });
+
   it("leaves the detail line out for a person captured before the detail existed", async () => {
     const { container, deps } = setup([
       {

@@ -940,7 +940,11 @@ async function openCortexSearchFromShortcut(): Promise<void> {
   const tab = await queryActiveTab();
   if (!tab) return;
   setActiveTabSnapshot(tab);
-  await openCortexSearchForTab(tab, openSearchOnTab);
+  await openCortexSearchForTab(tab, openSearchOnTab, {
+    // Apps that pull the caret back into their own editor (claude.ai and
+    // friends) get the side panel, where typing always works.
+    userPreference: (await getEffectiveSettings()).panelPreference,
+  });
 }
 
 configureSidePanelBehavior();
@@ -959,7 +963,11 @@ function openCortexSearchFromToolbarClick(tab: chrome.tabs.Tab): void {
       return;
     }
     setActiveTabSnapshot(tab);
-    await openCortexSearchForTab(tab, openSearchOnTab);
+    await openCortexSearchForTab(tab, openSearchOnTab, {
+    // Apps that pull the caret back into their own editor (claude.ai and
+    // friends) get the side panel, where typing always works.
+    userPreference: (await getEffectiveSettings()).panelPreference,
+  });
   });
 }
 
@@ -2263,9 +2271,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     return true;
   }
 
+  // Double tap of Shift with the panel already open: relay the close back to
+  // the tab it came from (content scripts cannot message each other).
+  if (type === "CORTEX_CLOSE_SEARCH") {
+    const tabId = sender.tab?.id;
+    if (tabId != null) {
+      chrome.tabs.sendMessage(tabId, { type: "CORTEX_CLOSE_SEARCH" }, { frameId: 0 }, () => {
+        void chrome.runtime.lastError;
+      });
+    }
+    sendResponse({ ok: true as const });
+    return true;
+  }
+
   if (type === "CORTEX_POPUP_OPEN_SEARCH") {
     void (async () => {
-      await openCortexSearchFromShortcut();
+      // From a page (the double Shift gesture): open on the tab the keys came
+      // from. From the popup, there is no tab, so use the active one.
+      const fromTab = sender.tab;
+      if (fromTab?.id != null) {
+        setActiveTabSnapshot(fromTab);
+        await withOpenCortexSearchGuard(async () => {
+          await openCortexSearchForTab(fromTab, openSearchOnTab, {
+            userPreference: (await getEffectiveSettings()).panelPreference,
+          });
+        });
+      } else {
+        await openCortexSearchFromShortcut();
+      }
       sendResponse({ ok: true });
     })();
     return true;

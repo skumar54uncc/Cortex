@@ -1,4 +1,5 @@
 import { initBackupUi, saveBlob } from "./backup-ui";
+import { normalizePanelPreference } from "../lib/panel-mode";
 import {
   getUserSettings,
   setUserSettings,
@@ -435,6 +436,11 @@ async function loadSettingsUi(): Promise<void> {
     .forEach((r) => {
       r.checked = r.value === (s.theme ?? "system");
     });
+  document
+    .querySelectorAll<HTMLInputElement>('input[name="cx-panel-mode"]')
+    .forEach((r) => {
+      r.checked = r.value === (s.panelPreference ?? "auto");
+    });
   (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked = s.cloudChatEnabled;
   (qs("#cx-opt-gemini-key") as HTMLInputElement).value = s.geminiApiKey ?? "";
   qs<HTMLSelectElement>("#cx-opt-retention").value = String(s.retentionDays ?? 0);
@@ -639,6 +645,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const theme =
           r.value === "light" || r.value === "dark" ? r.value : "system";
         void setUserSettings({ theme });
+      });
+    });
+
+  document
+    .querySelectorAll<HTMLInputElement>('input[name="cx-panel-mode"]')
+    .forEach((r) => {
+      r.addEventListener("change", () => {
+        if (!r.checked) return;
+        void setUserSettings({ panelPreference: normalizePanelPreference(r.value) });
       });
     });
 

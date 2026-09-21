@@ -11,6 +11,11 @@ export interface PersonRow {
   profileUrl: string;
   lastSeen: number;
   visitCount: number;
+  /**
+   * A plain sentence or two saying what Cortex read from the profile. Left
+   * off for rows captured before summaries existed.
+   */
+  summary?: string;
   /** Detail captured from the profile, when the page showed it. */
   location?: string;
   roleTitle?: string;
@@ -20,6 +25,22 @@ export interface PersonRow {
   connectionCount?: number;
   industry?: string;
   companySize?: string;
+}
+
+/**
+ * The summary to show under the name, or "" when there is none or when it
+ * only repeats the headline already on the card.
+ */
+export function personSummaryLine(p: PersonRow): string {
+  const summary = String(p.summary ?? "").replace(/\s+/g, " ").trim();
+  if (!summary) return "";
+  const norm = (s: string): string =>
+    String(s ?? "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/[.\s]+$/, "")
+      .toLowerCase();
+  return norm(summary) === norm(p.headline) ? "" : summary;
 }
 
 /** One plain line of captured detail, or "" when the profile had none. */
@@ -62,7 +83,7 @@ export async function renderPeopleView(container: HTMLElement, deps: PeopleViewD
   const input = document.createElement("input");
   input.type = "search";
   input.className = "cortex-input cortex-people-filter";
-  input.placeholder = "Filter by name, role, company or place";
+  input.placeholder = "Filter by name, role, company, place or what they do";
   input.setAttribute("aria-label", "Filter people");
   input.autocomplete = "off";
 
@@ -113,6 +134,13 @@ export async function renderPeopleView(container: HTMLElement, deps: PeopleViewD
         .filter(Boolean)
         .join(" · ");
       main.append(name, headline);
+      const summaryText = personSummaryLine(p);
+      if (summaryText) {
+        const summary = document.createElement("span");
+        summary.className = "cortex-person-summary cortex-muted";
+        summary.textContent = summaryText;
+        main.appendChild(summary);
+      }
       const detailText = personDetailLine(p);
       if (detailText) {
         const detail = document.createElement("span");

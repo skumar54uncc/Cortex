@@ -3,6 +3,7 @@
 import type { ChatSettings } from "../lib/chat/types";
 import { storageLocalGet, storageLocalSet } from "./storage-local";
 import { normalizeThemeSetting, type ThemeSetting } from "./theme";
+import { normalizePanelPreference, type PanelPreference } from "../lib/panel-mode";
 
 export type ChatMode = ChatSettings["mode"];
 
@@ -18,6 +19,12 @@ export interface CortexUserSettings {
   geminiApiKey: string;
   /** Overlay and side panel theme (Phase 2.6). */
   theme: ThemeSetting;
+  /**
+   * Where Cortex opens: on the page, or in Chrome's side panel. "auto" uses
+   * the side panel on apps that take the keyboard back (claude.ai and other
+   * editors), where typing in an in-page panel does not work.
+   */
+  panelPreference: PanelPreference;
   /** Delete pages, chunks and visits older than N days; 0 = keep forever (Phase 4.2). */
   retentionDays: number;
   /** On-device image descriptions via the Prompt API (Phase 5.8); off by default. */
@@ -32,6 +39,8 @@ export interface CortexUserSettings {
   tablesEnabled: boolean;
   imagesEnabled: boolean;
   pdfEnabled: boolean;
+  /** Open the panel by tapping Shift twice; the Chrome shortcuts keep working. */
+  doubleShiftShortcutEnabled: boolean;
 }
 
 export type FeatureToggle =
@@ -43,7 +52,8 @@ export type FeatureToggle =
   | "tablesEnabled"
   | "imagesEnabled"
   | "imageDescriptionsEnabled"
-  | "pdfEnabled";
+  | "pdfEnabled"
+  | "doubleShiftShortcutEnabled";
 
 const KEY = "cortex_user_settings";
 
@@ -56,6 +66,7 @@ export const DEFAULT_USER_SETTINGS: CortexUserSettings = {
   cloudChatEnabled: false,
   geminiApiKey: "",
   theme: "system",
+  panelPreference: "auto",
   retentionDays: 0,
   imageDescriptionsEnabled: false,
   peopleMemoryEnabled: true,
@@ -66,6 +77,7 @@ export const DEFAULT_USER_SETTINGS: CortexUserSettings = {
   tablesEnabled: true,
   imagesEnabled: true,
   pdfEnabled: true,
+  doubleShiftShortcutEnabled: true,
 };
 
 function bool(v: unknown, fallback: boolean): boolean {
@@ -92,6 +104,7 @@ function normalizeSettings(
     geminiApiKey:
       typeof raw?.geminiApiKey === "string" ? raw.geminiApiKey : "",
     theme: normalizeThemeSetting(raw?.theme),
+    panelPreference: normalizePanelPreference(raw?.panelPreference),
     retentionDays:
       typeof raw?.retentionDays === "number" &&
       Number.isFinite(raw.retentionDays) &&
@@ -107,6 +120,10 @@ function normalizeSettings(
     tablesEnabled: bool(raw?.tablesEnabled, DEFAULT_USER_SETTINGS.tablesEnabled),
     imagesEnabled: bool(raw?.imagesEnabled, DEFAULT_USER_SETTINGS.imagesEnabled),
     pdfEnabled: bool(raw?.pdfEnabled, DEFAULT_USER_SETTINGS.pdfEnabled),
+    doubleShiftShortcutEnabled: bool(
+      raw?.doubleShiftShortcutEnabled,
+      DEFAULT_USER_SETTINGS.doubleShiftShortcutEnabled
+    ),
   };
 }
 

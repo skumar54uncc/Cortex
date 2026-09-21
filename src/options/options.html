@@ -153,6 +153,45 @@
                 </label>
               </div>
             </div>
+            <div class="cx-group">
+              <h3 class="cx-group-title" id="cx-panel-where">Where Cortex opens</h3>
+              <p class="cx-group-desc">
+                Some apps take the keyboard back while you type. On those, Cortex opens in the
+                Chrome side panel instead, where typing always works.
+              </p>
+              <div class="cx-radio-cards" role="radiogroup" aria-labelledby="cx-panel-where">
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-panel-mode" value="auto" checked />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">Automatic</span>
+                    <span class="cx-radio-card-desc">On the page, except where typing breaks.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-panel-mode" value="always-side-panel" />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">Side panel</span>
+                    <span class="cx-radio-card-desc">Always beside the page.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label class="cx-radio-card">
+                  <input type="radio" name="cx-panel-mode" value="always-overlay" />
+                  <span class="cx-radio-card-inner">
+                    <span class="cx-radio-card-title">On the page</span>
+                    <span class="cx-radio-card-desc">Always in the page. Typing may not work on some apps.</span>
+                    <svg class="cx-radio-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -597,6 +636,16 @@
                 <code>chrome://extensions/shortcuts</code> in the address bar, press
                 <strong>Enter</strong>, find <strong>Cortex</strong>, then edit the command.
               </p>
+
+              <div class="cx-feature-list">
+                <div class="cx-feature-row">
+                  <label for="cx-feat-doubleShiftShortcutEnabled" class="cx-feature-label">
+                    <span class="cx-field-label">Open with a double tap of Shift</span>
+                    <span class="cx-field-hint">Tap Shift twice quickly on any page. The shortcuts above keep working.</span>
+                  </label>
+                  <input type="checkbox" id="cx-feat-doubleShiftShortcutEnabled" class="cx-check-native cx-switch" data-feature="doubleShiftShortcutEnabled" />
+                </div>
+              </div>
             </div>
 
             <div class="cx-group">

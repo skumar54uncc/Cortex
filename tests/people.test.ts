@@ -143,6 +143,120 @@ describe("people detail merge", () => {
   });
 });
 
+describe("people names", () => {
+  it("never stores LinkedIn chrome as a name: the slug supplies the real one", async () => {
+    const id = await upsertPerson(
+      {
+        kind: "person",
+        name: "Notifications",
+        headline: "",
+        company: "",
+        profileUrl: "https://www.linkedin.com/in/jenna-leigh-hornbeak/",
+      },
+      NOW
+    );
+    expect(id).not.toBeNull();
+    const row = (await db.people.toArray())[0]!;
+    expect(row.name).toBe("Jenna Leigh Hornbeak");
+  });
+
+  it("records nothing when neither the page nor the slug gives a plausible name", async () => {
+    const id = await upsertPerson(
+      { kind: "person", name: "(1) Messaging", headline: "", company: "", profileUrl: "https://www.linkedin.com/in/12345/" },
+      NOW
+    );
+    expect(id).toBeNull();
+    expect(await db.people.count()).toBe(0);
+  });
+
+  it("repairs the name on a later visit without duplicating the row", async () => {
+    await upsertPerson({ ...mira, name: "Notifications", profileUrl: "https://www.linkedin.com/in/mira-okafor-lind/" }, NOW - DAY);
+    await upsertPerson({ ...mira, profileUrl: "https://www.linkedin.com/in/mira-okafor-lind/" }, NOW);
+    const rows = await db.people.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.name).toBe("Mira Okafor-Lind");
+    expect(rows[0]!.visitCount).toBe(2);
+  });
+});
+
+describe("rows stored by an earlier release", () => {
+  it("repairs a junk name from the profile slug when the row is listed", async () => {
+    await db.people.add({
+      kind: "person",
+      name: "Notifications",
+      headline: "",
+      company: "",
+      profileUrl: "https://www.linkedin.com/in/jenna-leigh-hornbeak/",
+      firstSeen: NOW - DAY,
+      lastSeen: NOW,
+      visitCount: 29,
+    });
+    const [row] = await listPeople({});
+    expect(row!.name).toBe("Jenna Leigh Hornbeak");
+    // Searchable under the repaired name too.
+    expect((await listPeople({ q: "hornbeak" })).map((p) => p.name)).toEqual(["Jenna Leigh Hornbeak"]);
+  });
+
+  it("labels a row by its profile path when no name can be had, so it stays deletable", async () => {
+    const id = (await db.people.add({
+      kind: "person",
+      name: "(1) Notifications",
+      headline: "",
+      company: "",
+      profileUrl: "https://www.linkedin.com/in/12345/",
+      firstSeen: NOW,
+      lastSeen: NOW,
+      visitCount: 1,
+    })) as number;
+    const [row] = await listPeople({});
+    expect(row!.name).toBe("linkedin.com/in/12345");
+    expect(row!.id).toBe(id);
+    await deletePerson(id);
+    expect(await db.people.count()).toBe(0);
+  });
+
+  it("fills a missing summary from what the old row already holds", async () => {
+    await db.people.add({
+      kind: "person",
+      name: "Laxman Kumar",
+      headline: "Automation lead at Northwind",
+      company: "Northwind",
+      profileUrl: "https://www.linkedin.com/in/laxman-kumar-9f2/",
+      firstSeen: NOW - DAY,
+      lastSeen: NOW,
+      visitCount: 29,
+    });
+    const [row] = await listPeople({});
+    expect(row!.summary).toBe("Automation lead at Northwind.");
+    expect((await listPeople({ q: "automation" })).map((p) => p.name)).toEqual(["Laxman Kumar"]);
+  });
+});
+
+describe("people summary", () => {
+  it("stores a short summary of what the profile carried", async () => {
+    await upsertPerson(avery, NOW);
+    const row = (await db.people.toArray())[0]!;
+    expect(row.summary).toBe(
+      "Staff Engineer at Brewlog, based in Durham, North Carolina. Co-founder at heart."
+    );
+    expect(row.summary!.length).toBeLessThanOrEqual(200);
+    expect(row.summary).not.toContain(String.fromCharCode(0x2014));
+  });
+
+  it("keeps a summary the capture already built", async () => {
+    await upsertPerson({ ...jonas, summary: "Brews beer and writes Rust." }, NOW);
+    expect((await db.people.toArray())[0]!.summary).toBe("Brews beer and writes Rust.");
+  });
+
+  it("finds a person by what they do", async () => {
+    await upsertPerson(avery, NOW);
+    await upsertPerson(mira, NOW - DAY);
+    // "based in" only ever exists in the summary.
+    expect((await listPeople({ q: "based in durham" })).map((p) => p.name)).toEqual(["Avery Nakamura"]);
+    expect(await listPeople({ q: "based in bergen" })).toEqual([]);
+  });
+});
+
 describe("people search over the captured detail", () => {
   beforeEach(async () => {
     await upsertPerson(mira, NOW - DAY);

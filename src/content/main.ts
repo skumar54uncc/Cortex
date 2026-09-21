@@ -3,6 +3,11 @@ import {
   isInvalidatedExtensionError,
   sendRuntimeMessage,
 } from "../shared/extension-runtime";
+import {
+  getUserSettings,
+  getUserSettingsFresh,
+} from "../shared/extension-settings";
+import { doubleShiftSwitch } from "./double-shift";
 import { devLog } from "../lib/extension-logger";
 
 declare global {
@@ -136,6 +141,42 @@ if (!window.__cortexInstallKickListener) {
 }
 
 // Ctrl+Shift+K / Alt+Shift+C: handled by chrome.commands in the service worker.
+
+/**
+ * Double tap of Shift. Chrome shortcuts cannot describe a double tap, so the
+ * gesture is recognised here and asks the worker to open the panel, the same
+ * request the popup's "Open search" button sends.
+ */
+function toggleCortexPanel(panelOpen: boolean): void {
+  if (!isExtensionRuntimeAlive()) return;
+  // Open, or close again on a second double tap. The service worker relays
+  // the close to this tab, because content scripts cannot message each other.
+  const type = panelOpen ? "CORTEX_CLOSE_SEARCH" : "CORTEX_POPUP_OPEN_SEARCH";
+  void sendRuntimeMessage({ type }).catch((e: unknown) => {
+    if (isInvalidatedExtensionError(e)) return;
+    devLog.warn("[Cortex] double Shift:", e);
+  });
+}
+
+const setDoubleShift = doubleShiftSwitch({ onTrigger: toggleCortexPanel });
+// Storage key of CortexUserSettings (see shared/extension-settings.ts).
+const USER_SETTINGS_KEY = "cortex_user_settings";
+
+void getUserSettings()
+  .then((s) => setDoubleShift(s.doubleShiftShortcutEnabled))
+  .catch(() => {
+    /* storage unavailable: leave the detector off */
+  });
+
+// Turning the setting off applies to open tabs, not only to the next load.
+chrome.storage?.onChanged?.addListener((changes, area) => {
+  if (area !== "local" || !changes[USER_SETTINGS_KEY]) return;
+  void getUserSettingsFresh()
+    .then((s) => setDoubleShift(s.doubleShiftShortcutEnabled))
+    .catch(() => {
+      /* ignore */
+    });
+});
 
 }
 

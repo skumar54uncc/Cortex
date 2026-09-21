@@ -115,6 +115,14 @@ describe("parseLinkedInPage profile detail", () => {
     ]);
   });
 
+  it("summarises the profile in one or two plain sentences", () => {
+    expect(p.summary).toBe(
+      "Head of Field Programs at Tidora, based in Bergen, Norway. Co-founder turned operator."
+    );
+    expect(p.summary!.length).toBeLessThanOrEqual(200);
+    expect(p.summary).not.toContain(String.fromCharCode(0x2014));
+  });
+
   it("reads text only, never markup", () => {
     const d = doc("profile.html");
     d.querySelector("#about")!.closest("section")!.querySelector("span[aria-hidden='true']")!.textContent =
@@ -150,6 +158,12 @@ describe("parseLinkedInPage company detail", () => {
     expect(c.tagline).toBe("Tidal energy microgrids for island communities");
     expect(c.location).toBe("Bergen, Vestland");
     expect(c.about).toContain("tidal microgrids for island communities");
+  });
+
+  it("summarises the company by tagline, industry, place and size", () => {
+    expect(c.summary).toBe(
+      "Tidal energy microgrids for island communities. Renewable Energy Semiconductor Manufacturing, Bergen, Vestland, 51-200 employees."
+    );
   });
 
   it("reads a single bullet separated info line too", () => {

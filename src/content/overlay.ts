@@ -46,6 +46,8 @@ let overlayShadowRoot: ShadowRoot | null = null;
 
 /** Prevent duplicate chrome.runtime / window listeners if mountOverlay ever runs twice */
 let overlayListenersInstalled = false;
+/** Set while the panel is open, so a message can close it (double Shift). */
+let closeOpenOverlay: (() => void) | null = null;
 /** Side-panel / extension shell: fill panel instead of page modal */
 let overlayShellMode = false;
 
@@ -174,6 +176,12 @@ export function mountOverlay(opts?: MountOverlayOptions): void {
   overlayListenersInstalled = true;
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    // Double tap of Shift while the panel is open closes it again.
+    if (msg?.type === "CORTEX_CLOSE_SEARCH") {
+      closeOpenOverlay?.();
+      sendResponse({ ok: true as const });
+      return true;
+    }
     if (msg?.type === "CORTEX_OPEN_SEARCH" && !overlayShellMode) {
       openCortexOverlay();
       sendResponse({ ok: true as const });
@@ -570,6 +578,7 @@ ${shadowCss}`;
   // Pages bind their own keys (YouTube plays or pauses on Space): keep every
   // key pressed inside the panel away from them (src/content/key-shield.ts).
   const removeKeyShield = installKeyShield(host);
+  closeOpenOverlay = () => closeOverlay();
   focusTrap.activate();
 
   function rebuildTabs(): void {
@@ -1985,6 +1994,7 @@ ${shadowCss}`;
     document.removeEventListener("keydown", onOverlayNavKey, true);
     document.removeEventListener("keydown", onKeyCaptureRedirect, true);
     removeKeyShield();
+    closeOpenOverlay = null;
     panel.classList.remove("is-visible");
     host.remove();
     overlayHost = null;

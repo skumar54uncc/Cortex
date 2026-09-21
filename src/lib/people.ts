@@ -10,7 +10,19 @@
  */
 import { db, type PersonRecord } from "../db/schema";
 import { parseQuestion } from "./chat/question-parser";
+import { buildProfileSummary, resolveProfileName } from "./capture/linkedin";
 import type { LinkedInEntity, LinkedInRole } from "./capture/linkedin";
+
+/**
+ * The short description of what Cortex read from a profile, stored next to
+ * the row. Declared here rather than in the schema so an old row without one
+ * still reads: the field is optional and no index depends on it.
+ */
+declare module "../db/schema" {
+  interface PersonRecord {
+    summary?: string;
+  }
+}
 
 const MAX_PAST_ROLES = 5;
 const MAX_EDUCATION_ITEMS = 3;
@@ -33,6 +45,7 @@ function roleList(roles: LinkedInRole[] | undefined): LinkedInRole[] {
  * is left out, so a later thin render never blanks what an earlier visit saw.
  */
 function detailPatch(e: LinkedInEntity): Partial<PersonRecord> {
+  const summary = s(e.summary) || buildProfileSummary(e);
   const roles = roleList(e.pastRoles);
   const education = (e.education ?? []).map(s).filter(Boolean).slice(0, MAX_EDUCATION_ITEMS);
   const count =
@@ -50,16 +63,25 @@ function detailPatch(e: LinkedInEntity): Partial<PersonRecord> {
     ...(s(e.industry) ? { industry: s(e.industry) } : {}),
     ...(s(e.companySize) ? { companySize: s(e.companySize) } : {}),
     ...(s(e.tagline) ? { tagline: s(e.tagline) } : {}),
+    ...(summary ? { summary } : {}),
   };
 }
 
-export async function upsertPerson(e: LinkedInEntity, now: number = Date.now()): Promise<number> {
+/**
+ * Stores or refreshes a profile. The name is resolved first: LinkedIn chrome
+ * ("Notifications", "(1) Messaging") is never stored, and when the page gave
+ * nothing usable the profile slug supplies the name. A profile with no
+ * plausible name at all is not recorded, and null says so.
+ */
+export async function upsertPerson(e: LinkedInEntity, now: number = Date.now()): Promise<number | null> {
+  const name = resolveProfileName([e.name], e.profileUrl);
+  if (!name) return null;
   const existing = await db.people.where("profileUrl").equals(e.profileUrl).first();
-  const detail = detailPatch(e);
+  const detail = detailPatch({ ...e, name });
   if (existing?.id != null) {
     await db.people.update(existing.id, {
       kind: e.kind,
-      name: e.name,
+      name,
       headline: e.headline || existing.headline,
       company: e.company || existing.company,
       // Detail the page carried wins; anything it did not show is untouched.
@@ -71,7 +93,7 @@ export async function upsertPerson(e: LinkedInEntity, now: number = Date.now()):
   }
   return (await db.people.add({
     kind: e.kind,
-    name: e.name,
+    name,
     headline: e.headline,
     company: e.company,
     profileUrl: e.profileUrl,
@@ -98,6 +120,7 @@ function haystack(p: PersonRecord): string {
     p.company,
     p.location,
     p.about,
+    p.summary,
     p.roleTitle,
     ...(p.pastRoles ?? []).flatMap((r) => [r.title, r.company]),
     ...(p.education ?? []),
@@ -117,10 +140,33 @@ function matchesCompany(p: PersonRecord, company: string): boolean {
   return names.some((n) => n!.toLowerCase().includes(company));
 }
 
+/** "linkedin.com/in/12345": what a row is, when no name can be had at all. */
+function urlLabel(profileUrl: string): string {
+  try {
+    const u = new URL(profileUrl);
+    return `linkedin.com${u.pathname.replace(/\/+$/, "")}`;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * A row as it should read now. Rows stored by an earlier release can carry
+ * LinkedIn chrome as the name ("Notifications") and no summary, so both are
+ * repaired for display and for search. The row itself is left alone: the next
+ * visit writes the repair through upsertPerson.
+ */
+function repairedRow(p: PersonRecord): PersonRecord {
+  const name = resolveProfileName([p.name], p.profileUrl) || urlLabel(p.profileUrl) || s(p.name);
+  const summary = s(p.summary) || buildProfileSummary({ ...p, name });
+  if (name === p.name && summary === (p.summary ?? "")) return p;
+  return { ...p, name, ...(summary ? { summary } : {}) };
+}
+
 export async function listPeople(f: PeopleFilter): Promise<PersonRecord[]> {
   const company = f.company?.trim().toLowerCase();
   const words = (f.q ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const rows = await db.people.orderBy("lastSeen").reverse().toArray();
+  const rows = (await db.people.orderBy("lastSeen").reverse().toArray()).map(repairedRow);
   return rows
     .filter((p) => (f.since == null || p.lastSeen >= f.since) && (f.until == null || p.lastSeen <= f.until))
     .filter((p) => !company || matchesCompany(p, company))
