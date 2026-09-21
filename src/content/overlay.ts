@@ -1269,6 +1269,66 @@ ${shadowCss}`;
     }
   }
 
+  /**
+   * "What you saw, site by site": one bullet per site, each naming a few of
+   * the pages as links. Built from the digest's per-site groups, so the
+   * counts match the period, not just the pages the model cited.
+   */
+  function renderDigestSites(digest: DigestResult): HTMLElement | null {
+    const groups = digest.domainGroups ?? [];
+    if (!groups.length) return null;
+    const sources = new Map((digest.sources ?? []).map((s) => [s.n, s]));
+    const byDomain = new Map<string, typeof digest.sources>();
+    for (const s of digest.sources ?? []) {
+      byDomain.set(s.domain, [...(byDomain.get(s.domain) ?? []), s]);
+    }
+
+    const section = document.createElement("section");
+    section.className = "cortex-digest-section";
+    const heading = document.createElement("h3");
+    heading.className = "cortex-digest-section-label";
+    heading.textContent = "What you saw, site by site";
+    const list = document.createElement("ul");
+    list.className = "cortex-digest-sites";
+
+    for (const group of groups.slice(0, 12)) {
+      const li = document.createElement("li");
+      li.className = "cortex-digest-site";
+
+      const lead = document.createElement("span");
+      lead.className = "cortex-digest-site-lead";
+      const pages = `${group.count} ${group.count === 1 ? "page" : "pages"}`;
+      lead.textContent = `On ${group.domain} you read ${pages}: `;
+      li.appendChild(lead);
+
+      const named = (byDomain.get(group.domain) ?? group.sourceIndexes.map((n) => sources.get(n)))
+        .filter((x): x is NonNullable<typeof x> => !!x)
+        .slice(0, 3);
+      named.forEach((src, i) => {
+        if (i > 0) li.appendChild(document.createTextNode(", "));
+        const a = document.createElement("a");
+        a.className = "cortex-digest-site-link";
+        a.href = safeHttpUrl(src.url);
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = src.title;
+        a.title = src.title;
+        li.appendChild(a);
+      });
+      const rest = group.count - named.length;
+      if (rest > 0) {
+        const more = document.createElement("span");
+        more.className = "cortex-muted";
+        more.textContent = ` and ${rest} more`;
+        li.appendChild(more);
+      }
+      list.appendChild(li);
+    }
+
+    section.append(heading, list);
+    return section;
+  }
+
   function renderDigestUI(digest: DigestResult): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "cortex-digest";
@@ -1305,6 +1365,9 @@ ${shadowCss}`;
     renderDigestNarrative(narrative, digest);
     hero.append(heroLabel, narrative);
     wrapper.appendChild(hero);
+
+    const sites = renderDigestSites(digest);
+    if (sites) wrapper.appendChild(sites);
 
     if (digest.topics.length > 0) {
       const topicsSection = document.createElement("section");

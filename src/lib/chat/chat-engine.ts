@@ -16,6 +16,8 @@ import {
 import { CortexError } from "../errors";
 import type { ChatSettings } from "./types";
 import { answerPeopleQuery, parsePeopleQuery } from "../people";
+import { buildRecallAnswer, loadRecallPages, parseRecallQuery } from "./recall";
+import { db } from "../../db/schema";
 export interface ChatStreamEvent {
   type:
     | "conversation"
@@ -75,6 +77,42 @@ export async function* runChat(
         yield { type: "done", data: { provider: "people" } };
         return;
       }
+    }
+
+    // "What did I see on YouTube today": answered from the visit record, not
+    // from passages. Retrieval cannot answer it, and the model used to say it
+    // had nothing while twenty sources sat underneath the answer.
+    const recall = parseRecallQuery(question);
+    if (recall) {
+      const pages = await loadRecallPages(recall, db.documents);
+      const answer = buildRecallAnswer(recall, pages);
+      const chunks = answer.sources.map((p, i) => ({
+        id: -1 - i,
+        documentId: -1 - i,
+        ord: 0,
+        text: "",
+        document: {
+          id: -1 - i,
+          url: p.url,
+          domain: p.domain,
+          title: p.title,
+          summary: p.summary,
+          lastVisitedAt: p.visitedAt,
+          visitCount: 1,
+          importanceScore: 0,
+        },
+      }));
+      await addMessageToConversation(convId, { role: "user", content: question, timestamp: Date.now() });
+      yield { type: "sources", data: { chunks } };
+      yield { type: "token", data: answer.text };
+      await addMessageToConversation(convId, {
+        role: "assistant",
+        content: answer.text,
+        timestamp: Date.now(),
+        citedChunks: [],
+      });
+      yield { type: "done", data: { provider: "recall" } };
+      return;
     }
 
     const priorMessages =

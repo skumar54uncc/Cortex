@@ -169,6 +169,13 @@ function numberChunks(chunks: ChunkWithDoc[]): NumberedChunk[] {
  * URL does not survive safeHttpHttpsHref is dropped before numbering, so the
  * numbers stay contiguous and every url in the result is a real http(s) link.
  */
+/**
+ * How many pages of the period the digest carries. The per-site counts and
+ * the "show all pages" list come from this, so it must cover a busy day
+ * rather than only the pages the model cited.
+ */
+export const DIGEST_SOURCE_CAP = 200;
+
 export function buildDigestSources(chunks: ChunkWithDoc[]): DigestSource[] {
   return numberChunks(chunks).map((n) => n.source);
 }
@@ -486,7 +493,7 @@ export async function generateDigest(
   const parsedOut = parseDigestOutput(rawOut, packed);
   // Cited sources keep their [N]; the rest of the period fills the
   // "show all pages" list with numbers that simply were never cited.
-  const sources = mergeSources(parsedOut.sources, docs, 24);
+  const sources = mergeSources(parsedOut.sources, docs, DIGEST_SOURCE_CAP);
 
   const result: DigestResult = {
     schemaVersion: DIGEST_SCHEMA_VERSION,

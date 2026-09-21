@@ -173,7 +173,7 @@
 }
 
 .cx-brand-tagline {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.25;
   color: var(--cx-text-muted);
@@ -254,7 +254,7 @@
 
 .cortex-hint {
   padding: 8px 16px 10px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--cx-text-muted);
   display: flex;
   flex-wrap: wrap;
@@ -277,7 +277,7 @@
   padding: 1px 5px;
   margin: 0 1px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-family: ui-monospace, monospace;
   border: 1px solid var(--cx-border);
   background: var(--cx-raised);
@@ -285,7 +285,7 @@
 }
 
 .cortex-hint-nav {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--cx-text-muted);
 }
 
@@ -299,13 +299,13 @@
 .cortex-muted {
   padding: 12px;
   color: var(--cx-text-muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .cortex-evidence {
   padding: 10px 12px;
   margin-bottom: 10px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--cx-text);
   background: var(--cx-accent-soft);
@@ -316,7 +316,7 @@
 .cortex-evidence-compact {
   padding: 8px 12px;
   margin-bottom: 8px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -393,12 +393,12 @@
 }
 
 .cortex-hit-host {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--cx-text-muted);
 }
 
 .cortex-hit-snippet {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--cx-text);
   line-height: 1.45;
   display: -webkit-box;
@@ -416,7 +416,7 @@
 }
 
 .cortex-hit-time {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--cx-text-subtle);
 }
 
@@ -429,14 +429,14 @@
 
 .cortex-hit-extra {
   padding-left: 32px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--cx-text-muted);
   line-height: 1.35;
 }
 
 .cortex-hit-details {
   padding-left: 32px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .cortex-hit-details-sum {
@@ -459,7 +459,7 @@
 
 .cortex-results-idle {
   padding: 14px 12px 18px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -477,7 +477,7 @@
   padding: 3px 9px;
   border-radius: 999px;
   border: 1px solid var(--cx-border);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.2;
@@ -556,13 +556,13 @@
 .cortex-empty-tips {
   margin: 0;
   padding-left: 18px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
 .cortex-evidence-note {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -586,7 +586,7 @@
   border: 0;
   padding: 10px 14px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--cx-text-muted);
   cursor: pointer;
@@ -621,7 +621,7 @@
 
 .cortex-attribution {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--cx-text-subtle);
 }
 
@@ -651,7 +651,7 @@
   flex-shrink: 0;
   margin: 10px 10px 8px;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   padding: 8px 10px;
   border-radius: 8px;
@@ -675,7 +675,7 @@
 }
 
 .cortex-chat-sidebar-empty {
-  font-size: 11px;
+  font-size: 12px;
   padding: 8px 10px;
   margin: 0;
 }
@@ -701,7 +701,7 @@
   min-width: 0;
   text-align: left;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -759,7 +759,7 @@
 }
 
 .cortex-chat-history-when {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--cx-text-subtle);
 }
 
@@ -830,7 +830,7 @@
 }
 
 .cortex-ask-send-hint {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   flex: 1;
   min-width: 160px;
@@ -839,7 +839,7 @@
 .cortex-ask-send {
   flex-shrink: 0;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   padding: 8px 18px;
   border-radius: 10px;
@@ -886,7 +886,7 @@
 
 .cortex-chat-empty-hint {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -940,7 +940,7 @@
 
 .cortex-sources-toggle {
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--cx-text-muted);
   padding: 8px 10px;
@@ -979,7 +979,7 @@
 .cortex-source-num {
   color: var(--cx-accent);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
   min-width: 28px;
 }
 
@@ -993,18 +993,18 @@
 
 .cortex-source-title {
   color: var(--cx-text);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .cortex-source-detail {
   color: var(--cx-text-muted);
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 
 .cortex-source-domain {
   color: var(--cx-text-subtle);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .cortex-citation {
@@ -1042,7 +1042,7 @@
 
 .cortex-chat-error-hint {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cortex-chat-error-link {
@@ -1066,7 +1066,7 @@
   border-radius: 999px;
   padding: 6px 14px;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   color: var(--cx-text-muted);
@@ -1097,7 +1097,7 @@
 
 .cortex-digest-loading {
   padding: 24px 0;
-  font-size: 13px;
+  font-size: 14px;
   text-align: center;
 }
 
@@ -1118,7 +1118,7 @@
   align-items: center;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   background: var(--cx-accent-soft);
@@ -1146,7 +1146,7 @@
 
 .cortex-digest-section-label {
   margin: 0 0 8px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -1155,7 +1155,7 @@
 
 .cortex-digest-section-hint {
   margin: -4px 0 10px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -1210,14 +1210,14 @@
 
 .cortex-digest-topic-label {
   flex: 1;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.35;
 }
 
 .cortex-digest-topic-count {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--cx-text-subtle);
   padding: 2px 8px;
@@ -1243,13 +1243,13 @@
 
 .cortex-digest-insight-text {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--cx-text);
 }
 
 .cortex-digest-insight-source {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--cx-link);
   text-decoration: none;
@@ -1268,7 +1268,7 @@
 
 .cortex-digest-sources-toggle {
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--cx-text-muted);
   padding: 10px 12px;
@@ -1320,7 +1320,7 @@
 }
 
 .cortex-digest-source-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--cx-link);
   text-decoration: none;
@@ -1335,7 +1335,7 @@
 .cortex-digest-source-meta {
   display: block;
   color: var(--cx-text-subtle);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
 }
 
@@ -1356,7 +1356,7 @@
 
 .cortex-digest-empty-hint {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
   color: var(--cx-text-muted);
 }
@@ -1394,7 +1394,7 @@
   min-height: 44px;
   padding: 0 12px;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   border: none;
   border-bottom: 1px solid var(--cx-border);
@@ -1541,7 +1541,7 @@
 
 .cortex-chat-stopped {
   margin: 6px 0 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 /* Confidence badges in dark theme (AA on --cx-surface #1e1c1a) */
@@ -1577,7 +1577,7 @@
   width: 100%;
   box-sizing: border-box;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   padding: 6px 8px;
   border-radius: 8px;
   border: 1px solid var(--cx-border);
@@ -1591,7 +1591,7 @@
 }
 
 .cortex-chat-group-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1619,7 +1619,7 @@
   border: 1px solid var(--cx-border);
   background: var(--cx-surface-input);
   color: var(--cx-text);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cortex-undo-toast-text {
@@ -1632,7 +1632,7 @@
 .cortex-undo-toast-btn {
   flex-shrink: 0;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   padding: 4px 10px;
   min-height: 28px;
@@ -1659,7 +1659,7 @@
 
 .cortex-example-chip {
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   min-height: 36px;
   padding: 6px 12px;
@@ -1710,7 +1710,7 @@
 
 .cortex-menu-item {
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   text-align: left;
   min-height: 36px;
   padding: 6px 10px;
@@ -1739,7 +1739,7 @@
 .cortex-forget-status {
   margin: 0;
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: 13px;
   border-bottom: 1px solid var(--cx-border);
   background: var(--cx-note-bg);
   color: var(--cx-text);
@@ -1803,7 +1803,7 @@ a.cortex-person-name:focus-visible {
 }
 
 .cortex-person-headline {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--cx-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1811,13 +1811,13 @@ a.cortex-person-name:focus-visible {
 }
 
 .cortex-person-meta {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .cortex-person-delete {
   flex-shrink: 0;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   min-height: 32px;
   padding: 4px 10px;
   border-radius: 8px;
@@ -1839,7 +1839,7 @@ a.cortex-person-name:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--cx-text-muted);
 }
 
@@ -1849,7 +1849,7 @@ a.cortex-person-name:focus-visible {
 
 .cortex-scope-select {
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   min-height: 30px;
   padding: 2px 8px;
   border-radius: 8px;
@@ -1861,7 +1861,7 @@ a.cortex-person-name:focus-visible {
 
 .cortex-scope-add {
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   min-height: 30px;
   padding: 2px 10px;
@@ -1961,7 +1961,7 @@ a.cortex-person-name:focus-visible {
 
 .cortex-msg-rich .cortex-md-pre .cortex-md-code-block {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   white-space: pre;
 }
@@ -1987,11 +1987,55 @@ a.cortex-person-name:focus-visible {
   padding: 0 4px;
   border-radius: 4px;
   background: var(--cx-hover);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   vertical-align: baseline;
 }
 
 .cortex-digest-cite + .cortex-digest-cite {
   margin-left: 3px;
+}
+
+
+/* Digest: what you saw, site by site. */
+.cortex-digest-sites {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cortex-digest-site {
+  position: relative;
+  padding-left: 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--cx-text);
+}
+
+.cortex-digest-site::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cx-accent);
+}
+
+.cortex-digest-site-lead {
+  color: var(--cx-text-muted);
+}
+
+.cortex-digest-site-link {
+  color: var(--cx-accent);
+  text-decoration: none;
+}
+
+.cortex-digest-site-link:hover,
+.cortex-digest-site-link:focus-visible {
+  text-decoration: underline;
 }
