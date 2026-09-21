@@ -12,10 +12,15 @@ test("content.js carries no overlay UI; toolbar click injects overlay.js and ope
   serviceWorker,
 }) => {
   const contentJs = readFileSync(join(EXTENSION_PATH, "content.js"), "utf8");
-  expect(contentJs).not.toContain("cortex-overlay-root");
-  expect(contentJs).not.toContain(".cortex-hit");
+  // No overlay markup, styles or rendering in the script that runs on every
+  // page. It does look the panel's host element up by id, to tell whether the
+  // panel is already open (the double Shift gesture), which is not UI.
+  for (const uiMarker of [".cortex-hit", "cortex-shell", "cortex-panel", "cortex-tab", "attachShadow"]) {
+    expect(contentJs, uiMarker).not.toContain(uiMarker);
+  }
   const overlayJs = readFileSync(join(EXTENSION_PATH, "overlay.js"), "utf8");
   expect(overlayJs).toContain("cortex-overlay-root");
+  expect(overlayJs).toContain("attachShadow");
 
   await context.route("http://cortex-e2e.test/**", (route) =>
     route.fulfill({

@@ -50,3 +50,16 @@ describe("citationHref and citationDetail (citation cards)", () => {
     expect(citationDetail({})).toBe("");
   });
 });
+
+describe("video identity chunks", () => {
+  const meta = { kind: "transcript" as const, locator: { videoId: "abc", startSec: 0, endSec: 754, meta: true } };
+
+  it("reads as details, not as a moment at 0:00", () => {
+    expect(citationDetail(meta)).toBe("Video details");
+    expect(snippetLabel(meta)).toBe("video details");
+  });
+
+  it("still links to the video", () => {
+    expect(citationHref(meta, "https://www.youtube.com/watch?v=abc")).toBe("https://www.youtube.com/watch?v=abc&t=0s");
+  });
+});

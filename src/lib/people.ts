@@ -163,10 +163,35 @@ function repairedRow(p: PersonRecord): PersonRecord {
   return { ...p, name, ...(summary ? { summary } : {}) };
 }
 
+/**
+ * People captured before the detail existed have nothing to summarise from.
+ * Cortex already indexed the profile page itself, so borrow what it read
+ * there. Local only: this reads the library, it fetches nothing.
+ */
+async function summaryFromIndexedProfile(rows: PersonRecord[]): Promise<PersonRecord[]> {
+  const missing = rows.filter((p) => !s(p.summary) && p.profileUrl);
+  if (!missing.length) return rows;
+  const wanted = new Set(missing.map((p) => p.profileUrl));
+  const byUrl = new Map<string, string>();
+  for (const doc of await db.documents.toArray()) {
+    const url = String(doc.url ?? "");
+    if (!wanted.has(url)) continue;
+    const text = String(doc.summary ?? "").replace(/\s+/g, " ").trim();
+    if (text) byUrl.set(url, text.slice(0, 200));
+  }
+  if (!byUrl.size) return rows;
+  return rows.map((p) => {
+    const fallback = !s(p.summary) ? byUrl.get(p.profileUrl) : undefined;
+    return fallback ? { ...p, summary: fallback } : p;
+  });
+}
+
 export async function listPeople(f: PeopleFilter): Promise<PersonRecord[]> {
   const company = f.company?.trim().toLowerCase();
   const words = (f.q ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const rows = (await db.people.orderBy("lastSeen").reverse().toArray()).map(repairedRow);
+  const rows = await summaryFromIndexedProfile(
+    (await db.people.orderBy("lastSeen").reverse().toArray()).map(repairedRow)
+  );
   return rows
     .filter((p) => (f.since == null || p.lastSeen >= f.since) && (f.until == null || p.lastSeen <= f.until))
     .filter((p) => !company || matchesCompany(p, company))

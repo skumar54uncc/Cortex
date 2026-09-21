@@ -1,109 +1,161 @@
 /**
- * YouTube transcript capture in the isolated world (Phase 5.6), part of
- * extract.js. Armed by the service worker only when transcripts are on and
- * the page passed the privacy gate. Indexes a video after 30 s of actual
- * playback: captions (json3) first, then the transcript panel, then
- * title / channel / description / chapters.
+ * YouTube capture in the isolated world (Phase 5.6), part of extract.js. Armed
+ * by the service worker only when transcripts are on and the page passed the
+ * privacy gate, so every privacy toggle still decides whether any of this runs.
+ *
+ * Two phases per video, both over the same gated CORTEX_INDEX_TRANSCRIPT
+ * channel:
+ *   1. identity (title, channel, description) a few seconds after landing on
+ *      the watch page, so "what did I watch today" knows about every video,
+ *      including ones with no captions and ones watched for ten seconds;
+ *   2. the transcript after 30 s of real playback, which replaces phase 1.
+ *
+ * All timing lives in createYouTubeCaptureController; this file is the wiring.
  */
 import {
   captionJson3Url,
-  createPlaybackTracker,
+  createYouTubeCaptureController,
   json3ToWindows,
-  metadataText,
-  parsePlayerResponse,
   pickCaptionTrack,
   transcriptPanelWindows,
   videoIdFromUrl,
-  PLAYBACK_THRESHOLD_SEC,
   type PlayerInfo,
+  type TranscriptPayload,
   type TranscriptWindow,
+  type YouTubeCaptureController,
 } from "../lib/capture/youtube";
 import { isExtensionRuntimeAlive, sendRuntimeMessage } from "../shared/extension-runtime";
 
 let armed = false;
-let info: PlayerInfo | null = null;
-let currentVideo: string | null = null;
-const sent = new Set<string>();
+let controller: YouTubeCaptureController | null = null;
 
-function pageUrl(): string {
-  const u = new URL(location.href);
-  u.hash = "";
-  return u.href;
+/**
+ * Whether media is playing right now. The media events are the reliable
+ * signal while they arrive; the element state covers the gaps (a video that
+ * was already rolling when YouTube swapped the page under it never fires
+ * `playing` again).
+ */
+let mediaPlaying = false;
+
+function domPlaying(): boolean {
+  for (const v of Array.from(document.querySelectorAll("video"))) {
+    if (!v.paused && !v.ended) return true;
+  }
+  return false;
 }
 
-async function fetchWindows(p: PlayerInfo): Promise<TranscriptWindow[]> {
-  const track = pickCaptionTrack(p.tracks, document.documentElement.lang);
+async function fetchWindows(p: PlayerInfo | null): Promise<TranscriptWindow[]> {
+  const track = p ? pickCaptionTrack(p.tracks, document.documentElement.lang) : null;
   const url = track ? captionJson3Url(track.baseUrl) : null;
   if (url) {
     try {
+      // youtube.com itself, the page the user is already on: no new endpoint.
       const res = await fetch(url, { credentials: "include" });
       if (res.ok) {
         const windows = json3ToWindows(await res.json());
         if (windows.length) return windows;
       }
     } catch {
-      /* fall through */
+      /* fall through to the transcript panel */
     }
   }
   return transcriptPanelWindows(document);
 }
 
-async function capture(videoId: string): Promise<void> {
-  if (!isExtensionRuntimeAlive() || sent.has(videoId)) return;
-  if (videoIdFromUrl(location.href) !== videoId) return;
-  const p = info && info.videoId === videoId ? info : null;
-  const windows = p ? await fetchWindows(p) : transcriptPanelWindows(document);
-  const metadata = p ? metadataText(p) : document.title;
-  if (!windows.length && !metadata.trim()) return;
-  sent.add(videoId);
-  await sendRuntimeMessage({
+async function send(payload: TranscriptPayload): Promise<boolean> {
+  if (!isExtensionRuntimeAlive()) return false;
+  const res = await sendRuntimeMessage<{ ok?: boolean }>({
     type: "CORTEX_INDEX_TRANSCRIPT",
-    payload: {
-      url: pageUrl(),
-      videoId,
-      title: p?.title || document.title,
-      channel: p?.channel ?? "",
-      lengthSeconds: p?.lengthSeconds ?? 0,
-      windows,
-      metadata,
-    },
+    payload,
   }).catch(() => undefined);
+  return res?.ok === true;
 }
 
-const tracker = createPlaybackTracker(PLAYBACK_THRESHOLD_SEC, () => {
-  if (currentVideo) void capture(currentVideo);
-});
-
-function onNavigate(): void {
-  const id = videoIdFromUrl(location.href);
-  if (id === currentVideo) return;
-  currentVideo = id;
-  info = null;
-  tracker.reset();
-  window.postMessage({ source: "cortex-yt-request" }, location.origin);
+function getController(): YouTubeCaptureController {
+  controller ??= createYouTubeCaptureController({
+    currentUrl: () => location.href,
+    getDocument: () => document,
+    isPlaying: () => mediaPlaying || domPlaying(),
+    requestPlayerInfo: () => {
+      try {
+        window.postMessage({ source: "cortex-yt-request" }, location.origin);
+      } catch {
+        /* origin mismatch: nothing to do */
+      }
+    },
+    fetchWindows,
+    send,
+  });
+  return controller;
 }
 
-/** Idempotent. Starts listening for player info and playback on this tab. */
+let ticking = false;
+function tick(): void {
+  if (ticking || !isExtensionRuntimeAlive()) return;
+  ticking = true;
+  void getController()
+    .tick()
+    .catch(() => undefined)
+    .finally(() => {
+      ticking = false;
+    });
+}
+
+/**
+ * A navigation inside YouTube changes the URL long before the new player is
+ * ready, so the next second is polled hard rather than sampled once.
+ */
+function kick(): void {
+  tick();
+  for (const d of [200, 700, 1500, 3000]) window.setTimeout(tick, d);
+}
+
+/** Idempotent. Starts following this tab's watch pages. */
 export function armYouTubeCapture(): void {
-  onNavigate();
-  if (armed) return;
+  if (armed) {
+    kick();
+    return;
+  }
   armed = true;
+
   window.addEventListener("message", (e) => {
     if (e.source !== window || e.origin !== location.origin) return;
     const d = e.data as { source?: string; playerResponse?: unknown } | null;
     if (d?.source !== "cortex-yt-bridge") return;
-    const parsed = parsePlayerResponse(d.playerResponse);
-    // Untrusted page data: only accept it for the video in the address bar.
-    if (parsed && parsed.videoId === videoIdFromUrl(location.href)) info = parsed;
+    getController().offerPlayerInfo(d.playerResponse);
+    tick();
   });
+
   // Media events do not bubble; capture phase on the document sees them.
-  document.addEventListener("playing", () => tracker.playing(), true);
-  for (const ev of ["pause", "ended", "waiting", "emptied"]) {
-    document.addEventListener(ev, () => tracker.paused(), true);
+  for (const ev of ["playing", "play", "timeupdate"]) {
+    document.addEventListener(ev, () => {
+      mediaPlaying = true;
+    }, true);
   }
-  document.addEventListener("yt-navigate-finish", onNavigate);
-  setInterval(() => {
-    if (videoIdFromUrl(location.href) !== currentVideo) onNavigate();
-    tracker.tick();
+  for (const ev of ["pause", "ended", "waiting", "emptied", "stalled", "abort"]) {
+    document.addEventListener(ev, () => {
+      mediaPlaying = false;
+    }, true);
+  }
+
+  // SPA navigation: YouTube's own event, the History API, and a poll as the
+  // backstop, because YouTube does not always fire what it used to.
+  for (const ev of ["yt-navigate-finish", "yt-page-data-updated", "yt-navigate-start"]) {
+    document.addEventListener(ev, kick);
+  }
+  window.addEventListener("popstate", kick);
+  window.addEventListener("pageshow", kick);
+
+  let lastVideo = videoIdFromUrl(location.href);
+  window.setInterval(() => {
+    const id = videoIdFromUrl(location.href);
+    if (id !== lastVideo) {
+      lastVideo = id;
+      kick();
+      return;
+    }
+    tick();
   }, 1000);
+
+  kick();
 }

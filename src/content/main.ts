@@ -8,6 +8,7 @@ import {
   getUserSettingsFresh,
 } from "../shared/extension-settings";
 import { doubleShiftSwitch } from "./double-shift";
+import { shouldReindexAfterMutation } from "./mutation-throttle";
 import { devLog } from "../lib/extension-logger";
 
 declare global {
@@ -28,6 +29,8 @@ function normalizedUrl(): string {
 
 let indexTimer: number | undefined;
 let mutationTimer: number | undefined;
+/** When a mutation last caused a re-index request on this page. */
+let lastMutationIndexAt: number | null = null;
 let currentUrl = normalizedUrl();
 
 function scheduleIndex(delayMs: number): void {
@@ -78,6 +81,10 @@ function onLocationLikeChange(reason: "spa" | "mutation"): void {
   }
 
   if (reason === "mutation") {
+    // Pages that never settle (YouTube, feeds) would otherwise ask for a
+    // re-index every few seconds and exhaust the per tab extraction budget.
+    if (!shouldReindexAfterMutation(lastMutationIndexAt, Date.now())) return;
+    lastMutationIndexAt = Date.now();
     scheduleIndex(3200);
   }
 }

@@ -8,7 +8,9 @@ const KB = 1024;
 export const BUNDLE_BUDGETS = {
   // content.js: lifecycle + messaging only since Phase 5 task 0.2 (was 45 KB).
   "content.js": 15 * KB,
-  "extract.js": 60 * KB,
+  // extract.js is injected only after the privacy gate passes, never on every
+  // page. It grew with YouTube identity capture (Phase 6 follow-up).
+  "extract.js": 70 * KB,
   "resurface-chip.js": 8 * KB,
   "youtube-bridge.js": 4 * KB,
   "overlay.js": 140 * KB,

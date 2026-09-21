@@ -13,6 +13,11 @@ import {
   transcriptChunks,
   createPlaybackTracker,
   youtubeCitationHref,
+  mergeShortWindows,
+  usableTranscriptWindows,
+  readWatchPageMetadata,
+  mergeMetadata,
+  stripYouTubeSuffix,
   MAX_TRANSCRIPT_WINDOWS,
 } from "../src/lib/capture/youtube";
 
@@ -109,6 +114,84 @@ describe("metadataText", () => {
     expect(t).toContain("Chapters: Intro (0:00); Slack tide storage (1:05); Islanding drills (2:30)");
     expect(t).toContain("How island microgrids use tidal turbines.");
   });
+
+  it("appends a too-short transcript rather than dropping the words", () => {
+    const t = metadataText({ title: "T", channel: "C", description: "" }, "okay so");
+    expect(t).toBe("T\nChannel: C\nTranscript: okay so");
+  });
+});
+
+describe("mergeShortWindows / usableTranscriptWindows", () => {
+  const long = (n: string) => `${n} `.repeat(30).trim(); // > 80 chars
+
+  it("merges consecutive short windows and folds a short tail backwards", () => {
+    expect(
+      mergeShortWindows([
+        { startSec: 0, endSec: 60, text: "one" },
+        { startSec: 60, endSec: 120, text: "two" },
+        { startSec: 120, endSec: 180, text: long("alpha") },
+        { startSec: 180, endSec: 240, text: long("beta") },
+        { startSec: 240, endSec: 300, text: "tail" },
+      ])
+    ).toEqual([
+      { startSec: 0, endSec: 180, text: `one two ${long("alpha")}` },
+      { startSec: 180, endSec: 300, text: `${long("beta")} tail` },
+    ]);
+  });
+
+  it("keeps windows that already carry enough text", () => {
+    const w = [
+      { startSec: 0, endSec: 60, text: long("alpha") },
+      { startSec: 60, endSec: 120, text: long("beta") },
+    ];
+    expect(mergeShortWindows(w)).toEqual(w);
+    expect(usableTranscriptWindows(w)).toEqual(w);
+  });
+
+  it("drops a transcript that is only a handful of words in total", () => {
+    expect(usableTranscriptWindows([{ startSec: 0, endSec: 60, text: "[Music]" }])).toEqual([]);
+    expect(usableTranscriptWindows([])).toEqual([]);
+  });
+
+  it("does not break a long window apart or lose its end time", () => {
+    const [only] = usableTranscriptWindows([
+      { startSec: 0, endSec: 60, text: long("alpha") },
+      { startSec: 60, endSec: 120, text: "short" },
+    ]);
+    expect(only).toEqual({ startSec: 0, endSec: 120, text: `${long("alpha")} short` });
+  });
+});
+
+describe("readWatchPageMetadata (no player response)", () => {
+  const doc = () => new DOMParser().parseFromString(fx("watch-page.html"), "text/html");
+
+  it("reads title, channel and description out of the watch page itself", () => {
+    const m = readWatchPageMetadata(doc());
+    expect(m.title).toBe("Tidal microgrids explained");
+    expect(m.channel).toBe("Tidegrid Weekly");
+    expect(m.description).toContain("How island microgrids use tidal turbines");
+    // Line structure survives, so the chapter list is still readable.
+    expect(metadataText(m)).toContain("Chapters: Intro (0:00)");
+  });
+
+  it("falls back to the tab title without the YouTube suffix", () => {
+    const d = new DOMParser().parseFromString(
+      "<html><head><title>Some talk - YouTube</title></head><body></body></html>",
+      "text/html"
+    );
+    expect(readWatchPageMetadata(d)).toEqual({ title: "Some talk", channel: "", description: "" });
+    expect(stripYouTubeSuffix("Plain title")).toBe("Plain title");
+  });
+
+  it("prefers the player response and fills its gaps from the page", () => {
+    const m = mergeMetadata(
+      { title: "From player", channel: "", description: "" },
+      readWatchPageMetadata(doc())
+    );
+    expect(m.title).toBe("From player");
+    expect(m.channel).toBe("Tidegrid Weekly");
+    expect(m.description).toContain("tidal turbines");
+  });
 });
 
 describe("transcriptChunks", () => {
@@ -154,6 +237,19 @@ describe("createPlaybackTracker (index only after 30 s of playback)", () => {
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
+  it("tick(playing) keeps counting when the media events stop arriving", () => {
+    let now = 0;
+    const onReady = vi.fn();
+    const t = createPlaybackTracker(30, onReady, () => now);
+    // No playing event at all: the poll alone has to carry it.
+    for (let i = 1; i <= 31; i++) {
+      now = i * 1000;
+      t.tick(true);
+    }
+    expect(onReady).toHaveBeenCalledTimes(1);
+    expect(t.watchedMs()).toBeGreaterThanOrEqual(30_000);
+  });
+
   it("reset() starts over for a new video", () => {
     let now = 0;
     const onReady = vi.fn();
@@ -175,20 +271,65 @@ import { sanitizeTranscriptPayload } from "../src/lib/capture/youtube";
 
 describe("sanitizeTranscriptPayload (service worker side)", () => {
   const tabUrl = "https://www.youtube.com/watch?v=tIdAl4Mgr01&list=PL1";
+  const LONG_1 =
+    "Welcome back to Tidegrid Weekly, where we look at how island grids stay up when the tide goes slack.";
+  const LONG_2 =
+    "Batteries carry the island through slack tide, and the crew runs islanding drills every single spring.";
   const good = {
     url: "https://www.youtube.com/watch?v=tIdAl4Mgr01&list=PL1",
     videoId: "tIdAl4Mgr01",
     title: "Tidal microgrids explained",
     channel: "Tidegrid Weekly",
     lengthSeconds: 185,
-    windows: [{ startSec: 0, endSec: 60, text: "Welcome." }],
+    windows: [
+      { startSec: 0, endSec: 60, text: LONG_1 },
+      { startSec: 60, endSec: 120, text: LONG_2 },
+    ],
     metadata: "Tidal microgrids explained",
   };
 
   it("accepts a payload for the video in the sender tab", () => {
     const s = sanitizeTranscriptPayload(good, tabUrl)!;
     expect(s.videoId).toBe("tIdAl4Mgr01");
-    expect(s.windows).toEqual([{ startSec: 0, endSec: 60, text: "Welcome." }]);
+    expect(s.windows).toEqual([
+      { startSec: 0, endSec: 60, text: LONG_1 },
+      { startSec: 60, endSec: 120, text: LONG_2 },
+    ]);
+  });
+
+  it("refuses to store a chunk that is a locator with two words in it", () => {
+    const s = sanitizeTranscriptPayload(
+      { ...good, windows: [{ startSec: 0, endSec: 60, text: "okay so" }] },
+      tabUrl
+    )!;
+    expect(s.windows).toEqual([]);
+    // The few words are kept, but as part of the video's document, not as a
+    // transcript chunk that retrieval would match and no answer could use.
+    expect(s.metadata).toBe("Tidal microgrids explained\nTranscript: okay so");
+  });
+
+  it("merges short caption windows up to the chunk floor", () => {
+    const s = sanitizeTranscriptPayload(
+      {
+        ...good,
+        windows: [
+          { startSec: 0, endSec: 60, text: "Short one." },
+          { startSec: 60, endSec: 120, text: "Short two." },
+          { startSec: 120, endSec: 180, text: LONG_1 },
+          { startSec: 180, endSec: 240, text: LONG_2 },
+        ],
+      },
+      tabUrl
+    )!;
+    expect(s.windows).toEqual([
+      { startSec: 0, endSec: 180, text: `Short one. Short two. ${LONG_1}` },
+      { startSec: 180, endSec: 240, text: LONG_2 },
+    ]);
+  });
+
+  it("rejects a payload with neither transcript nor identity", () => {
+    expect(sanitizeTranscriptPayload({ ...good, windows: [], metadata: "" }, tabUrl)).toBeNull();
+    expect(sanitizeTranscriptPayload({ ...good, windows: [], metadata: "Ok" }, tabUrl)).toBeNull();
   });
 
   it("rejects a video id or URL that does not match the tab", () => {

@@ -32,7 +32,10 @@ export function snippetLabel(c: KindedChunk): string {
   const l = c.locator;
   switch (c.kind) {
     case "transcript":
-      return has(l, "videoId") ? `video ${formatClock((l as Video).startSec)} to ${formatClock((l as Video).endSec)}` : "video";
+      if (!has(l, "videoId")) return "video";
+      return (l as Video & { meta?: boolean }).meta
+        ? "video details"
+        : `video ${formatClock((l as Video).startSec)} to ${formatClock((l as Video).endSec)}`;
     case "table": {
       if (!has(l, "rowStart")) return "table";
       const t = l as Table;
@@ -62,7 +65,11 @@ export function citationDetail(c: KindedChunk): string {
   const l = c.locator;
   switch (c.kind) {
     case "transcript":
-      return has(l, "videoId") ? `Video at ${formatClock((l as Video).startSec)}` : "Video";
+      if (!has(l, "videoId")) return "Video";
+      // An identity chunk covers the whole video, not a moment in it.
+      return (l as Video & { meta?: boolean }).meta
+        ? "Video details"
+        : `Video at ${formatClock((l as Video).startSec)}`;
     case "pdf":
       return has(l, "page") ? `PDF page ${(l as { page: number }).page}` : "PDF";
     case "table":

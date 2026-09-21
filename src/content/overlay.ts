@@ -6,6 +6,7 @@ import { confidenceTier } from "./confidence";
 import { observePanelLayout } from "./layout-mode";
 import { installKeyShield } from "./key-shield";
 import { renderMarkdown } from "./markdown-render";
+import { completeSentencesOnly, pickSitePages } from "../lib/chat/digest-format";
 import { createChatDrawerToggle, type ChatDrawerToggle } from "./chat-drawer";
 import {
   createPendingDelete,
@@ -1260,7 +1261,11 @@ ${shadowCss}`;
     const parts = digest.narrativeParts?.length
       ? digest.narrativeParts
       : [{ text: digest.narrative, sourceIndexes: [] }];
-    for (const part of parts) {
+    const lastIndex = parts.length - 1;
+    for (const [i, raw] of parts.entries()) {
+      // The model can be cut off mid sentence: show what it finished saying.
+      const text = i === lastIndex ? completeSentencesOnly(raw.text) : raw.text;
+      const part = { ...raw, text };
       if (!part.text.trim()) continue;
       el.appendChild(document.createTextNode(`${el.childNodes.length ? " " : ""}${part.text} `));
       for (const n of part.sourceIndexes) {
@@ -1310,9 +1315,11 @@ ${shadowCss}`;
       lead.textContent = `On ${group.domain} you read ${pages}: `;
       li.appendChild(lead);
 
-      const named = (byDomain.get(group.domain) ?? group.sourceIndexes.map((n) => sources.get(n)))
-        .filter((x): x is NonNullable<typeof x> => !!x)
-        .slice(0, 3);
+      const pool = (byDomain.get(group.domain) ?? group.sourceIndexes.map((n) => sources.get(n))).filter(
+        (x): x is NonNullable<typeof x> => !!x
+      );
+      // One line per page, the site's own feed and inbox pages last.
+      const named = pickSitePages(pool, 3);
       named.forEach((src, i) => {
         if (i > 0) li.appendChild(document.createTextNode(", "));
         const a = document.createElement("a");
@@ -1320,7 +1327,7 @@ ${shadowCss}`;
         a.href = safeHttpUrl(src.url);
         a.target = "_blank";
         a.rel = "noopener noreferrer";
-        a.textContent = src.title;
+        a.textContent = src.label;
         a.title = src.title;
         li.appendChild(a);
       });

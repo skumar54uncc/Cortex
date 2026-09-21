@@ -56,8 +56,22 @@ type AnyRec = Record<string, unknown>;
     window.postMessage({ source: "cortex-yt-bridge", playerResponse: reduce(pr) }, location.origin);
   };
 
-  post();
-  document.addEventListener("yt-navigate-finish", () => setTimeout(post, 400));
+  /**
+   * YouTube swaps the player response in some time after the URL changes, so
+   * one post per navigation loses the race and the isolated world is left with
+   * no identity for the video. Post a few times, and answer every request the
+   * isolated world makes (it keeps asking until the ids line up).
+   */
+  const postSoon = (): void => {
+    post();
+    for (const d of [300, 900, 2000, 4000]) setTimeout(post, d);
+  };
+
+  postSoon();
+  for (const ev of ["yt-navigate-finish", "yt-page-data-updated", "yt-player-updated"]) {
+    document.addEventListener(ev, postSoon);
+  }
+  window.addEventListener("popstate", postSoon);
   window.addEventListener("message", (e) => {
     if (e.source === window && (e.data as AnyRec | null)?.source === "cortex-yt-request") post();
   });

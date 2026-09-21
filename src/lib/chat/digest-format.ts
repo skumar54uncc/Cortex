@@ -110,3 +110,62 @@ export function splitNarrativeSentences(raw: string): string[] {
     .filter((p) => p.length > 0);
   return parts.length > 0 ? parts : [s];
 }
+
+/** Site chrome rather than a page you chose to read. */
+const CHROME_TITLES =
+  /^(feed|home|notifications?|messages?|messaging|my network|jobs|search|inbox|dashboard|explore|for you|shorts|subscriptions|watch later|history|settings|profile|linkedin|youtube|instagram|facebook|x|twitter)$/i;
+
+const SITE_SUFFIX = /\s*[-|\u00b7\u2014\u2013]\s*(youtube|linkedin|instagram|facebook|x|twitter|google search|google maps|amazon\.[a-z.]+|github)\s*$/i;
+
+/**
+ * A page title as a person would say it: no unread counter, no site name
+ * tacked on the end, short enough to read in a list.
+ */
+export function pageLabel(raw: string, maxChars = 60): string {
+  let t = (raw || "").replace(/\s+/g, " ").trim();
+  t = t.replace(/^\(\d+\)\s*/, "");
+  t = t.replace(SITE_SUFFIX, "").trim();
+  if (!t) return "Untitled";
+  return t.length <= maxChars ? t : `${t.slice(0, maxChars).replace(/\s\S*$/, "")}…`;
+}
+
+export interface LabelledPage {
+  label: string;
+  url: string;
+  title: string;
+}
+
+/**
+ * The pages to name for one site: each one once (the same video watched three
+ * times is one line), real pages before the site's own chrome.
+ */
+export function pickSitePages<T extends { title: string; url: string }>(pages: T[], limit: number): LabelledPage[] {
+  const seen = new Set<string>();
+  const real: LabelledPage[] = [];
+  const chrome: LabelledPage[] = [];
+  for (const p of pages) {
+    const label = pageLabel(p.title);
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    (CHROME_TITLES.test(label) ? chrome : real).push({ label, url: p.url, title: p.title });
+  }
+  return (real.length ? real : chrome).slice(0, limit);
+}
+
+/**
+ * Models get cut off mid sentence. Show what they finished saying, unless
+ * that would leave nothing at all.
+ */
+export function completeSentencesOnly(raw: string): string {
+  const text = (raw || "").trim();
+  if (!text) return "";
+  // A real sentence end is followed by a capital or nothing at all, so the
+  // dot in "github.com you explored" does not count.
+  let lastStop = -1;
+  const boundary = /[.!?](?=\s+["'(“]?[A-Z]|\s*$)/g;
+  for (let m = boundary.exec(text); m; m = boundary.exec(text)) lastStop = m.index;
+  if (lastStop === -1) return text;
+  const trimmed = text.slice(0, lastStop + 1).trim();
+  return trimmed || text;
+}

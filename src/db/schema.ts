@@ -43,7 +43,7 @@ export const CHUNK_KINDS: readonly ChunkKind[] = ["text", "transcript", "table",
 
 /** Kind-specific position of a chunk inside its source (serializable). */
 export type ChunkLocator =
-  | { videoId: string; startSec: number; endSec: number }
+  | { videoId: string; startSec: number; endSec: number; /** Title, channel and description, not captions. */ meta?: boolean }
   | { tableIndex: number; rowStart: number; rowEnd: number; caption: string }
   | { page: number }
   | { images: { src: string; alt: string }[] }

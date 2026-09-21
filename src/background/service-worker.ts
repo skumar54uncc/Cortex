@@ -1571,7 +1571,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       sendResponse({ ok: false, error: "bad_transcript" });
       return true;
     }
-    if (!rateLimitHit(`transcript:${tab.id}`, 6, sendResponse)) return true;
+    // Two messages per video now (identity first, then the transcript), so a
+    // user moving quickly through videos needs more headroom than 6 a minute.
+    if (!rateLimitHit(`transcript:${tab.id}`, 20, sendResponse)) return true;
     void (async () => {
       const settings = await getEffectiveSettings();
       if (!settings.youtubeTranscriptsEnabled) {
@@ -1590,12 +1592,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
         summary: redactPII(p.metadata).redacted.slice(0, 500),
         lastVisitedAt: Date.now(),
       });
-      const windows = p.windows.length
-        ? p.windows
-        : [{ startSec: 0, endSec: Math.max(60, p.lengthSeconds), text: p.metadata }];
+      // No captions yet: store the video's identity (title, channel,
+      // description) so the video is findable, and mark the chunk as such so
+      // citations read "Video details" rather than "Video at 0:00".
+      const identityOnly = p.windows.length === 0;
+      const windows = identityOnly
+        ? [{ startSec: 0, endSec: Math.max(60, p.lengthSeconds), text: p.metadata }]
+        : p.windows;
       const chunks = transcriptChunks(
         p.videoId,
         windows.map((w) => ({ ...w, text: redactPII(w.text).redacted }))
+      ).map((c) =>
+        identityOnly ? { ...c, locator: { ...(c.locator as object), meta: true } as typeof c.locator } : c
       );
       const ids = await replaceChunksForDocument(docId, chunks, { kinds: ["transcript"] });
       queueEmbeddingsForChunkIds(ids.map((id, i) => ({ chunkId: id, text: chunks[i]!.text })));
