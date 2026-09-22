@@ -1,7 +1,19 @@
-/** Chrome Prompt API: required on availability() and create() (en | es | ja). */
-export type NanoOutputLanguage = "en" | "es" | "ja";
+/** Chrome Prompt API output languages (de | en | es | fr | ja). */
+export type NanoOutputLanguage = "de" | "en" | "es" | "fr" | "ja";
 
 export const NANO_OUTPUT_LANGUAGE: NanoOutputLanguage = "en";
+
+/**
+ * Chrome wants the language in `expectedInputs` / `expectedOutputs`. An
+ * `outputLanguage` field belongs to Summarizer and is ignored here, so
+ * sending that one made Chrome log "No output language was specified in a
+ * LanguageModel API request" for every chat turn. Both create() and
+ * availability() take these.
+ */
+export const NANO_LANGUAGE_OPTIONS = {
+  expectedInputs: [{ type: "text", languages: [NANO_OUTPUT_LANGUAGE] }],
+  expectedOutputs: [{ type: "text", languages: [NANO_OUTPUT_LANGUAGE] }],
+} as const;
 
 const NANO_AVAILABILITY_CACHE_MS = 60_000;
 
@@ -10,9 +22,14 @@ let nanoAvailabilityCache: {
   result: Awaited<ReturnType<typeof isNanoAvailableUncached>>;
 } | null = null;
 
+type LanguageModelExpected = {
+  type: "text" | "image" | "audio";
+  languages?: readonly NanoOutputLanguage[];
+};
+
 type LanguageModelRequestOptions = {
-  outputLanguage?: NanoOutputLanguage;
-  language?: NanoOutputLanguage;
+  expectedInputs?: readonly LanguageModelExpected[];
+  expectedOutputs?: readonly LanguageModelExpected[];
   initialPrompts?: Array<{
     role: "system" | "user" | "assistant";
     content: string;
@@ -26,7 +43,7 @@ declare global {
   interface Window {
     LanguageModel?: {
       availability(
-        options?: Pick<LanguageModelRequestOptions, "outputLanguage">
+        options?: Pick<LanguageModelRequestOptions, "expectedInputs" | "expectedOutputs">
       ): Promise<
         "unavailable" | "downloadable" | "downloading" | "available"
       >;
@@ -65,7 +82,7 @@ async function isNanoAvailableUncached(): Promise<{
     };
   }
 
-  const lmOptions = { outputLanguage: NANO_OUTPUT_LANGUAGE } as const;
+  const lmOptions = NANO_LANGUAGE_OPTIONS;
   const diskHint =
     "Free disk space or use Cloud mode with a Gemini API key in Settings.";
 
@@ -134,8 +151,7 @@ export async function createNanoSession(
   }
 
   const session = await window.LanguageModel.create({
-    outputLanguage: NANO_OUTPUT_LANGUAGE,
-    language: NANO_OUTPUT_LANGUAGE,
+    ...NANO_LANGUAGE_OPTIONS,
     initialPrompts: systemPrompt
       ? [{ role: "system", content: systemPrompt }]
       : undefined,

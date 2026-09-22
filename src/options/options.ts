@@ -10,6 +10,7 @@ import { getEffectiveSettings } from "../shared/managed-policy";
 import { applyManagedLockout, stripLockedFields } from "./managed-ui";
 import type { HistoryImportProgress } from "../lib/history-import";
 import { injectBrandFontFacesInto } from "../styles/brand-fonts";
+import { siteBadgeColors, siteInitial } from "../lib/site-badge";
 
 const HISTORY_IDLE: HistoryImportProgress = {
   running: false,
@@ -171,19 +172,15 @@ function renderRecentList(recent: RecentRow[]): void {
     const li = document.createElement("li");
     li.className = "cx-recent-item";
     li.tabIndex = 0;
-    const letter = (r.host || "?").charAt(0).toUpperCase();
-    const fav = document.createElement("img");
-    fav.className = "cx-recent-favicon";
-    fav.width = 16;
-    fav.height = 16;
-    fav.alt = "";
-    fav.src = `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(r.host)}`;
-    fav.onerror = () => {
-      const fb = document.createElement("span");
-      fb.className = "cx-recent-fallback";
-      fb.textContent = letter;
-      fav.replaceWith(fb);
-    };
+    // Drawn here, never fetched: a favicon service would be told every
+    // domain in this list (core value 1).
+    const colors = siteBadgeColors(r.host);
+    const fav = document.createElement("span");
+    fav.className = "cx-recent-favicon cx-recent-fallback";
+    fav.setAttribute("aria-hidden", "true");
+    fav.style.background = colors.background;
+    fav.style.color = colors.text;
+    fav.textContent = siteInitial(r.host);
 
     const main = document.createElement("div");
     main.className = "cx-recent-main";

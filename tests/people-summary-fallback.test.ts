@@ -67,6 +67,39 @@ describe("people summary fallback", () => {
     expect(row!.summary).not.toContain("should not win");
   });
 
+  it("shows the profile, not the page's skip links and buttons", async () => {
+    await addProfileDoc(
+      "https://www.linkedin.com/in/rajesh/",
+      "Rajesh Ranjan | LinkedIn",
+      "Skip to sidebar Skip to primary content Skip to aside Rajesh Ranjan Founder at DataVero.io Data Analyst More Message Connect"
+    );
+    await upsertPerson({
+      kind: "person",
+      name: "Rajesh Ranjan",
+      headline: "",
+      company: "",
+      profileUrl: "https://www.linkedin.com/in/rajesh/",
+    });
+
+    const [row] = await listPeople({});
+    expect(row!.summary).toBe("Founder at DataVero.io Data Analyst");
+  });
+
+  it("cleans a summary an earlier release already stored", async () => {
+    await upsertPerson({
+      kind: "person",
+      name: "Linda Thurman",
+      headline: "Director",
+      company: "",
+      profileUrl: "https://www.linkedin.com/in/linda/",
+      summary: "Skip to primary content Linda Thurman Director for Student Prof. Dev. More Message Linda Thurman She/Her",
+    });
+
+    const [row] = await listPeople({});
+    expect(row!.summary).toBe("Director for Student Prof. Dev.");
+    expect(await listPeople({ q: "skip" })).toHaveLength(0);
+  });
+
   it("leaves the row alone when there is no page either", async () => {
     await upsertPerson({ kind: "person", name: "Ada Field", headline: "", company: "", profileUrl: "https://www.linkedin.com/in/ada/" });
     const [row] = await listPeople({});

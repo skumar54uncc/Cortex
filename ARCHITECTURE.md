@@ -324,7 +324,7 @@ The SW listener **ignores** `CORTEX_EMBED_TEXT` and `CORTEX_SEARCH_RUN` so only 
 - Tabs: **Search**, **Ask**, **Digest**.
 - Header: brand, **gear → settings**, close.
 - **Confidence badges** (`confidence.ts`): Strong / Good / Looser — uses **batch rank + grounding score** (`query-relevance.ts`).
-- Search: hybrid results, keyboard navigation, favicons.
+- Search: hybrid results, keyboard navigation, site badges drawn on the device.
 
 ### 10.2 Side panel shell (`search-shell.ts`)
 

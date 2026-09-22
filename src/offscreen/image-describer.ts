@@ -20,7 +20,7 @@ interface ImageLanguageModel {
  */
 const IMAGE_MODEL_OPTIONS = {
   outputLanguage: NANO_OUTPUT_LANGUAGE,
-  expectedInputs: [{ type: "text" }, { type: "image" }],
+  expectedInputs: [{ type: "text", languages: [NANO_OUTPUT_LANGUAGE] }, { type: "image" }],
   expectedOutputs: [{ type: "text", languages: [NANO_OUTPUT_LANGUAGE] }],
 };
 

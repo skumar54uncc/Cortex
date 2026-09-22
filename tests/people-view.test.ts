@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
-import { renderPeopleView, type PersonRow } from "../src/content/people-view";
+import { renderPeopleView, personSummaryLine, type PersonRow } from "../src/content/people-view";
 
 const rows: PersonRow[] = [
   { id: 1, kind: "person", name: "Mira <b>Okafor</b>", headline: "Head of Field Programs", company: "Tidora", profileUrl: "https://www.linkedin.com/in/mira/", lastSeen: Date.now(), visitCount: 3 },
@@ -158,5 +158,42 @@ describe("People view", () => {
     await renderPeopleView(container, deps);
     expect(container.querySelector("a")).toBeNull();
     expect(container.querySelector(".cortex-person-name")?.textContent).toContain("Mira");
+  });
+});
+
+/**
+ * The card already shows the headline, so a summary that only repeats it in
+ * different punctuation is noise: LinkedIn writes the headline as the first
+ * line of the profile text, which is where the summary comes from.
+ */
+describe("personSummaryLine", () => {
+  const row = (headline: string, summary: string): PersonRow => ({
+    id: 1,
+    kind: "person",
+    name: "Laxman Kumar",
+    headline,
+    company: "T-Mobile",
+    profileUrl: "https://www.linkedin.com/in/laxman/",
+    lastSeen: Date.now(),
+    visitCount: 1,
+    summary,
+  });
+
+  it("drops a summary that is the headline with other separators", () => {
+    expect(
+      personSummaryLine(
+        row("Senior FDE at T-Mobile | Agentic AI Development | Ex-Google", "Senior FDE at T-Mobile Agentic AI Development Ex-Google")
+      )
+    ).toBe("");
+  });
+
+  it("keeps a summary that says more than the headline", () => {
+    expect(personSummaryLine(row("Senior FDE at T-Mobile", "Senior FDE at T-Mobile. Writes about agent evaluation."))).toBe(
+      "Senior FDE at T-Mobile. Writes about agent evaluation."
+    );
+  });
+
+  it("has nothing to show when there is no summary", () => {
+    expect(personSummaryLine(row("Senior FDE", ""))).toBe("");
   });
 });

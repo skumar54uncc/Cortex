@@ -11,6 +11,7 @@
 import { db, type PersonRecord } from "../db/schema";
 import { parseQuestion } from "./chat/question-parser";
 import { buildProfileSummary, resolveProfileName } from "./capture/linkedin";
+import { cleanProfileSummary } from "./capture/text-noise";
 import type { LinkedInEntity, LinkedInRole } from "./capture/linkedin";
 
 /**
@@ -158,7 +159,9 @@ function urlLabel(profileUrl: string): string {
  */
 function repairedRow(p: PersonRecord): PersonRecord {
   const name = resolveProfileName([p.name], p.profileUrl) || urlLabel(p.profileUrl) || s(p.name);
-  const summary = s(p.summary) || buildProfileSummary({ ...p, name });
+  // Summaries stored before the page chrome was stripped still read
+  // "Skip to primary content ..."; clean them for display and for search.
+  const summary = cleanProfileSummary(s(p.summary), name) || buildProfileSummary({ ...p, name });
   if (name === p.name && summary === (p.summary ?? "")) return p;
   return { ...p, name, ...(summary ? { summary } : {}) };
 }
@@ -172,12 +175,13 @@ async function summaryFromIndexedProfile(rows: PersonRecord[]): Promise<PersonRe
   const missing = rows.filter((p) => !s(p.summary) && p.profileUrl);
   if (!missing.length) return rows;
   const wanted = new Set(missing.map((p) => p.profileUrl));
+  const nameByUrl = new Map(missing.map((p) => [p.profileUrl, p.name] as const));
   const byUrl = new Map<string, string>();
   for (const doc of await db.documents.toArray()) {
     const url = String(doc.url ?? "");
     if (!wanted.has(url)) continue;
-    const text = String(doc.summary ?? "").replace(/\s+/g, " ").trim();
-    if (text) byUrl.set(url, text.slice(0, 200));
+    const text = cleanProfileSummary(String(doc.summary ?? ""), nameByUrl.get(url) ?? "");
+    if (text) byUrl.set(url, text);
   }
   if (!byUrl.size) return rows;
   return rows.map((p) => {

@@ -46,6 +46,16 @@ Automated grep targets: `innerHTML`, `outerHTML`, `document.write`, `eval(`.
 | `src/search/search-shell.ts` load error | was `document.body.innerHTML` with the raw error message (since 1.0.x); now a `<pre>` with `textContent` (`tests/search-shell-error.test.ts`) | **Fixed** |
 | `src/lib/export/markdown-vault.ts` | not a DOM sink; writes Markdown files. Page text has `<` escaped as `&lt;` so a Markdown viewer that renders HTML shows it as text | **Safe** |
 
+## Owner review round 3 (site badges)
+
+| File | Sinks | Verdict |
+|------|-------|---------|
+| `src/content/overlay.ts` `siteBadgeHtml` | interpolated into the existing `results.innerHTML` template; the host goes through `esc()` into a `data-cortex-host` attribute and the letter through `esc()` as text | **Safe**: every interpolation escaped, no `style` attribute for a page CSP to reject |
+| `src/content/overlay.ts` `paintSiteBadges` | none: reads `dataset.cortexHost` and sets `style.background` / `style.color` through CSSOM | **Safe** |
+| `src/content/overlay.ts` digest source rows | `siteBadgeElement`: `createElement`, `textContent`, CSSOM | **Safe** |
+| `src/options/options.ts` recent list | `createElement`, `textContent`, CSSOM | **Safe** |
+| `src/lib/capture/text-noise.ts`, `src/lib/site-badge.ts` | not DOM sinks: string in, string out | **Safe** |
+
 ## Follow-up
 
 Re-run when changing hit templates or adding new HTML sinks:

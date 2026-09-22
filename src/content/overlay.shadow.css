@@ -14,6 +14,40 @@
   /* Host sits in the page DOM: reset inherited user-select so inputs show a caret */
   user-select: none;
   -webkit-user-select: none;
+  /*
+   * scrollbar-width inherits from the page, and a site that hides its own
+   * scrollbars would otherwise hide the panel's. Stating the initial value
+   * blocks that while leaving the styled scrollbar below in charge: Chrome
+   * ignores ::-webkit-scrollbar once scrollbar-width or scrollbar-color is
+   * set to anything else.
+   */
+  scrollbar-width: auto;
+}
+
+/* A scrollbar that is always visible, on every list inside the panel. */
+.cortex-panel ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.cortex-panel ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cortex-panel ::-webkit-scrollbar-thumb {
+  background: var(--cx-text-subtle);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+.cortex-panel ::-webkit-scrollbar-thumb:hover {
+  background: var(--cx-text-muted);
+  background-clip: content-box;
+}
+
+.cortex-panel ::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .cortex-shell {
@@ -367,13 +401,36 @@
   display: block;
   width: 20px;
   height: 20px;
-  object-fit: contain;
 }
 
 .cortex-hit-favicon-placeholder {
   display: block;
   width: 20px;
   height: 20px;
+}
+
+/*
+ * The site badge is drawn here from the host name. It replaced a favicon
+ * fetched from Google, which told a third party every domain the user read.
+ * The colour comes from the host and is set on the element itself.
+ */
+.cortex-site-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.cortex-digest-source-favicon.cortex-site-badge {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
 }
 
 .cortex-hit-main-col {
@@ -1753,19 +1810,35 @@
 }
 
 /* People tab (Phase 5.1) */
+/*
+ * A flex item's automatic minimum size is its content, so this wrapper used
+ * to refuse to shrink: the list ran past the bottom of the panel and nothing
+ * was scrollable. The filter stays put; the list below it scrolls.
+ */
+.cortex-people-host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .cortex-people {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 12px 14px 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .cortex-people-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 14px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;

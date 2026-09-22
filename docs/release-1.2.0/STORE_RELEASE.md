@@ -52,6 +52,7 @@ Everything below is stored only in the browser's local storage (IndexedDB) on th
 | Image pixels | not used | only if the user turns on image descriptions: up to 5 images per page, already loaded by the page, described by Chrome's built-in on-device model. Pixels are never stored and never sent anywhere. |
 | Sent off the device | if the user turns on cloud chat with their own Gemini API key: the question and the retrieved text snippets go to Google's Gemini API | unchanged, same opt-in. Snippets may now come from captions, tables, PDFs and image text. Never images, PDF files or whole pages; on-device image descriptions are removed before any cloud request. |
 | Exported files | none | the user can save a Markdown export or a JSON backup to their own disk. Backups never contain settings or the Gemini key. |
+| Site icons in the panel | fetched from Google's favicon service, one request per domain the user had read | drawn on the device from the host name. No request leaves the machine. |
 | Analytics, telemetry, ads, sale or transfer of data | none | none |
 
 ### Privacy practices form: the answers to submit

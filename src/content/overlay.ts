@@ -30,6 +30,7 @@ import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
 import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
 import { createForgetMenu } from "./forget-menu";
 import { renderPeopleView, type PersonRow } from "./people-view";
+import { siteBadgeColors, siteInitial } from "../lib/site-badge";
 import { createScopeBar, type ScopeCollection } from "./scope-bar";
 import { applyThemeToHost, themeTokensCss } from "../shared/theme";
 import { getUserSettings } from "../shared/extension-settings";
@@ -207,10 +208,36 @@ export function mountOverlay(opts?: MountOverlayOptions): void {
   });
 }
 
-function faviconUrlForHost(hostname: string): string {
-  const h = hostname.trim().toLowerCase();
-  if (!h) return "";
-  return `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(h)}`;
+/**
+ * The site badge, drawn here. This used to be a favicon fetched from Google,
+ * which told a third party every domain the user had read (core value 1).
+ */
+function siteBadgeHtml(hostname: string, className: string): string {
+  // The colour is applied afterwards by paintSiteBadges, so this markup
+  // carries no style attribute for a strict page CSP to reject.
+  return `<span class="${className} cortex-site-badge" aria-hidden="true" data-cortex-host="${esc(
+    hostname
+  )}">${esc(siteInitial(hostname))}</span>`;
+}
+
+/** Colours the badges written as markup, through CSSOM rather than markup. */
+function paintSiteBadges(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>(".cortex-site-badge[data-cortex-host]").forEach((el) => {
+    const { background, text } = siteBadgeColors(el.dataset.cortexHost ?? "");
+    el.style.background = background;
+    el.style.color = text;
+  });
+}
+
+function siteBadgeElement(hostname: string, className: string): HTMLElement {
+  const { background, text } = siteBadgeColors(hostname);
+  const span = document.createElement("span");
+  span.className = `${className} cortex-site-badge`;
+  span.setAttribute("aria-hidden", "true");
+  span.style.background = background;
+  span.style.color = text;
+  span.textContent = siteInitial(hostname);
+  return span;
 }
 
 type OverlayMode = "search" | "ask" | "digest" | "people";
@@ -832,7 +859,10 @@ ${shadowCss}`;
   let askMessagesEl: HTMLElement | null = null;
   let askTextareaEl: HTMLTextAreaElement | null = null;
 
-  let activeDigestRange: DigestRange = "yesterday";
+  // Today first: the tab opened on an empty "Yesterday" for anyone who had
+  // been reading all day. When today really is empty, loadDigest falls back.
+  let activeDigestRange: DigestRange = "today";
+  let digestFellBack = false;
   let digestRangeButtons: HTMLButtonElement[] = [];
 
   function openSearchWithQuery(query: string): void {
@@ -1299,7 +1329,7 @@ ${shadowCss}`;
 
     const section = document.createElement("section");
     section.className = "cortex-digest-section";
-    const heading = document.createElement("h3");
+    const heading = document.createElement("h2");
     heading.className = "cortex-digest-section-label";
     heading.textContent = "What you saw, site by site";
     const list = document.createElement("ul");
@@ -1388,7 +1418,7 @@ ${shadowCss}`;
     if (digest.topics.length > 0) {
       const topicsSection = document.createElement("section");
       topicsSection.className = "cortex-digest-section";
-      const topicsHeading = document.createElement("h3");
+      const topicsHeading = document.createElement("h2");
       topicsHeading.className = "cortex-digest-section-label";
       topicsHeading.textContent = "Top topics";
       const topicsHint = document.createElement("p");
@@ -1425,7 +1455,7 @@ ${shadowCss}`;
     if (digest.insights.length > 0) {
       const insightsSection = document.createElement("section");
       insightsSection.className = "cortex-digest-section";
-      const insightsHeading = document.createElement("h3");
+      const insightsHeading = document.createElement("h2");
       insightsHeading.className = "cortex-digest-section-label";
       insightsHeading.textContent = "Notable findings";
 
@@ -1475,16 +1505,7 @@ ${shadowCss}`;
         const li = document.createElement("li");
         li.className = "cortex-digest-source-row";
 
-        const fav = faviconUrlForHost(s.domain);
-        if (fav) {
-          const img = document.createElement("img");
-          img.className = "cortex-digest-source-favicon";
-          img.src = fav;
-          img.alt = "";
-          img.width = 16;
-          img.height = 16;
-          li.appendChild(img);
-        }
+        li.appendChild(siteBadgeElement(s.domain, "cortex-digest-source-favicon"));
 
         const main = document.createElement("div");
         main.className = "cortex-digest-source-main";
@@ -1566,6 +1587,13 @@ ${shadowCss}`;
           );
         }),
       ]);
+
+      // Nothing today, and the day has just started: show yesterday instead.
+      if (digest.pageCount === 0 && range === "today" && !digestFellBack) {
+        digestFellBack = true;
+        await loadDigest("yesterday", content);
+        return;
+      }
 
       content.innerHTML = "";
       content.appendChild(renderDigestUI(digest));
@@ -1702,10 +1730,7 @@ ${shadowCss}`;
               const tier = confidenceTier(scoreNum, maxScore, ground);
               const titleAttr = `Blend score ${scoreNum.toFixed(3)} · batch-relative ${tier.relative.toFixed(2)} · term alignment ${(ground * 100).toFixed(0)}%`;
 
-              const fav = faviconUrlForHost(hostName);
-              const favHtml = fav
-                ? `<img class="cortex-hit-favicon" src="${esc(fav)}" alt="" width="20" height="20" loading="lazy" />`
-                : `<span class="cortex-hit-favicon cortex-hit-favicon-placeholder" aria-hidden="true"></span>`;
+              const favHtml = siteBadgeHtml(hostName, "cortex-hit-favicon");
 
               const extra = h.matchReason
                 ? `<div class="cortex-hit-extra">${esc(h.matchReason)}</div>`
@@ -1737,6 +1762,7 @@ ${shadowCss}`;
             .join("");
 
           results.innerHTML = `${evidenceBlock}<div class="cortex-hit-list" role="list" aria-label="Matching pages">${rows}</div>`;
+          paintSiteBadges(results);
 
           announcePolite(
             `${res.hits.length} result${res.hits.length === 1 ? "" : "s"} found`
@@ -1973,7 +1999,10 @@ ${shadowCss}`;
         btn.className = "cortex-digest-range-btn";
         btn.textContent = label;
         btn.setAttribute("data-digest-range", key);
-        btn.addEventListener("click", () => void loadDigest(key, content));
+        btn.addEventListener("click", () => {
+        digestFellBack = true;
+        void loadDigest(key, content);
+      });
         rangeBar.appendChild(btn);
         digestRangeButtons.push(btn);
       }

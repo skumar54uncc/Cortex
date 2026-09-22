@@ -117,7 +117,11 @@ export const FAKE_NANO_SCRIPT = (tokens: string[]): string => `(() => {
       destroy() {},
       prompt: async () => "",
       promptStreaming: (input) => {
-        window.__cortexE2EPrompts.push({ system: JSON.stringify(opts?.initialPrompts ?? []), input });
+        window.__cortexE2EPrompts.push({
+          system: JSON.stringify(opts?.initialPrompts ?? []),
+          options: JSON.stringify(opts ?? {}),
+          input,
+        });
         const toks = ${JSON.stringify(tokens)};
         return new ReadableStream({
           start(c) { for (const t of toks) c.enqueue(t); c.close(); },
@@ -127,6 +131,69 @@ export const FAKE_NANO_SCRIPT = (tokens: string[]): string => `(() => {
   };
   return true;
 })()`;
+
+export interface ConsoleProblem {
+  /** Which extension page said it: offscreen.html, the service worker, ... */
+  source: string;
+  level: string;
+  text: string;
+}
+
+/**
+ * Every warning and error Chrome logs against the extension's own targets,
+ * including the ones no page listener sees (the offscreen document and the
+ * service worker). Browser level messages, such as the Prompt API complaining
+ * that a request named no output language, arrive as Log.entryAdded.
+ */
+export async function recordExtensionConsole(cdp: BrowserCdp): Promise<ConsoleProblem[]> {
+  const problems: ConsoleProblem[] = [];
+  const urlBySession = new Map<string, string>();
+  const label = (sessionId?: string): string => {
+    const url = urlBySession.get(String(sessionId)) ?? "";
+    return url.split("/").pop() || url || "unknown";
+  };
+
+  cdp.on("Log.entryAdded", (p, sessionId) => {
+    const entry = p.entry as { level?: string; text?: string; url?: string };
+    if (entry.level !== "error" && entry.level !== "warning") return;
+    // "Failed to load resource" on its own never says what failed.
+    const where = entry.url ? ` [${entry.url}]` : "";
+    problems.push({ source: label(sessionId), level: String(entry.level), text: `${entry.text ?? ""}${where}` });
+  });
+  cdp.on("Runtime.exceptionThrown", (p, sessionId) => {
+    const d = p.exceptionDetails as { text?: string; exception?: { description?: string } };
+    problems.push({
+      source: label(sessionId),
+      level: "error",
+      text: String(d.exception?.description ?? d.text ?? ""),
+    });
+  });
+  cdp.on("Runtime.consoleAPICalled", (p, sessionId) => {
+    const type = String(p.type ?? "");
+    if (type !== "error" && type !== "warning") return;
+    const args = (p.args as { value?: unknown; description?: string }[]) ?? [];
+    problems.push({
+      source: label(sessionId),
+      level: type,
+      text: args.map((a) => String(a.value ?? a.description ?? "")).join(" "),
+    });
+  });
+
+  cdp.on("Target.attachedToTarget", (p) => {
+    const sid = String(p.sessionId);
+    const info = p.targetInfo as { type?: string; url?: string };
+    urlBySession.set(sid, String(info.url ?? ""));
+    void (async () => {
+      if (info.type !== "browser_ui") {
+        await cdp.send("Log.enable", {}, sid).catch(() => undefined);
+        await cdp.send("Runtime.enable", {}, sid).catch(() => undefined);
+      }
+      await cdp.send("Runtime.runIfWaitingForDebugger", {}, sid).catch(() => undefined);
+    })();
+  });
+  await cdp.send("Target.setAutoAttach", { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+  return problems;
+}
 
 /**
  * Records every network request made by the offscreen document from the

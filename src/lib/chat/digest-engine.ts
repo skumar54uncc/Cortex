@@ -474,20 +474,21 @@ export async function generateDigest(
     timeRange: undefined,
   };
 
-  const route: RouteDecision = await decideRoute(
-    prompt,
-    fakeQuestion,
-    settings
-  );
-
+  /*
+   * Without a model there is no narrative, but there is still a digest: the
+   * pages of the period, grouped by site, come from the library alone. The
+   * tab used to show the model's error and nothing else.
+   */
   let rawOut = "";
-  for await (const token of streamAnswer(
-    prompt,
-    DIGEST_SYSTEM_PROMPT,
-    route,
-    settings
-  )) {
-    rawOut += token;
+  let modelNote = "";
+  try {
+    const route: RouteDecision = await decideRoute(prompt, fakeQuestion, settings);
+    for await (const token of streamAnswer(prompt, DIGEST_SYSTEM_PROMPT, route, settings)) {
+      rawOut += token;
+    }
+  } catch (e) {
+    const why = e instanceof Error ? e.message : String(e);
+    modelNote = `${why} Cortex listed the pages below from your own library, without a model.`;
   }
 
   const parsedOut = parseDigestOutput(rawOut, packed);
@@ -501,8 +502,8 @@ export async function generateDigest(
     generatedAt: Date.now(),
     pageCount: docs.length,
     domainsCount: new Set(docs.map((d) => d.domain)).size,
-    narrative: parsedOut.narrative,
-    narrativeParts: parsedOut.narrativeParts,
+    narrative: modelNote || parsedOut.narrative,
+    narrativeParts: modelNote ? [{ text: modelNote, sourceIndexes: [] }] : parsedOut.narrativeParts,
     topics: parsedOut.topics,
     insights: parsedOut.insights,
     sources,
@@ -510,6 +511,8 @@ export async function generateDigest(
     citationsFromModel: parsedOut.citationsFromModel,
   };
 
-  await saveDigestToCache(request.range, result);
+  // A digest with no narrative is not worth caching: the next open should
+  // try the model again.
+  if (!modelNote) await saveDigestToCache(request.range, result);
   return result;
 }

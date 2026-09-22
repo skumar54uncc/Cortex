@@ -18,7 +18,7 @@ Decisions made where the spec left room for interpretation. All aim at Linear / 
 
 ## Favicons in recent activity
 
-- Google s2 favicon API by hostname (works under extension CSP) with letter fallback on error—not `chrome://favicon/` (unreliable from extension pages).
+- Site badges are drawn on the device from the host name (one letter on a colour derived from the host, `src/lib/site-badge.ts`). Release 1.2.0 removed the Google s2 favicon API: it sent one request per domain the user had read to a third party, which core value 1 forbids. `chrome://favicon/` was not used either (unreliable from extension pages, and it needs a permission).
 
 ## History import running state
 

@@ -34,12 +34,13 @@ export interface PersonRow {
 export function personSummaryLine(p: PersonRow): string {
   const summary = String(p.summary ?? "").replace(/\s+/g, " ").trim();
   if (!summary) return "";
+  // Punctuation aside, LinkedIn's headline and the first line of the profile
+  // text are the same sentence, and the card already shows the headline.
   const norm = (s: string): string =>
     String(s ?? "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/[.\s]+$/, "")
-      .toLowerCase();
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
   return norm(summary) === norm(p.headline) ? "" : summary;
 }
 

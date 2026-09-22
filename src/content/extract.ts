@@ -1,4 +1,5 @@
 import { Readability } from "@mozilla/readability";
+import { stripIndexedTextNoise } from "../lib/capture/text-noise";
 
 export interface ExtractResult {
   title: string;
@@ -37,6 +38,11 @@ function stripSiteChromeLandmarks(
   for (const sel of skipSelectors) {
     root.querySelectorAll(sel).forEach((el) => el.parentNode?.removeChild(el));
   }
+  // Sites name their skip links every way there is ("Skip to sidebar", "Skip
+  // to aside"), so match what the link says rather than what it is called.
+  root.querySelectorAll('a[href^="#"]').forEach((el) => {
+    if (/^\s*skip to\b/i.test(el.textContent ?? "")) el.parentNode?.removeChild(el);
+  });
 
   const host = hostname.toLowerCase();
   if (!host.includes("linkedin.com")) return;
@@ -57,31 +63,6 @@ function stripSiteChromeLandmarks(
   for (const sel of rm) {
     root.querySelectorAll(sel).forEach((el) => el.parentNode?.removeChild(el));
   }
-}
-
-/** Collapse repeated LinkedIn / a11y chrome that still leaks into extracted strings */
-function stripIndexedTextNoise(text: string, hostname: string): string {
-  let t = text.replace(/\s+/g, " ").trim();
-  if (!t) return t;
-
-  const patterns: RegExp[] = [
-    /\bskip to (?:main )?content\b/gi,
-    /\bskip to search\b/gi,
-    /\bclicked?\s+apply\b/gi,
-    /\d+\s+notifications?\b/gi,
-    /\bJob moved to\b[^.]{0,120}\./gi,
-    /\bUnder\b\s+Clicked apply\b/gi,
-    /\bOpen\s+(?:candidate\s+)?profile\b/gi,
-  ];
-
-  if (hostname.toLowerCase().includes("linkedin.com")) {
-    patterns.push(
-      /(\b(?:Home|My Network|Jobs|Messaging|Notifications|Me|For Business|Advertise)\b\s*){4,}/gi
-    );
-  }
-
-  for (const re of patterns) t = t.replace(re, " ");
-  return t.replace(/\s+/g, " ").trim();
 }
 
 /**

@@ -29,7 +29,7 @@ describe("promptApiImageDescriber", () => {
       const o = call[0] as { outputLanguage?: string; expectedInputs?: unknown; expectedOutputs?: { languages?: string[] }[] };
       expect(o.outputLanguage).toBe("en");
       expect(o.expectedOutputs?.[0]?.languages).toEqual(["en"]);
-      expect(o.expectedInputs).toEqual([{ type: "text" }, { type: "image" }]);
+      expect(o.expectedInputs).toEqual([{ type: "text", languages: ["en"] }, { type: "image" }]);
     }
   });
 
