@@ -4,6 +4,7 @@ import {
   choosePanelMode,
   isKeyboardCapturingHost,
   normalizePanelPreference,
+  panelSurfaceForGesture,
   type ChoosePanelModeInput,
   type PanelMode,
   type PanelModeReason,
@@ -428,6 +429,31 @@ const TABLE: Row[] = [
     reason: "default",
   },
   {
+    name: "a YouTube video page",
+    url: "https://www.youtube.com/watch?v=abc",
+    mode: "side-panel",
+    reason: "keyboard-capturing-host",
+  },
+  {
+    name: "YouTube Music, a subdomain of the same entry",
+    url: "https://music.youtube.com/watch?v=abc",
+    mode: "side-panel",
+    reason: "keyboard-capturing-host",
+  },
+  {
+    name: "youtube.com.example is not youtube.com",
+    url: "https://youtube.com.example/watch",
+    mode: "overlay",
+    reason: "default",
+  },
+  {
+    name: "the owner can still pin the overlay on YouTube",
+    url: "https://www.youtube.com/watch?v=abc",
+    preference: "always-overlay",
+    mode: "overlay",
+    reason: "user-preference",
+  },
+  {
     name: "github.com (not the web editor) keeps the overlay",
     url: "https://github.com/owner/repo/blob/main/index.ts",
     mode: "overlay",
@@ -444,12 +470,6 @@ const TABLE: Row[] = [
   {
     name: "an ordinary http page",
     url: "http://localhost:3000/app",
-    mode: "overlay",
-    reason: "default",
-  },
-  {
-    name: "youtube keeps the overlay (the key shield handles it)",
-    url: "https://www.youtube.com/watch?v=abc",
     mode: "overlay",
     reason: "default",
   },
@@ -533,6 +553,142 @@ describe("normalizePanelPreference", () => {
     expect(normalizePanelPreference("")).toBe("auto");
     expect(normalizePanelPreference("sidepanel")).toBe("auto");
     expect(normalizePanelPreference(true)).toBe("auto");
+  });
+});
+
+describe("panelSurfaceForGesture", () => {
+  /**
+   * chrome.sidePanel.open() needs a user gesture. A content-script keydown
+   * (double Shift) does not carry one into the worker, so injectable
+   * side-panel hosts must dock the in-page overlay instead of popping a window.
+   */
+  function surface(
+    url: string,
+    hasUserGesture: boolean,
+    preference?: PanelPreference
+  ) {
+    return panelSurfaceForGesture(
+      choosePanelMode({ url, userPreference: preference }),
+      hasUserGesture
+    );
+  }
+
+  it("keeps the centred overlay on an ordinary page, gesture or not", () => {
+    expect(surface("https://example.com/article", true)).toBe("overlay");
+    expect(surface("https://example.com/article", false)).toBe("overlay");
+  });
+
+  it("opens the real side panel on YouTube when the caller still has a gesture", () => {
+    expect(surface("https://www.youtube.com/watch?v=abc", true)).toBe(
+      "side-panel"
+    );
+  });
+
+  it("docks the in-page overlay on YouTube when there is no gesture", () => {
+    expect(surface("https://www.youtube.com/watch?v=abc", false)).toBe(
+      "docked-overlay"
+    );
+    expect(surface("https://music.youtube.com/watch?v=abc", false)).toBe(
+      "docked-overlay"
+    );
+  });
+
+  it("docks on every keyboard-capturing host without a gesture", () => {
+    expect(surface("https://claude.ai/chat/1", false)).toBe("docked-overlay");
+    expect(surface("https://docs.google.com/document/d/1", false)).toBe(
+      "docked-overlay"
+    );
+  });
+
+  it("still opens the real side panel on those hosts when a gesture is present", () => {
+    expect(surface("https://claude.ai/chat/1", true)).toBe("side-panel");
+  });
+
+  it("docks when the user pinned the side panel on an injectable page, without a gesture", () => {
+    expect(
+      surface("https://example.com/article", false, "always-side-panel")
+    ).toBe("docked-overlay");
+  });
+
+  it("honours always-overlay on YouTube even without a gesture", () => {
+    expect(
+      surface("https://www.youtube.com/watch?v=abc", false, "always-overlay")
+    ).toBe("overlay");
+    expect(
+      surface("https://www.youtube.com/watch?v=abc", true, "always-overlay")
+    ).toBe("overlay");
+  });
+
+  it("cannot dock on a page Cortex cannot inject into", () => {
+    expect(surface("chrome://extensions", false)).toBe("side-panel");
+    expect(surface("https://example.com/report.pdf", false)).toBe("side-panel");
+    expect(
+      surface("https://chromewebstore.google.com/detail/cortex/abcdef", false)
+    ).toBe("side-panel");
+  });
+
+  it("covers every choosePanelMode reason, with and without a gesture", () => {
+    const cases: Array<{
+      url: string;
+      preference?: PanelPreference;
+      reason: PanelModeReason;
+      withGesture: "overlay" | "side-panel" | "docked-overlay";
+      withoutGesture: "overlay" | "side-panel" | "docked-overlay";
+    }> = [
+      {
+        url: "chrome://newtab/",
+        reason: "not-injectable",
+        withGesture: "side-panel",
+        withoutGesture: "side-panel",
+      },
+      {
+        url: "https://chromewebstore.google.com/detail/x/y",
+        reason: "extension-gallery",
+        withGesture: "side-panel",
+        withoutGesture: "side-panel",
+      },
+      {
+        url: "https://example.com/a.pdf",
+        reason: "pdf",
+        withGesture: "side-panel",
+        withoutGesture: "side-panel",
+      },
+      {
+        url: "https://example.com/",
+        preference: "always-side-panel",
+        reason: "user-preference",
+        withGesture: "side-panel",
+        withoutGesture: "docked-overlay",
+      },
+      {
+        url: "https://youtube.com/watch?v=1",
+        preference: "always-overlay",
+        reason: "user-preference",
+        withGesture: "overlay",
+        withoutGesture: "overlay",
+      },
+      {
+        url: "https://www.youtube.com/watch?v=1",
+        reason: "keyboard-capturing-host",
+        withGesture: "side-panel",
+        withoutGesture: "docked-overlay",
+      },
+      {
+        url: "https://example.com/blog",
+        reason: "default",
+        withGesture: "overlay",
+        withoutGesture: "overlay",
+      },
+    ];
+    for (const row of cases) {
+      const decision = choosePanelMode({
+        url: row.url,
+        userPreference: row.preference,
+      });
+      expect(decision.reason).toBe(row.reason);
+      expect(panelSurfaceForGesture(decision, true)).toBe(row.withGesture);
+      expect(panelSurfaceForGesture(decision, false)).toBe(row.withoutGesture);
+    }
   });
 });
 

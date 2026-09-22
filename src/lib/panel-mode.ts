@@ -47,6 +47,15 @@ export interface PanelModeDecision {
   matchedHost?: string;
 }
 
+/**
+ * The surface a caller can actually open, given whether it still holds a
+ * user gesture. `chrome.sidePanel.open()` only works inside one (toolbar
+ * click, chrome.commands). A keydown in a content script does not carry
+ * one into the service worker, so that path would fall through to a popup
+ * window. When the page can host the overlay, dock it instead.
+ */
+export type PanelSurface = "overlay" | "side-panel" | "docked-overlay";
+
 export interface ChoosePanelModeInput {
   /** `chrome.tabs.Tab.url`, which may be missing on a tab Cortex cannot see. */
   url: string | undefined | null;
@@ -67,8 +76,8 @@ export interface ChoosePanelModeInput {
  * the entry and a subdomain of it automatically.
  *
  * The bar for this list is focus theft, not key binding. A site that only
- * cancels keys (YouTube, GitHub's single-letter shortcuts) is handled by the
- * key shield and keeps the nicer in-page overlay.
+ * cancels keys (GitHub's single-letter shortcuts) is handled by the key
+ * shield and keeps the nicer in-page overlay.
  */
 export const KEYBOARD_CAPTURING_HOSTS: readonly string[] = [
   // Chat apps that re-focus their composer on every render.
@@ -86,6 +95,10 @@ export const KEYBOARD_CAPTURING_HOSTS: readonly string[] = [
   "notion.so",
   "notion.com",
   "overleaf.com", // CodeMirror 6.
+  // The player owns the keyboard: every letter is a control (k, j, l, f, t,
+  // c), "/" jumps to search, and the page pulls focus back to the player
+  // after an ad or a chapter change. The owner asked for the side panel here.
+  "youtube.com",
   // Canvas apps: the whole document is a keyboard-driven tool palette.
   "figma.com",
   "excalidraw.com",
@@ -232,4 +245,27 @@ export function choosePanelMode(
     reason: "default",
     detail: "Cortex opens on the page.",
   };
+}
+
+/**
+ * Map a panel-mode decision onto a surface the caller can open right now.
+ *
+ * Restricted pages (chrome://, PDFs, the Web Store) cannot run a content
+ * script, so they keep the side-panel path and its popup fallback even
+ * when there is no gesture. Injectable pages that wanted the side panel
+ * get the docked in-page overlay instead of a floating window.
+ */
+export function panelSurfaceForGesture(
+  decision: PanelModeDecision,
+  hasUserGesture: boolean
+): PanelSurface {
+  if (decision.mode === "overlay") return "overlay";
+  if (hasUserGesture) return "side-panel";
+  if (
+    decision.reason === "keyboard-capturing-host" ||
+    decision.reason === "user-preference"
+  ) {
+    return "docked-overlay";
+  }
+  return "side-panel";
 }

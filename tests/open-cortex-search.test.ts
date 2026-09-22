@@ -159,6 +159,99 @@ describe("openCortexSearchForTab", () => {
     expect(mocks.openSearchSidePanelReliable).not.toHaveBeenCalled();
   });
 
+  it("docks the overlay on YouTube when the caller has no user gesture", async () => {
+    const openSearchOnTab = vi.fn().mockResolvedValue(true);
+
+    await openCortexSearchForTab(
+      {
+        id: 12,
+        windowId: 4,
+        url: "https://www.youtube.com/watch?v=abc",
+      } as chrome.tabs.Tab,
+      openSearchOnTab,
+      { userGesture: false }
+    );
+
+    expect(openSearchOnTab).toHaveBeenCalledWith(12, { docked: true });
+    expect(mocks.openSearchSidePanelReliable).not.toHaveBeenCalled();
+  });
+
+  it("still opens the real side panel on YouTube when a gesture is present", async () => {
+    const openSearchOnTab = vi.fn().mockResolvedValue(true);
+
+    await openCortexSearchForTab(
+      {
+        id: 13,
+        windowId: 4,
+        url: "https://www.youtube.com/watch?v=abc",
+      } as chrome.tabs.Tab,
+      openSearchOnTab,
+      { userGesture: true }
+    );
+
+    expect(openSearchOnTab).not.toHaveBeenCalled();
+    expect(mocks.openSearchSidePanelReliable).toHaveBeenCalledWith(
+      4,
+      13,
+      "https://www.youtube.com/watch?v=abc"
+    );
+  });
+
+  it("docks when the user pinned the side panel, but there is no gesture", async () => {
+    const openSearchOnTab = vi.fn().mockResolvedValue(true);
+
+    await openCortexSearchForTab(
+      {
+        id: 14,
+        windowId: 4,
+        url: "https://example.com",
+      } as chrome.tabs.Tab,
+      openSearchOnTab,
+      { userPreference: "always-side-panel", userGesture: false }
+    );
+
+    expect(openSearchOnTab).toHaveBeenCalledWith(14, { docked: true });
+    expect(mocks.openSearchSidePanelReliable).not.toHaveBeenCalled();
+  });
+
+  it("keeps the centred overlay on YouTube when the owner pinned always-overlay", async () => {
+    const openSearchOnTab = vi.fn().mockResolvedValue(true);
+
+    await openCortexSearchForTab(
+      {
+        id: 15,
+        windowId: 4,
+        url: "https://www.youtube.com/watch?v=abc",
+      } as chrome.tabs.Tab,
+      openSearchOnTab,
+      { userPreference: "always-overlay", userGesture: false }
+    );
+
+    expect(openSearchOnTab).toHaveBeenCalledWith(15);
+    expect(mocks.openSearchSidePanelReliable).not.toHaveBeenCalled();
+  });
+
+  it("cannot dock on chrome:// even without a gesture", async () => {
+    const openSearchOnTab = vi.fn();
+
+    await openCortexSearchForTab(
+      {
+        id: 16,
+        windowId: 1,
+        url: "chrome://extensions",
+      } as chrome.tabs.Tab,
+      openSearchOnTab,
+      { userGesture: false }
+    );
+
+    expect(openSearchOnTab).not.toHaveBeenCalled();
+    expect(mocks.openSearchSidePanelReliable).toHaveBeenCalledWith(
+      1,
+      16,
+      "chrome://extensions"
+    );
+  });
+
   it("falls back to the side panel when the tab has no id", async () => {
     const openSearchOnTab = vi.fn();
 

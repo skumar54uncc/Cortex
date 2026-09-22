@@ -130,6 +130,52 @@
   min-height: 100%;
 }
 
+/*
+ * In-page dock: used when the side panel is wanted but there is no user
+ * gesture for chrome.sidePanel.open() (double Shift). The host occupies
+ * only the right strip so the page stays clickable and scrollable beside
+ * it. Internal layout (tabs, .cortex-body, per-tab scroll) is untouched.
+ */
+:host(.cortex-overlay-host--docked) {
+  position: fixed;
+  inset: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, calc(100vw - 72px));
+  height: 100%;
+  z-index: 2147483646;
+}
+
+:host(.cortex-overlay-host--docked) .cortex-backdrop {
+  display: none;
+}
+
+:host(.cortex-overlay-host--docked) .cortex-panel {
+  position: relative;
+  left: 0;
+  top: 0;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  max-height: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid var(--cx-border);
+  box-shadow: -8px 0 24px var(--cx-shadow-color);
+  opacity: 1;
+}
+
+:host(.cortex-overlay-host--docked) .cortex-panel.is-visible {
+  transform: none;
+}
+
+:host(.cortex-overlay-host--docked) .cortex-shell {
+  min-height: 100%;
+  height: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cortex-panel {
     transform: translate(-50%, -50%);
@@ -138,6 +184,11 @@
 
   .cortex-panel.is-visible {
     transform: translate(-50%, -50%);
+  }
+
+  :host(.cortex-overlay-host--docked) .cortex-panel,
+  :host(.cortex-overlay-host--docked) .cortex-panel.is-visible {
+    transform: none;
   }
 }
 

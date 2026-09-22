@@ -31,6 +31,7 @@ import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
 import { createForgetMenu } from "./forget-menu";
 import { renderPeopleView, type PersonRow } from "./people-view";
 import { siteBadgeColors, siteInitial } from "../lib/site-badge";
+import { overlayHostModifierClass } from "./overlay-host";
 import { createScopeBar, type ScopeCollection } from "./scope-bar";
 import { applyThemeToHost, themeTokensCss } from "../shared/theme";
 import { getUserSettings } from "../shared/extension-settings";
@@ -185,7 +186,7 @@ export function mountOverlay(opts?: MountOverlayOptions): void {
       return true;
     }
     if (msg?.type === "CORTEX_OPEN_SEARCH" && !overlayShellMode) {
-      openCortexOverlay();
+      openCortexOverlay({ docked: msg.docked === true });
       sendResponse({ ok: true as const });
       return true;
     }
@@ -242,8 +243,13 @@ function siteBadgeElement(hostname: string, className: string): HTMLElement {
 
 type OverlayMode = "search" | "ask" | "digest" | "people";
 
+export type OpenCortexOverlayOptions = {
+  /** Pin to the right edge with no backdrop; used when the side panel cannot open. */
+  docked?: boolean;
+};
+
 /** Opens the panel if closed. Idempotent: avoids double Ctrl+Shift+K (command + key handler). */
-export function openCortexOverlay(): void {
+export function openCortexOverlay(opts?: OpenCortexOverlayOptions): void {
   if (!isExtensionRuntimeAlive()) return;
 
   const existingRoot = document.getElementById("cortex-overlay-root");
@@ -261,9 +267,11 @@ export function openCortexOverlay(): void {
 
   const host = document.createElement("div");
   host.id = "cortex-overlay-root";
-  if (overlayShellMode) {
-    host.classList.add("cortex-overlay-host--shell");
-  }
+  const hostModifier = overlayHostModifierClass({
+    shell: overlayShellMode,
+    docked: opts?.docked,
+  });
+  if (hostModifier) host.classList.add(hostModifier);
 
   const shadow = host.attachShadow({
     mode: __CORTEX_DEBUG__ || __CORTEX_E2E_OPEN_SHADOW__ ? "open" : "closed",

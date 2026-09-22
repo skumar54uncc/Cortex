@@ -872,8 +872,11 @@ function sleepMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function deliverOpenSearchMessage(tabId: number): Promise<boolean> {
-  const msg = { type: "CORTEX_OPEN_SEARCH" as const };
+async function deliverOpenSearchMessage(
+  tabId: number,
+  docked = false
+): Promise<boolean> {
+  const msg = { type: "CORTEX_OPEN_SEARCH" as const, docked };
   return new Promise((resolve) => {
     chrome.tabs.sendMessage(tabId, msg, (res) => {
       if (chrome.runtime.lastError) {
@@ -886,9 +889,13 @@ async function deliverOpenSearchMessage(tabId: number): Promise<boolean> {
 }
 
 /** Injects overlay.js on demand, then opens it. content.js stays extraction-only. */
-async function openSearchOnTab(tabId: number): Promise<boolean> {
+async function openSearchOnTab(
+  tabId: number,
+  options?: { docked?: boolean }
+): Promise<boolean> {
+  const docked = options?.docked === true;
   return openOverlayOnTab(tabId, {
-    deliverOpen: deliverOpenSearchMessage,
+    deliverOpen: (id) => deliverOpenSearchMessage(id, docked),
     inject: async (id, files) => {
       await chrome.scripting.executeScript({ target: { tabId: id }, files });
     },
@@ -944,6 +951,7 @@ async function openCortexSearchFromShortcut(): Promise<void> {
     // Apps that pull the caret back into their own editor (claude.ai and
     // friends) get the side panel, where typing always works.
     userPreference: (await getEffectiveSettings()).panelPreference,
+    userGesture: true,
   });
 }
 
@@ -964,10 +972,11 @@ function openCortexSearchFromToolbarClick(tab: chrome.tabs.Tab): void {
     }
     setActiveTabSnapshot(tab);
     await openCortexSearchForTab(tab, openSearchOnTab, {
-    // Apps that pull the caret back into their own editor (claude.ai and
-    // friends) get the side panel, where typing always works.
-    userPreference: (await getEffectiveSettings()).panelPreference,
-  });
+      // Apps that pull the caret back into their own editor (claude.ai and
+      // friends) get the side panel, where typing always works.
+      userPreference: (await getEffectiveSettings()).panelPreference,
+      userGesture: true,
+    });
   });
 }
 
@@ -2302,6 +2311,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
         await withOpenCortexSearchGuard(async () => {
           await openCortexSearchForTab(fromTab, openSearchOnTab, {
             userPreference: (await getEffectiveSettings()).panelPreference,
+            // A content-script keydown (double Shift) does not carry a
+            // user gesture into the worker, so chrome.sidePanel.open()
+            // would fail and fall back to a popup window.
+            userGesture: false,
           });
         });
       } else {
