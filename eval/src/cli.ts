@@ -1,4 +1,5 @@
 import "fake-indexeddb/auto";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildTestDb } from "./build-test-db.js";
@@ -8,12 +9,17 @@ import { EVAL_PINNED_NOW_ISO, EVAL_PINNED_NOW_MS } from "./clock.js";
 import { runRetrievalEval, buildUrlToDocIdMap } from "./run-retrieval.js";
 import {
   buildEvalRun,
+  buildProbeRun,
   ciRegressionFailed,
   diffAgainstBaseline,
+  diffProbeBaseline,
   loadBaseline,
+  loadProbeBaseline,
   printConsoleReport,
   printDiffTable,
+  printProbeReport,
   writeBaseline,
+  writeProbeBaseline,
   writeRunJson,
 } from "./report.js";
 
@@ -21,6 +27,7 @@ const EVAL_ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 
 function parseArgs(argv: string[]): {
   baseline: boolean;
+  probesBaseline: boolean;
   ci: boolean;
   override: boolean;
   chunkProfile?: "compact" | "wide";
@@ -28,6 +35,7 @@ function parseArgs(argv: string[]): {
   const cp = argv.find((a) => a.startsWith("--chunk-profile="))?.split("=")[1];
   return {
     baseline: argv.includes("--baseline"),
+    probesBaseline: argv.includes("--probes-baseline"),
     ci: argv.includes("--ci"),
     override: argv.includes("--eval-override"),
     chunkProfile: cp === "compact" || cp === "wide" ? cp : undefined,
@@ -38,11 +46,13 @@ export async function runEvalCli(argv: string[] = process.argv.slice(2)): Promis
   const args = parseArgs(argv);
   const pagesPath = join(EVAL_ROOT, "corpus", "pages.jsonl");
   const queriesPath = join(EVAL_ROOT, "queries", "retrieval.jsonl");
+  const probesPath = join(EVAL_ROOT, "queries", "probes.jsonl");
   const resultsDir = join(EVAL_ROOT, "results");
 
   const cacheWarmAtStart = isEmbeddingCacheWarm();
   const pages = loadCorpusFromFile(pagesPath);
   const queries = loadQueriesFromFile(queriesPath);
+  const probes = existsSync(probesPath) ? loadQueriesFromFile(probesPath) : [];
 
   console.info(
     `[eval] Indexing ${pages.length} pages (chunk profile: ${args.chunkProfile ?? "default"})`
@@ -63,6 +73,25 @@ export async function runEvalCli(argv: string[] = process.argv.slice(2)): Promis
   const outPath = writeRunJson(run, resultsDir);
   console.info(`\n[eval] Wrote ${outPath}`);
 
+  let probeFailed = false;
+  if (probes.length > 0) {
+    console.info(`[eval] Running ${probes.length} probe queries…`);
+    const probePerQuery = await runRetrievalEval(probes, urlToDocId, EVAL_PINNED_NOW_MS);
+    const probeRun = buildProbeRun(probePerQuery, EVAL_PINNED_NOW_ISO);
+    printProbeReport(probeRun);
+    if (args.baseline || args.probesBaseline) {
+      const probePath = writeProbeBaseline(probeRun, resultsDir);
+      console.info(`[eval] Probe baseline updated → ${probePath}`);
+    } else {
+      const probeBase = loadProbeBaseline(resultsDir);
+      if (probeBase) {
+        const probeDiff = diffProbeBaseline(probeRun, probeBase);
+        printDiffTable(probeDiff);
+        probeFailed = ciRegressionFailed(probeDiff);
+      }
+    }
+  }
+
   if (args.baseline) {
     const basePath = writeBaseline(run, resultsDir);
     console.info(`[eval] Baseline updated → ${basePath}`);
@@ -76,7 +105,7 @@ export async function runEvalCli(argv: string[] = process.argv.slice(2)): Promis
     const skipLatency =
       run.environment.cacheMode === "cold" &&
       baseline.environment.cacheMode === "warm";
-    if (args.ci && ciRegressionFailed(diff, { skipLatencyRegression: skipLatency }) && !args.override) {
+    if (args.ci && (ciRegressionFailed(diff, { skipLatencyRegression: skipLatency }) || probeFailed) && !args.override) {
       if (skipLatency) {
         console.info(
           "\n[eval] Skipping p95 latency gate (cold embed cache vs warm baseline)."

@@ -167,6 +167,42 @@ describe("runAdvancedSearch", () => {
       forceTimeRange: { start: now - 10_000, end: now + 10_000 },
     });
     expect(res.hits.every((h) => h.url === "https://x.test/in")).toBe(true);
+    expect(res.timeWindow).toBe("applied");
+    expect(res.timeRelaxed).toBe(false);
+  });
+
+  it("abstains when the only in-window page scores under the floor", async () => {
+    mocks.docs = [
+      doc(1, "https://old.test/topic", "Orbital cargo", now - 40 * 86_400_000),
+      doc(2, "https://new.test/other", "Glacier notes", now),
+    ];
+    mocks.chunks = [
+      ch(1, 1, "orbital cargo logistics orbital cargo logistics orbital cargo"),
+      ch(2, 2, "a short note about something else"),
+    ];
+    mocks.urlsInRange = new Set(["https://new.test/other"]);
+    const res = await runAdvancedSearch("orbital cargo logistics", async () => null, {
+      forceTimeRange: { start: now - 86_400_000, end: now },
+      now,
+    });
+    expect(res.abstained).toBe(true);
+    expect(res.hits).toEqual([]);
+    expect(res.timeWindow).toBe("applied");
+  });
+
+  it("relaxes and says so when the date window has no visits", async () => {
+    mocks.docs = [doc(1, "https://old.test/topic", "Orbital cargo", now)];
+    mocks.chunks = [ch(1, 1, "orbital cargo logistics details and routes")];
+    mocks.urlsInRange = new Set();
+    const res = await runAdvancedSearch("orbital cargo logistics", async () => null, {
+      forceTimeRange: { start: now - 86_400_000, end: now },
+      now,
+      abstainFloor: 0,
+    });
+    expect(res.timeWindow).toBe("relaxed");
+    expect(res.timeRelaxed).toBe(true);
+    expect(res.hits[0]!.url).toContain("old.test");
+    expect(res.evidence).toMatch(/widened/i);
   });
 
   it("semantic signal can reorder when embeddings exist", async () => {

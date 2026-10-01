@@ -54,6 +54,14 @@ export interface SearchResponseDTO {
   chunks?: ChunkWithDoc[];
   /** True when the best fused score fell under ABSTAIN_FLOOR (Phase 3.3). */
   abstained?: boolean;
+  /**
+   * Date window decision. "applied" means hits were limited to visits in the
+   * window before the abstain floor. "relaxed" means the window had no visits,
+   * so ranking used the full library and said so.
+   */
+  timeWindow?: "applied" | "relaxed";
+  /** True when timeWindow is "relaxed". */
+  timeRelaxed?: boolean;
 }
 
 /**
@@ -519,33 +527,38 @@ export async function runAdvancedSearch(
     .filter((x): x is NonNullable<typeof x> => x != null && Number.isFinite(x.score))
     .sort((a, b) => b.score - a.score);
 
-  const topScore = ranked[0]?.score ?? 0;
-  const floor = opts?.abstainFloor ?? ABSTAIN_FLOOR;
-  if (floor > 0 && topScore < floor) {
-    return {
-      hits: [],
-      evidence: ABSTAIN_MESSAGE,
-      abstained: true,
-      ...(opts?.includeChunks ? { chunks: [] } : {}),
-    };
-  }
-  const cutoff = Math.max(0.028, Math.min(0.26, topScore * 0.072));
-
-  ranked = ranked.filter((x) => x.score >= cutoff);
-
+  let timeWindow: "applied" | "relaxed" | undefined;
   let timeRelaxed = false;
   if (effectiveParsed.timeRange) {
     const urlsInRange = await getUrlsVisitedBetween(
       effectiveParsed.timeRange.start,
       effectiveParsed.timeRange.end
     );
-    const filtered = ranked.filter((row) => urlsInRange.has(row.doc.url));
-    if (filtered.length > 0) {
-      ranked = filtered;
+    const inWindow = ranked.filter((row) => urlsInRange.has(row.doc.url));
+    if (inWindow.length > 0) {
+      ranked = inWindow;
+      timeWindow = "applied";
     } else {
       timeRelaxed = true;
+      timeWindow = "relaxed";
     }
   }
+
+  const topScore = ranked[0]?.score ?? 0;
+  const floor = opts?.abstainFloor ?? ABSTAIN_FLOOR;
+  const windowFields = timeWindow ? { timeWindow, timeRelaxed } : {};
+  if (floor > 0 && topScore < floor) {
+    return {
+      hits: [],
+      evidence: ABSTAIN_MESSAGE,
+      abstained: true,
+      ...windowFields,
+      ...(opts?.includeChunks ? { chunks: [] } : {}),
+    };
+  }
+  const cutoff = Math.max(0.028, Math.min(0.26, topScore * 0.072));
+
+  ranked = ranked.filter((x) => x.score >= cutoff);
 
   const maxHits = opts?.maxHits ?? 28;
   const slice = ranked.slice(0, maxHits);
@@ -589,5 +602,5 @@ export async function runAdvancedSearch(
         }))
     : undefined;
 
-  return { hits, evidence, ...(chunks ? { chunks } : {}) };
+  return { hits, evidence, ...windowFields, ...(chunks ? { chunks } : {}) };
 }

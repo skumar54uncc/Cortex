@@ -133,6 +133,56 @@ export function loadBaseline(resultsDir: string): EvalRun | null {
   return JSON.parse(readFileSync(path, "utf8")) as EvalRun;
 }
 
+/** Separate denominator from the frozen 193. Never folded into EvalRun.overall. */
+export interface ProbeRun {
+  pinnedNow: string;
+  perQuery: QueryResult[];
+  overall: AggregatedMetrics;
+}
+
+export function buildProbeRun(perQuery: QueryResult[], pinnedNow: string): ProbeRun {
+  return {
+    pinnedNow,
+    perQuery,
+    overall: aggregateMetrics(
+      perQuery.map((q) => ({ queryType: q.query_type, metrics: q.metrics }))
+    ),
+  };
+}
+
+export function printProbeReport(run: ProbeRun): void {
+  console.info("\n=== Probe slice (not mixed into the 193) ===");
+  console.info(`Pinned now: ${run.pinnedNow}  n=${run.overall.queryCount}`);
+  printMetricsTable("Probes", run.overall);
+  printFailedQueries(run.perQuery);
+}
+
+export function writeProbeBaseline(run: ProbeRun, resultsDir: string): string {
+  const path = join(resultsDir, "probes-baseline.json");
+  writeFileSync(path, JSON.stringify(run, null, 2), "utf8");
+  return path;
+}
+
+export function loadProbeBaseline(resultsDir: string): ProbeRun | null {
+  const path = join(resultsDir, "probes-baseline.json");
+  if (!existsSync(path)) return null;
+  return JSON.parse(readFileSync(path, "utf8")) as ProbeRun;
+}
+
+export function diffProbeBaseline(current: ProbeRun, baseline: ProbeRun): BaselineDiffRow[] {
+  const pairs: [string, number, number][] = [
+    ["probe nDCG@10", baseline.overall.nDCG10, current.overall.nDCG10],
+    ["probe Recall@10", baseline.overall.recall10, current.overall.recall10],
+    ["probe MRR@10", baseline.overall.mrr10, current.overall.mrr10],
+  ];
+  return pairs.map(([metric, base, cur]) => {
+    const delta = cur - base;
+    const deltaPct = base !== 0 ? (delta / base) * 100 : cur !== 0 ? 100 : 0;
+    const status: BaselineDiffRow["status"] = delta < -0.02 ? "regression" : delta > 0.02 ? "improved" : "ok";
+    return { metric, baseline: base, current: cur, delta, deltaPct, status };
+  });
+}
+
 export function diffAgainstBaseline(
   current: EvalRun,
   baseline: EvalRun

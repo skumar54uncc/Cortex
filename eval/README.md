@@ -33,6 +33,8 @@ Warm second run (embedding cache populated) should finish in under ~15s on a mod
 | **Neg pass** | Negative queries: no hit above score floor |
 | **p50/p95/p99** | Wall-clock ms per `runAdvancedSearch` call |
 
+`queries/retrieval.jsonl` is the frozen 193. `queries/probes.jsonl` is a separate slice (date windows and other probes). The two denominators are reported separately and are not averaged together. Probe metrics live in `results/probes-baseline.json`.
+
 **Rule of thumb:** factual nDCG &gt;0.5 is decent on a tiny corpus; compare **deltas vs baseline**, not absolute scores in isolation.
 
 ## CI gate

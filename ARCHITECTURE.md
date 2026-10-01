@@ -242,7 +242,7 @@ Reduces false “strong” matches on **generic words only** (e.g. “career” 
 - Best chunk score **per document**
 - **Abstain floor**: when the best fused score is under `ABSTAIN_FLOOR` (0.18), search returns no hits and Ask answers "I didn't find that in your library."
 - **Adaptive cutoff** vs top score
-- Optional **time range** from `parseAskQuery` → filter via `visitLog` (may relax if empty)
+- Optional **time range** from `parseAskQuery` is applied before the floor and the cutoff. If the window contains visits, only those pages are scored against the floor. If it contains none, search relaxes to the full library, sets `timeWindow: "relaxed"`, and says the window was empty.
 
 ### 6.9 Natural-language hints (`query-parse.ts`)
 

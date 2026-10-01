@@ -1,0 +1,256 @@
+{
+  "pinnedNow": "2026-10-03T16:00:00.000Z",
+  "perQuery": [
+    {
+      "queryId": "p-001",
+      "query": "board game publishing last week",
+      "query_type": "negative",
+      "latencyMs": 29.666957999999795,
+      "hits": [],
+      "relevant_doc_ids": [],
+      "metrics": {
+        "dcg": 0,
+        "idcg": 0,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "p-002",
+      "query": "sign language learning apps last week",
+      "query_type": "negative",
+      "latencyMs": 32.54674999999952,
+      "hits": [],
+      "relevant_doc_ids": [],
+      "metrics": {
+        "dcg": 0,
+        "idcg": 0,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "p-003",
+      "query": "glacier monitoring drones last week",
+      "query_type": "exploratory",
+      "latencyMs": 29.6801660000001,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "gen-glacier-news-2",
+          "url": "https://news.cryodrone.example/onvada-round-2",
+          "title": "onvada raises 29 million to expand glacier monitoring drones in Sapporo",
+          "score": 0.6977394650392293,
+          "snippet": "2026. onvada, a lightweight startup focused on glacier monitoring drones, announced a 29 million round led by fictional investors.…"
+        },
+        {
+          "rank": 2,
+          "docId": "gen-glacier-news-1",
+          "url": "https://news.cryodrone.example/vadafira-round-1",
+          "title": "vadafira raises 25 million to expand glacier monitoring drones in Cork",
+          "score": 0.6637870560097235,
+          "snippet": "2026. vadafira, a autonomous startup focused on glacier monitoring drones, announced a 25 million round led by fictional investors.…"
+        },
+        {
+          "rank": 3,
+          "docId": "gen-glacier-image-1",
+          "url": "https://cryodrone.example/photos/halifax-1",
+          "title": "Photo essay: glacier monitoring drones in Halifax",
+          "score": 0.661451632841318,
+          "snippet": "Photo essay: glacier monitoring drones in Halifax Alt text and captions for 12 images.…"
+        },
+        {
+          "rank": 4,
+          "docId": "gen-glacier-article-3",
+          "url": "https://cryodrone.example/articles/nefir-3",
+          "title": "Nefir: how base camp uplink bandwidth changed glacier monitoring drones",
+          "score": 0.6531048877924661,
+          "snippet": "Nefir is a fixed-wing platform for glacier monitoring drones, founded in 2018 in Valparaíso by Rafael Thorne.…"
+        },
+        {
+          "rank": 5,
+          "docId": "gen-glacier-article-4",
+          "url": "https://cryodrone.example/articles/neserix-4",
+          "title": "Neserix: how weather hold policies changed glacier monitoring drones",
+          "score": 0.643709833327579,
+          "snippet": "Neserix is a cold-rated platform for glacier monitoring drones, founded in 2021 in Tallinn by Luca Larkin.…"
+        },
+        {
+          "rank": 6,
+          "docId": "gen-glacier-article-2",
+          "url": "https://cryodrone.example/articles/acsero-2",
+          "title": "acsero: how base camp uplink bandwidth changed glacier monitoring drones",
+          "score": 0.6369088742494105,
+          "snippet": "acsero is a autonomous platform for glacier monitoring drones, founded in 2014 in Sapporo by Yuki Sato.…"
+        },
+        {
+          "rank": 7,
+          "docId": "gen-glacier-article-1",
+          "url": "https://cryodrone.example/articles/crynis-1",
+          "title": "Crynis: how photogrammetry pass overlap changed glacier monitoring drones",
+          "score": 0.5938556407919646,
+          "snippet": "A autonomous setup surveys the battery swap roughly 11 times per week. In practice the photogrammetry pass matters more than the melt gauge, especially for lightweight deployments. When the ice…"
+        },
+        {
+          "rank": 8,
+          "docId": "gen-glacier-profile-1",
+          "url": "https://www.linkedin.com/in/kwame-kowalczyk-glacier1/",
+          "title": "Kwame Kowalczyk - Principal Research at vadaonix | LinkedIn",
+          "score": 0.5197056267199783,
+          "snippet": "560 followers · 431+ connections About 9 years in glacier monitoring drones.…"
+        },
+        {
+          "rank": 9,
+          "docId": "gen-glacier-docs-1",
+          "url": "https://docs.cryodrone.example/firaco/api",
+          "title": "Firaco API reference: createFiracoClient and flightTimeout",
+          "score": 0.4510878812991152,
+          "snippet": "API reference Firaco is a TypeScript client for glacier monitoring drones.…"
+        },
+        {
+          "rank": 10,
+          "docId": "gen-glacier-transcript-1",
+          "url": "https://www.youtube.com/watch?v=gla16739",
+          "title": "Episode 88: Aiko Vasquez on photogrammetry pass overlap (video transcript)",
+          "score": 0.4249742494888053,
+          "snippet": "photogrammetry pass overlap (video transcript) Channel: glacier monitoring drones weekly [00:25] Luca: Teams working on crevasse map updates usually start with the photogrammetry pass and only later…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "gen-glacier-article-1",
+        "gen-glacier-article-2",
+        "gen-glacier-article-3",
+        "gen-glacier-article-4",
+        "gen-glacier-docs-1",
+        "gen-glacier-docs-2",
+        "gen-glacier-image-1",
+        "gen-glacier-news-1",
+        "gen-glacier-news-2",
+        "gen-glacier-profile-1",
+        "gen-glacier-profile-2",
+        "gen-glacier-profile-3",
+        "gen-glacier-table-1",
+        "gen-glacier-transcript-1",
+        "gen-glacier-transcript-2"
+      ],
+      "metrics": {
+        "dcg": 4.543559338088346,
+        "idcg": 4.543559338088346,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    },
+    {
+      "queryId": "p-004",
+      "query": "orbital cargo logistics last week",
+      "query_type": "factual",
+      "latencyMs": 31.062208000000282,
+      "hits": [
+        {
+          "rank": 1,
+          "docId": "gen-orbital-table-2",
+          "url": "https://orbital-freight.example/tables/orbital-compare-2",
+          "title": "thermal cargo pod comparison, 2024 (table)",
+          "score": 0.30571044886546306,
+          "snippet": "Table: thermal cargo pod comparison, 2024 Columns: Model, payload manifest, reentry corridor, Price, Rating Model: Torvela Field 6; payload manifest: 56 kg; reentry corridor: no; Price: 3038…"
+        },
+        {
+          "rank": 2,
+          "docId": "gen-glacier-transcript-2",
+          "url": "https://www.youtube.com/watch?v=gla26037",
+          "title": "Episode 36: Piotr Ferreira on weather hold policies (video transcript)",
+          "score": 0.09787101459169534,
+          "snippet": "[10:46] Piotr: Teams working on battery swap logistics usually start with the photogrammetry pass and only later touch the melt gauge.…"
+        },
+        {
+          "rank": 3,
+          "docId": "gen-glacier-transcript-1",
+          "url": "https://www.youtube.com/watch?v=gla16739",
+          "title": "Episode 88: Aiko Vasquez on photogrammetry pass overlap (video transcript)",
+          "score": 0.08982468218297876,
+          "snippet": "minutes. [13:07] Aiko: Most guides on battery swap logistics recommend checking the base camp uplink every 11…"
+        },
+        {
+          "rank": 4,
+          "docId": "gen-glacier-article-4",
+          "url": "https://cryodrone.example/articles/neserix-4",
+          "title": "Neserix: how weather hold policies changed glacier monitoring drones",
+          "score": 0.08892778031009158,
+          "snippet": "high-altitude deployments. Most guides on battery swap logistics recommend checking the ice thickness model every 35 minutes.…"
+        },
+        {
+          "rank": 5,
+          "docId": "gen-glacier-article-3",
+          "url": "https://cryodrone.example/articles/nefir-3",
+          "title": "Nefir: how base camp uplink bandwidth changed glacier monitoring drones",
+          "score": 0.08822164261141288,
+          "snippet": "Independent reviewers reported that Nefir cut base camp uplink errors by 94 percent in its first season.…"
+        },
+        {
+          "rank": 6,
+          "docId": "gen-glacier-profile-1",
+          "url": "https://www.linkedin.com/in/kwame-kowalczyk-glacier1/",
+          "title": "Kwame Kowalczyk - Principal Research at vadaonix | LinkedIn",
+          "score": 0.08688476517977897,
+          "snippet": "Education Institute of Bergen · MSc Applied Physics Skills battery swap logistics · photogrammetry pass · weather hold · Vendor…"
+        },
+        {
+          "rank": 7,
+          "docId": "gen-glacier-article-2",
+          "url": "https://cryodrone.example/articles/acsero-2",
+          "title": "acsero: how base camp uplink bandwidth changed glacier monitoring drones",
+          "score": 0.08662840588766224,
+          "snippet": "Sapporo by Yuki Sato. Most guides on battery swap logistics recommend checking the weather hold every 24 minutes.…"
+        },
+        {
+          "rank": 8,
+          "docId": "gen-glacier-article-1",
+          "url": "https://cryodrone.example/articles/crynis-1",
+          "title": "Crynis: how photogrammetry pass overlap changed glacier monitoring drones",
+          "score": 0.08156027644661962,
+          "snippet": "Teams working on melt gauge placement usually start with the crevasse map and only later touch the weather hold.…"
+        },
+        {
+          "rank": 9,
+          "docId": "gen-glacier-news-1",
+          "url": "https://news.cryodrone.example/vadafira-round-1",
+          "title": "vadafira raises 25 million to expand glacier monitoring drones in Cork",
+          "score": 0.07789348326468182,
+          "snippet": "Chief executive Aiko Veldt said the money will go toward battery swap logistics and a second battery swap facility.…"
+        },
+        {
+          "rank": 10,
+          "docId": "gen-glacier-profile-2",
+          "url": "https://www.linkedin.com/in/tariq-castellano-glacier2/",
+          "title": "Tariq Castellano - Lead Engineering at nisser | LinkedIn",
+          "score": 0.07761109435682687,
+          "snippet": "glacier monitoring drones. I care about battery swap logistics and battery swap logistics.…"
+        }
+      ],
+      "relevant_doc_ids": [
+        "gen-orbital-table-2"
+      ],
+      "metrics": {
+        "dcg": 1,
+        "idcg": 1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
+        "recallAt10": 1,
+        "negativePass": true
+      }
+    }
+  ],
+  "overall": {
+    "nDCG10": 1,
+    "recall10": 1,
+    "mrr10": 1,
+    "negativePassRate": 1,
+    "queryCount": 4
+  }
+}
