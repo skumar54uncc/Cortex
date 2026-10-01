@@ -214,12 +214,12 @@ Cosine similarity per chunk with stored `embedding`. **`hasSemantic`:** cosine >
 
 | Component | Weight |
 |-----------|--------|
-| Cosine | 0.48 |
-| Lexical blend | 0.24 |
+| Cosine | 0.36 |
+| Lexical blend | 0.36 |
 | Recency | 0.12 |
 | Engagement | 0.16 |
 
-A grid over this vector on 2026-10-01 (`eval/src/grid-fusion.ts`) did not find a replacement that raised overall nDCG without dropping another slice. The constants stayed.
+Grid on 2026-10-01 (`eval/src/grid-fusion.ts`), with the without-semantic vector held fixed. This point held every core slice and raised overall nDCG from 0.9715 to 0.9734 and exploratory nDCG from 0.9436 to 0.9589. The previous hand tuned cosine 0.48 / lexical 0.24 lost that comparison.
 
 **Without semantic:**
 

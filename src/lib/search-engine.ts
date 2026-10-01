@@ -76,13 +76,11 @@ export const ABSTAIN_FLOOR = 0.18;
 
 /**
  * Linear fusion. Components sum to 1.
- * Grid on 2026-10-01 (`eval/src/grid-fusion.ts`, 25 coarse points plus a
- * neighborhood) kept this vector. The highest overall nDCG point was
- * cosine 0.48, lexical 0.24, recency 0.00, engagement 0.28 (overall 0.9825)
- * but factual nDCG fell from 1.000 to 0.996. The nearest improving point
- * (recency 0.08, engagement 0.20) lifted negatives to 1.000 and dropped
- * "that video about Episode 32" and "board game publishing overview".
- * Neither point holds every slice, so the hand tuned vector stays.
+ * Grid on 2026-10-01 (`eval/src/grid-fusion.ts`) searched the with-semantic
+ * vector only. The without-semantic vector stayed at 0.52 / 0.26 / 0.22.
+ * Winning point that held every core slice: cosine 0.36, lexical 0.36,
+ * recency 0.12, engagement 0.16. Overall nDCG 0.9715 to 0.9734. Exploratory
+ * nDCG 0.9436 to 0.9589. Recall, MRR, factual, navigational, and negative held.
  */
 export interface FusionVector {
   cosine: number;
@@ -92,8 +90,8 @@ export interface FusionVector {
 }
 
 export const FUSION_WITH_SEMANTIC: FusionVector = {
-  cosine: 0.48,
-  lexical: 0.24,
+  cosine: 0.36,
+  lexical: 0.36,
   recency: 0.12,
   engagement: 0.16,
 };

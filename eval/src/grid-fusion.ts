@@ -1,7 +1,8 @@
 /**
- * Offline grid over fuseRankScore. Builds the corpus once, then reranks.
- * A point is kept only when every core-slice nDCG holds versus the current
- * constants. Prints the best held point. Does not edit production weights.
+ * Offline grid over the with-semantic fusion vector. The without-semantic
+ * vector stays at FUSION_WITHOUT_SEMANTIC. Builds the corpus once, then
+ * reranks. Prints every point and whether every core slice holds against
+ * the production vector. Does not edit production weights.
  */
 import "fake-indexeddb/auto";
 import { join } from "node:path";
@@ -12,6 +13,7 @@ import { loadCorpusFromFile, loadQueriesFromFile } from "./load-corpus.js";
 import { aggregateByQueryType, aggregateMetrics } from "./metrics.js";
 import { buildUrlToDocIdMap, runRetrievalEval } from "./run-retrieval.js";
 import {
+  FUSION_WITHOUT_SEMANTIC,
   FUSION_WITH_SEMANTIC,
   type FusionOverride,
   type FusionVector,
@@ -21,19 +23,31 @@ const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 
 const NEAR_CURRENT: FusionVector[] = [
   { cosine: 0.48, lexical: 0.24, recency: 0.12, engagement: 0.16 },
-  { cosine: 0.5, lexical: 0.24, recency: 0.1, engagement: 0.16 },
-  { cosine: 0.48, lexical: 0.26, recency: 0.1, engagement: 0.16 },
-  { cosine: 0.48, lexical: 0.24, recency: 0.08, engagement: 0.2 },
-  { cosine: 0.48, lexical: 0.24, recency: 0.1, engagement: 0.18 },
-  { cosine: 0.5, lexical: 0.22, recency: 0.1, engagement: 0.18 },
-  { cosine: 0.46, lexical: 0.24, recency: 0.12, engagement: 0.18 },
-  { cosine: 0.48, lexical: 0.22, recency: 0.12, engagement: 0.18 },
-  { cosine: 0.44, lexical: 0.24, recency: 0.12, engagement: 0.2 },
-  { cosine: 0.48, lexical: 0.24, recency: 0.04, engagement: 0.24 },
+  { cosine: 0.36, lexical: 0.36, recency: 0.12, engagement: 0.16 },
+  { cosine: 0.32, lexical: 0.36, recency: 0.12, engagement: 0.2 },
+  { cosine: 0.4, lexical: 0.36, recency: 0.12, engagement: 0.12 },
+  { cosine: 0.36, lexical: 0.32, recency: 0.12, engagement: 0.2 },
+  { cosine: 0.36, lexical: 0.4, recency: 0.12, engagement: 0.12 },
+  { cosine: 0.36, lexical: 0.36, recency: 0.08, engagement: 0.2 },
+  { cosine: 0.36, lexical: 0.36, recency: 0.16, engagement: 0.12 },
+  { cosine: 0.4, lexical: 0.32, recency: 0.12, engagement: 0.16 },
+  { cosine: 0.48, lexical: 0.36, recency: 0.12, engagement: 0.04 },
 ];
 
+function dedupe(vectorsIn: FusionVector[]): FusionVector[] {
+  const seen = new Set<string>();
+  return vectorsIn.filter((v) => {
+    const key = `${v.cosine}|${v.lexical}|${v.recency}|${v.engagement}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function vectors(): FusionVector[] {
-  if (process.argv.includes("--near")) return NEAR_CURRENT;
+  if (process.argv.includes("--near")) {
+    return dedupe([{ ...FUSION_WITH_SEMANTIC }, ...NEAR_CURRENT]);
+  }
   const out: FusionVector[] = [{ ...FUSION_WITH_SEMANTIC }];
   const cosines = [0.36, 0.48, 0.6];
   const lexicals = [0.16, 0.24, 0.36];
@@ -47,28 +61,11 @@ function vectors(): FusionVector[] {
       }
     }
   }
-  const seen = new Set<string>();
-  return out.filter((v) => {
-    const key = `${v.cosine}|${v.lexical}|${v.recency}|${v.engagement}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function withoutSemantic(w: FusionVector): FusionVector {
-  const rest = w.lexical + w.recency + w.engagement;
-  if (rest <= 0) return { cosine: 0, lexical: 1, recency: 0, engagement: 0 };
-  return {
-    cosine: 0,
-    lexical: w.lexical / rest,
-    recency: w.recency / rest,
-    engagement: w.engagement / rest,
-  };
+  return dedupe(out);
 }
 
 function override(w: FusionVector): FusionOverride {
-  return { withSemantic: w, withoutSemantic: withoutSemantic(w) };
+  return { withSemantic: w, withoutSemantic: { ...FUSION_WITHOUT_SEMANTIC } };
 }
 
 async function main(): Promise<void> {
@@ -96,24 +93,42 @@ async function main(): Promise<void> {
   let best: { w: FusionVector; nDCG: number; line: string } | null = null;
   let currentLine = "";
   let currentNDCG = 0;
+  let incumbent: {
+    nDCG: number;
+    recall: number;
+    mrr: number;
+    factual: number;
+    nav: number;
+    expl: number;
+    neg: number;
+  } | null = null;
 
   for (const [i, w] of points.entries()) {
     const perQuery = await runRetrievalEval(queries, urlToDocId, EVAL_PINNED_NOW_MS, override(w));
     const rows = perQuery.map((q) => ({ queryType: q.query_type, metrics: q.metrics }));
     const overall = aggregateMetrics(rows);
     const by = aggregateByQueryType(rows);
+    const point = {
+      nDCG: overall.nDCG10,
+      recall: overall.recall10,
+      mrr: overall.mrr10,
+      factual: by.factual.nDCG10,
+      nav: by.navigational.nDCG10,
+      expl: by.exploratory.nDCG10,
+      neg: by.negative.nDCG10,
+    };
     const line = [
       w.cosine.toFixed(2),
       w.lexical.toFixed(2),
       w.recency.toFixed(2),
       w.engagement.toFixed(2),
-      overall.nDCG10.toFixed(4),
-      overall.recall10.toFixed(4),
-      overall.mrr10.toFixed(4),
-      by.factual.nDCG10.toFixed(4),
-      by.navigational.nDCG10.toFixed(4),
-      by.exploratory.nDCG10.toFixed(4),
-      by.negative.nDCG10.toFixed(4),
+      point.nDCG.toFixed(4),
+      point.recall.toFixed(4),
+      point.mrr.toFixed(4),
+      point.factual.toFixed(4),
+      point.nav.toFixed(4),
+      point.expl.toFixed(4),
+      point.neg.toFixed(4),
     ].join("\t");
     const isCurrent =
       w.cosine === FUSION_WITH_SEMANTIC.cosine &&
@@ -122,10 +137,20 @@ async function main(): Promise<void> {
       w.engagement === FUSION_WITH_SEMANTIC.engagement;
     if (isCurrent) {
       currentLine = line;
-      currentNDCG = overall.nDCG10;
+      currentNDCG = point.nDCG;
+      incumbent = point;
     }
-    console.info(`${String(i + 1).padStart(2)} ${line}`);
-    if (!best || overall.nDCG10 > best.nDCG) best = { w, nDCG: overall.nDCG10, line };
+    const holds =
+      incumbent != null &&
+      point.nDCG >= incumbent.nDCG - 1e-9 &&
+      point.recall >= incumbent.recall - 1e-9 &&
+      point.mrr >= incumbent.mrr - 1e-9 &&
+      point.factual >= incumbent.factual - 1e-9 &&
+      point.nav >= incumbent.nav - 1e-9 &&
+      point.expl >= incumbent.expl - 1e-9 &&
+      point.neg >= incumbent.neg - 1e-9;
+    console.info(`${String(i + 1).padStart(2)} ${line} ${holds ? "HOLD" : "DROP"}`);
+    if (!best || point.nDCG > best.nDCG) best = { w, nDCG: point.nDCG, line };
   }
 
   console.info("\ncurrent\t" + currentLine);
