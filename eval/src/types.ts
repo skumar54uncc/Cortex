@@ -76,6 +76,8 @@ export interface EvalRun {
     corpusPageCount: number;
     queryCount: number;
     cacheMode: "cold" | "warm";
+    /** ISO timestamp used as "now" for recency and date windows. */
+    pinnedNow: string;
   };
   perQuery: QueryResult[];
   byQueryType: Record<QueryType, AggregatedMetrics>;

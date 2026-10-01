@@ -53,12 +53,11 @@ function startEndDay(ts: number): { start: number; end: number } {
 /**
  * Parse time phrases + quoted strings + "works at X" / CamelCase brands.
  */
-export function parseAskQuery(raw: string): ParsedAskQuery {
+export function parseAskQuery(raw: string, now = Date.now()): ParsedAskQuery {
   const trimmed = raw.trim();
   const lower = trimmed.toLowerCase();
 
   let timeRange: { start: number; end: number } | undefined;
-  const now = Date.now();
 
   if (/\byesterday\b/.test(lower)) {
     const y = now - 86_400_000;

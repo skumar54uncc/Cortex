@@ -114,6 +114,24 @@ describe("runAdvancedSearch", () => {
     expect(res.hits.length).toBe(2);
   });
 
+  it("uses the injected now for recency instead of the wall clock", async () => {
+    const older = now;
+    const newer = now + 40 * 86_400_000;
+    mocks.docs = [
+      doc(1, "https://old.test/a", "Alpha notes", older),
+      doc(2, "https://new.test/b", "Alpha notes", newer),
+    ];
+    mocks.chunks = [
+      ch(1, 1, "alpha shared topic text"),
+      ch(2, 2, "alpha shared topic text"),
+    ];
+    const res = await runAdvancedSearch("alpha shared topic", async () => null, {
+      now: newer,
+      abstainFloor: 0,
+    });
+    expect(res.hits[0]!.url).toContain("new.test");
+  });
+
   it("time range filters to urls returned by visit log", async () => {
     mocks.docs = [
       doc(1, "https://x.test/in", "In", now),

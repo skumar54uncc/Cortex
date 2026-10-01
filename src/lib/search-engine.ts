@@ -79,6 +79,11 @@ export interface AdvancedSearchOptions {
   abstainFloor?: number;
   /** Only documents in this collection (Phase 5.4). */
   collectionId?: number;
+  /**
+   * Clock for recency and for "yesterday" / "today" / "last week".
+   * Production omits this and uses Date.now(). The eval harness pins it.
+   */
+  now?: number;
 }
 
 const BM25_K1 = 1.35;
@@ -172,8 +177,9 @@ function fuseRankScore(parts: {
   visitedAt: number;
   engagement: number;
   hasSemantic: boolean;
+  now: number;
 }): number {
-  const rec = recencyBoost(parts.visitedAt);
+  const rec = recencyBoost(parts.visitedAt, 18, parts.now);
   const eng = Math.min(1, Math.max(0, parts.engagement));
   const lexicalBlend = 0.72 * parts.bm25Norm + 0.28 * parts.titleMatch;
 
@@ -280,7 +286,8 @@ export async function runAdvancedSearch(
   embedQuery: (text: string) => Promise<number[] | null>,
   opts?: AdvancedSearchOptions
 ): Promise<SearchResponseDTO> {
-  const parsed = parseAskQuery(normalizeQueryText(rawQuery));
+  const now = opts?.now ?? Date.now();
+  const parsed = parseAskQuery(normalizeQueryText(rawQuery), now);
   const effectiveParsed: typeof parsed = {
     ...parsed,
     timeRange:
@@ -409,7 +416,7 @@ export async function runAdvancedSearch(
     const visitedAt =
       typeof doc.lastVisitedAt === "number" && Number.isFinite(doc.lastVisitedAt)
         ? doc.lastVisitedAt
-        : Date.now();
+        : now;
 
     const hasSemantic =
       cosine > 0.025 && !!(queryVec?.length && p.chunk.embedding?.length);
@@ -421,6 +428,7 @@ export async function runAdvancedSearch(
       visitedAt,
       engagement,
       hasSemantic,
+      now,
     });
 
     let bonus = 0;
@@ -531,7 +539,7 @@ export async function runAdvancedSearch(
       visitedAt:
         typeof doc.lastVisitedAt === "number" && Number.isFinite(doc.lastVisitedAt)
           ? doc.lastVisitedAt
-          : Date.now(),
+          : now,
       snippet: pickSnippet(chunk.text, q),
       score,
       grounding,

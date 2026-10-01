@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildTestDb } from "./build-test-db.js";
 import { isEmbeddingCacheWarm } from "./embed-node.js";
 import { loadCorpusFromFile, loadQueriesFromFile } from "./load-corpus.js";
+import { EVAL_PINNED_NOW_ISO, EVAL_PINNED_NOW_MS } from "./clock.js";
 import { runRetrievalEval, buildUrlToDocIdMap } from "./run-retrieval.js";
 import {
   buildEvalRun,
@@ -50,11 +51,13 @@ export async function runEvalCli(argv: string[] = process.argv.slice(2)): Promis
   console.info(`[eval] Indexed ${built.documentCount} docs, ${built.chunkCount} chunks`);
 
   const urlToDocId = buildUrlToDocIdMap(pages);
-  console.info(`[eval] Running ${queries.length} queries…`);
-  const perQuery = await runRetrievalEval(queries, urlToDocId);
+  console.info(
+    `[eval] Running ${queries.length} queries (pinned now ${EVAL_PINNED_NOW_ISO})`
+  );
+  const perQuery = await runRetrievalEval(queries, urlToDocId, EVAL_PINNED_NOW_MS);
 
   const cacheMode: "cold" | "warm" = cacheWarmAtStart ? "warm" : "cold";
-  const run = buildEvalRun(perQuery, pages.length, cacheMode);
+  const run = buildEvalRun(perQuery, pages.length, cacheMode, EVAL_PINNED_NOW_ISO);
 
   printConsoleReport(run);
   const outPath = writeRunJson(run, resultsDir);

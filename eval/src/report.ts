@@ -35,7 +35,8 @@ function formatPct(n: number): string {
 export function buildEvalRun(
   perQuery: QueryResult[],
   pagesCount: number,
-  cacheMode: "cold" | "warm"
+  cacheMode: "cold" | "warm",
+  pinnedNow: string
 ): EvalRun {
   const rows = perQuery.map((q) => ({
     queryType: q.query_type,
@@ -52,6 +53,7 @@ export function buildEvalRun(
       corpusPageCount: pagesCount,
       queryCount: perQuery.length,
       cacheMode,
+      pinnedNow,
     },
     perQuery,
     byQueryType: aggregateByQueryType(rows),
@@ -99,6 +101,7 @@ export function printConsoleReport(run: EvalRun): void {
   console.info("\n=== Cortex retrieval eval ===");
   console.info(`Run: ${run.runId}`);
   console.info(`Cache: ${run.environment.cacheMode}`);
+  console.info(`Pinned now: ${run.environment.pinnedNow}`);
   console.info(
     `Latency ms — p50: ${run.latencyMs.p50.toFixed(1)}  p95: ${run.latencyMs.p95.toFixed(1)}  p99: ${run.latencyMs.p99.toFixed(1)}`
   );

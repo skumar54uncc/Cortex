@@ -203,7 +203,7 @@ Cosine similarity per chunk with stored `embedding`. **`hasSemantic`:** cosine >
 ### 6.5 Other ranking signals
 
 - **Title match** (`ranking.ts`)
-- **Recency** — ~18-day half-life (`recencyBoost`)
+- **Recency** — ~18-day half-life (`recencyBoost`). Production uses `Date.now()`. Eval passes a pinned timestamp (`eval/src/clock.ts`, recorded on the baseline as `pinnedNow`) so scores do not drift across days.
 - **Engagement** — `importanceScore` on documents
 
 ### 6.6 Fusion (`fuseRankScore`)

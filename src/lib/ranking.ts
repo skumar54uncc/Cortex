@@ -15,9 +15,17 @@ export function titleMatchScore(title: string, query: string): number {
   return hits / qWords.length;
 }
 
-/** Recency prior: half-life ~18 days */
-export function recencyBoost(visitedAt: number, halfLifeDays = 18): number {
-  const ageDays = (Date.now() - visitedAt) / 86_400_000;
+/**
+ * Recency prior: half-life ~18 days.
+ * `now` defaults to the wall clock in production. The eval harness passes a
+ * pinned timestamp so a run next week scores the same corpus the same way.
+ */
+export function recencyBoost(
+  visitedAt: number,
+  halfLifeDays = 18,
+  now = Date.now()
+): number {
+  const ageDays = (now - visitedAt) / 86_400_000;
   if (ageDays <= 0) return 1;
   return Math.pow(0.5, ageDays / halfLifeDays);
 }
@@ -27,6 +35,8 @@ export interface HybridParts {
   keyword: number;
   titleMatch: number;
   visitedAt: number;
+  /** Wall clock override. Omitted means Date.now(). */
+  now?: number;
 }
 
 /**
@@ -35,7 +45,7 @@ export interface HybridParts {
  */
 export function hybridScore(parts: HybridParts): number {
   const { cosine, keyword, titleMatch, visitedAt } = parts;
-  const rec = recencyBoost(visitedAt);
+  const rec = recencyBoost(visitedAt, 18, parts.now);
 
   const hasSemantic = cosine > 0.02;
 
@@ -55,6 +65,8 @@ export interface HybridProductionParts {
   visitedAt: number;
   /** 0–1 importance / engagement roll-up */
   engagement: number;
+  /** Wall clock override. Omitted means Date.now(). */
+  now?: number;
 }
 
 /**
@@ -62,7 +74,7 @@ export interface HybridProductionParts {
  * When cosine is negligible, emphasize lexical + recency + engagement.
  */
 export function hybridProduction(parts: HybridProductionParts): number {
-  const rec = recencyBoost(parts.visitedAt);
+  const rec = recencyBoost(parts.visitedAt, 18, parts.now);
   const eng = Math.min(1, Math.max(0, parts.engagement));
   const lexical =
     qLex(parts.keyword, parts.titleMatch);

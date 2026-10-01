@@ -13,13 +13,14 @@ export function buildUrlToDocIdMap(pages: CorpusPage[]): Map<string, string> {
 
 export async function runRetrievalEval(
   queries: RetrievalQuery[],
-  urlToDocId: Map<string, string>
+  urlToDocId: Map<string, string>,
+  now: number
 ): Promise<QueryResult[]> {
   const results: QueryResult[] = [];
 
   for (const q of queries) {
     const t0 = performance.now();
-    const response = await runAdvancedSearch(q.query, embedText, { maxHits: 10 });
+    const response = await runAdvancedSearch(q.query, embedText, { maxHits: 10, now });
     const latencyMs = performance.now() - t0;
 
     const hits: RetrievalHit[] = (response.hits ?? []).slice(0, 10).map((h, i) => ({
