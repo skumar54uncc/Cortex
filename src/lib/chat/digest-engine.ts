@@ -11,7 +11,9 @@ import { safeHttpHttpsHref } from "../url-security";
 import {
   cleanSourceTitle,
   extractCitationIndexes,
+  pageLabel,
   personalizeDigestNarrative,
+  pickSitePages,
   splitNarrativeSentences,
   stripDigestMarkdown,
 } from "./digest-format";
@@ -212,6 +214,98 @@ export function groupSourcesByDomain(
   return [...byDomain.values()].sort(
     (a, b) => b.count - a.count || a.domain.localeCompare(b.domain)
   );
+}
+
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+/**
+ * A reading-focus paragraph built only from the library, used when every
+ * model is unavailable. It names the busiest sites and a few real page
+ * titles. Sentences stay free of [N] markers; citations are the source
+ * indexes the UI renders as chips.
+ */
+export function localReadingFocus(
+  groups: DigestDomainGroup[],
+  sources: DigestSource[]
+): {
+  narrative: string;
+  narrativeParts: DigestNarrativePart[];
+} {
+  if (groups.length === 0) {
+    const text = "Cortex saved pages for this period, but none of them could be summarized.";
+    return { narrative: text, narrativeParts: [{ text, sourceIndexes: [] }] };
+  }
+  const byDomain = new Map<string, DigestSource[]>();
+  for (const source of sources) {
+    const list = byDomain.get(source.domain) ?? [];
+    list.push(source);
+    byDomain.set(source.domain, list);
+  }
+  const focus = joinNames(groups.slice(0, 3).map((g) => g.domain));
+  const parts: DigestNarrativePart[] = [
+    { text: `Your recent reading focused on ${focus}.`, sourceIndexes: [] },
+  ];
+  for (const group of groups.slice(0, 3)) {
+    const pool = byDomain.get(group.domain) ?? [];
+    const named = pickSitePages(pool, 2);
+    const titles = named.map((p) => pageLabel(p.title)).filter((t) => t && t !== "Untitled");
+    const indexes = named
+      .map((p) => pool.find((s) => s.url === p.url)?.n)
+      .filter((n): n is number => typeof n === "number")
+      .slice(0, 3);
+    const pages = group.count === 1 ? "1 page" : `${group.count} pages`;
+    const including = titles.length > 0 ? `, including ${joinNames(titles)}` : "";
+    parts.push({
+      text: `On ${group.domain} you read ${pages}${including}.`,
+      sourceIndexes: indexes,
+    });
+  }
+  return {
+    narrative: parts.map((p) => p.text).join(" "),
+    narrativeParts: parts,
+  };
+}
+
+function sentenceIsFinished(text: string): boolean {
+  return /[.!?]["')\]]*$/.test(text.trim());
+}
+
+function domainIsNamed(text: string, domain: string): boolean {
+  const host = domain.replace(/^www\./i, "").toLowerCase();
+  return text.toLowerCase().includes(host);
+}
+
+/**
+ * A model reply can stop mid sentence once its output budget is spent.
+ * Drop that fragment, then add a library sentence for every site it never named.
+ */
+export function finishReadingFocus(
+  parts: DigestNarrativePart[],
+  groups: DigestDomainGroup[],
+  sources: DigestSource[]
+): { narrative: string; narrativeParts: DigestNarrativePart[] } {
+  const kept = parts.filter((p) => p.text.trim());
+  while (kept.length > 1 && !sentenceIsFinished(kept[kept.length - 1]!.text)) {
+    kept.pop();
+  }
+  if (kept.length === 0 || (kept.length === 1 && !sentenceIsFinished(kept[0]!.text))) {
+    return localReadingFocus(groups, sources);
+  }
+  const covered = kept.map((p) => p.text).join(" ");
+  const missing = groups.filter((g) => !domainIsNamed(covered, g.domain));
+  const siteParts =
+    missing.length > 0
+      ? localReadingFocus(missing, sources).narrativeParts.filter((p) => p.text.startsWith("On "))
+      : [];
+  const narrativeParts = [...kept, ...siteParts];
+  return {
+    narrative: narrativeParts.map((p) => p.text).join(" "),
+    narrativeParts,
+  };
 }
 
 function sitesBlock(groups: DigestDomainGroup[]): string {
@@ -475,26 +569,30 @@ export async function generateDigest(
   };
 
   /*
-   * Without a model there is no narrative, but there is still a digest: the
-   * pages of the period, grouped by site, come from the library alone. The
-   * tab used to show the model's error and nothing else.
+   * A model writes the reading focus when one is available. If every model
+   * fails, the paragraph is written from the pages already grouped below,
+   * and the API error is never shown.
    */
   let rawOut = "";
-  let modelNote = "";
+  let modelFailed = false;
   try {
     const route: RouteDecision = await decideRoute(prompt, fakeQuestion, settings);
-    for await (const token of streamAnswer(prompt, DIGEST_SYSTEM_PROMPT, route, settings)) {
+    for await (const token of streamAnswer(prompt, DIGEST_SYSTEM_PROMPT, route, settings, {
+      maxOutputTokens: 8192,
+    })) {
       rawOut += token;
     }
-  } catch (e) {
-    const why = e instanceof Error ? e.message : String(e);
-    modelNote = `${why} Cortex listed the pages below from your own library, without a model.`;
+  } catch {
+    modelFailed = true;
   }
 
   const parsedOut = parseDigestOutput(rawOut, packed);
   // Cited sources keep their [N]; the rest of the period fills the
   // "show all pages" list with numbers that simply were never cited.
   const sources = mergeSources(parsedOut.sources, docs, DIGEST_SOURCE_CAP);
+  const domainGroups = groupSourcesByDomain(sources);
+  const local = modelFailed || !rawOut.trim() ? localReadingFocus(domainGroups, sources) : null;
+  const finished = local ? null : finishReadingFocus(parsedOut.narrativeParts, domainGroups, sources);
 
   const result: DigestResult = {
     schemaVersion: DIGEST_SCHEMA_VERSION,
@@ -502,17 +600,16 @@ export async function generateDigest(
     generatedAt: Date.now(),
     pageCount: docs.length,
     domainsCount: new Set(docs.map((d) => d.domain)).size,
-    narrative: modelNote || parsedOut.narrative,
-    narrativeParts: modelNote ? [{ text: modelNote, sourceIndexes: [] }] : parsedOut.narrativeParts,
+    narrative: local?.narrative ?? finished!.narrative,
+    narrativeParts: local?.narrativeParts ?? finished!.narrativeParts,
     topics: parsedOut.topics,
     insights: parsedOut.insights,
     sources,
-    domainGroups: groupSourcesByDomain(sources),
-    citationsFromModel: parsedOut.citationsFromModel,
+    domainGroups,
+    citationsFromModel: local ? false : parsedOut.citationsFromModel,
   };
 
-  // A digest with no narrative is not worth caching: the next open should
-  // try the model again.
-  if (!modelNote) await saveDigestToCache(request.range, result);
+  // A library-only summary is not cached: the next open should try the model again.
+  if (!local) await saveDigestToCache(request.range, result);
   return result;
 }

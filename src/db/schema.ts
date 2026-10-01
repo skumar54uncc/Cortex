@@ -107,6 +107,10 @@ export interface PersonRecord {
   industry?: string;
   companySize?: string;
   tagline?: string;
+  /** LinkedIn CDN photo, when the profile card had one. */
+  photoUrl?: string;
+  /** About, experience and education, for search. Not shown on the card. */
+  profileText?: string;
 }
 
 export interface CollectionRecord {

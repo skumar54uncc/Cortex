@@ -10,8 +10,9 @@ export interface DigestRequest {
  * The digest cache keys on it, so a digest written by an older build is
  * never handed to a newer renderer (see digest-cache.ts).
  * 1 = release 1.2.0 narrative only. 2 = numbered, citable sources.
+ * 3 = reading focus must be a finished paragraph, so a cutoff digest is not reused.
  */
-export const DIGEST_SCHEMA_VERSION = 2;
+export const DIGEST_SCHEMA_VERSION = 3;
 
 /**
  * One numbered, clickable source. `n` is the number the model saw as [N] in

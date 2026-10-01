@@ -10,6 +10,7 @@
   <body>
     <div class="cx-opt-page cx-onb-page">
       <header class="cx-opt-topbar">
+        <div class="cx-opt-topbar-inner cx-onb-bar">
         <div class="cx-opt-brand" aria-label="Cortex">
           <img
             class="cx-opt-brand-mark"
@@ -20,9 +21,10 @@
           />
           <span class="cx-opt-brand-wordmark">Cortex</span>
         </div>
+        </div>
       </header>
 
-      <main>
+      <main class="cx-onb-main">
         <header class="cx-opt-page-head">
           <h1 class="cx-opt-title">Welcome to Cortex</h1>
           <p class="cx-opt-subtitle">
@@ -55,8 +57,8 @@
               <div class="cx-onb-step-body">
                 <h3 class="cx-onb-step-title">Open Search or Ask</h3>
                 <p class="cx-onb-step-desc">
-                  Use a shortcut or the toolbar icon. On regular websites the panel opens over the
-                  page; on Chrome settings pages it opens in the side panel.
+                  Double-tap Shift, or click the toolbar icon. On a normal site the panel opens
+                  over the page. On Chrome's own pages it opens in the side panel.
                 </p>
               </div>
             </li>
@@ -74,34 +76,16 @@
         </section>
 
         <section class="cx-opt-section" aria-labelledby="cx-onb-shortcuts-h">
-          <h2 id="cx-onb-shortcuts-h" class="cx-section-heading">Keyboard shortcuts</h2>
+          <h2 id="cx-onb-shortcuts-h" class="cx-section-heading">Keyboard shortcut</h2>
           <div class="cx-shortcuts-grid">
             <div class="cx-shortcut-block">
-              <span class="cx-field-label">Primary</span>
+              <span class="cx-field-label">Double-tap Shift</span>
               <div class="cx-kbd-row">
-                <kbd>Ctrl</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd
-                ><span class="cx-kbd-plus">+</span><kbd>K</kbd>
-                <span class="cx-kbd-meta">Windows / Linux</span>
-              </div>
-              <div class="cx-kbd-row">
-                <kbd>⌘</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd
-                ><span class="cx-kbd-plus">+</span><kbd>K</kbd>
-                <span class="cx-kbd-meta">macOS</span>
-              </div>
-            </div>
-            <div class="cx-shortcut-block">
-              <span class="cx-field-label">Alternate</span>
-              <div class="cx-kbd-row">
-                <kbd>Alt</kbd><span class="cx-kbd-plus">+</span><kbd>Shift</kbd
-                ><span class="cx-kbd-plus">+</span><kbd>C</kbd>
+                <kbd>Shift</kbd><span class="cx-kbd-plus">then</span><kbd>Shift</kbd>
+                <span class="cx-kbd-meta">Opens or closes the panel on the page you are reading</span>
               </div>
             </div>
           </div>
-          <p class="cx-section-desc cx-onb-shortcuts-hint">
-            To change shortcuts: open a new tab, paste
-            <code class="cx-inline-code">chrome://extensions/shortcuts</code> in the address bar,
-            press <strong>Enter</strong>, find <strong>Cortex</strong>, then edit the command.
-          </p>
         </section>
 
         <div class="cx-onb-actions">

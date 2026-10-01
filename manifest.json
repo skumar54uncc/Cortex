@@ -46,22 +46,6 @@
   "omnibox": {
     "keyword": "cx"
   },
-  "commands": {
-    "open-cortex-search": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+K",
-        "mac": "Command+Shift+K"
-      },
-      "description": "Open Cortex search / ask"
-    },
-    "open-cortex-search-alt": {
-      "suggested_key": {
-        "default": "Alt+Shift+C",
-        "mac": "Alt+Shift+C"
-      },
-      "description": "Open Cortex (alternate shortcut)"
-    }
-  },
   "content_scripts": [
     {
       "matches": [

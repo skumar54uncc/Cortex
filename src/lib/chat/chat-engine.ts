@@ -1,8 +1,9 @@
 import { parseQuestion } from "./question-parser";
-import { runAdvancedSearch } from "../search-engine";
+import { runAdvancedSearch, type ChunkWithDoc } from "../search-engine";
 import {
   buildChatPrompt,
   CHAT_SYSTEM_PROMPT,
+  expandChatEvidence,
   selectChunksForBudget,
   selectHistoryForPrompt,
 } from "./context-builder";
@@ -40,6 +41,22 @@ export interface RunChatOptions {
 
 function isAbortError(e: unknown): boolean {
   return e instanceof Error && e.name === "AbortError";
+}
+
+/** Best passage per page, plus other passages on those pages that share the question. */
+async function expandRetrievedPages(
+  hits: ChunkWithDoc[],
+  question: string
+): Promise<ChunkWithDoc[]> {
+  if (hits.length === 0) return hits;
+  const docIds = [...new Set(hits.map((hit) => hit.documentId))];
+  const rows = await db.chunks.where("documentId").anyOf(docIds).toArray();
+  const docById = new Map(hits.map((hit) => [hit.documentId, hit.document]));
+  const pageChunks = rows.flatMap((row) => {
+    const document = docById.get(row.documentId);
+    return document ? [{ ...row, document }] : [];
+  });
+  return expandChatEvidence(hits, pageChunks, question);
 }
 
 export async function* runChat(
@@ -140,7 +157,10 @@ export async function* runChat(
       ...(opts.collectionId != null ? { collectionId: opts.collectionId } : {}),
     });
 
-    const rawChunks = searchResults.chunks ?? [];
+    const rawChunks = await expandRetrievedPages(
+      searchResults.chunks ?? [],
+      question
+    );
 
     if (rawChunks.length === 0) {
       yield {

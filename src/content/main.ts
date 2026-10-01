@@ -147,11 +147,9 @@ if (!window.__cortexInstallKickListener) {
   });
 }
 
-// Ctrl+Shift+K / Alt+Shift+C: handled by chrome.commands in the service worker.
-
 /**
- * Double tap of Shift. Chrome shortcuts cannot describe a double tap, so the
- * gesture is recognised here and asks the worker to open the panel, the same
+ * Double tap of Shift. This is the only keyboard way to open the panel.
+ * The gesture is recognised here and asks the worker to open it, the same
  * request the popup's "Open search" button sends.
  */
 function toggleCortexPanel(panelOpen: boolean): void {

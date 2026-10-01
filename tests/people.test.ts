@@ -248,6 +248,30 @@ describe("people summary", () => {
     expect((await db.people.toArray())[0]!.summary).toBe("Brews beer and writes Rust.");
   });
 
+  it("finds a vague phrase from the indexed profile page", async () => {
+    await upsertPerson(mira, NOW);
+    const documentId = (await db.documents.add({
+      url: mira.profileUrl,
+      domain: "www.linkedin.com",
+      title: "Mira",
+      summary: "",
+      lastVisitedAt: NOW,
+      visitCount: 1,
+      importanceScore: 0.2,
+    })) as number;
+    await db.chunks.add({
+      documentId,
+      ord: 0,
+      text: "Winter storms and instrumentation that survives cold water.",
+    });
+    expect((await listPeople({ q: "someone who mentioned winter storms" })).map((p) => p.name)).toEqual([
+      "Mira Okafor-Lind",
+    ]);
+    expect(await listPeople({ q: "volcano" })).toEqual([]);
+    await db.chunks.clear();
+    await db.documents.clear();
+  });
+
   it("finds a person by what they do", async () => {
     await upsertPerson(avery, NOW);
     await upsertPerson(mira, NOW - DAY);

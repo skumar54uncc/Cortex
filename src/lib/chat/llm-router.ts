@@ -85,6 +85,8 @@ export async function decideRoute(
 export interface StreamAnswerOptions {
   /** Aborting destroys the Nano session or cancels the Gemini fetch. */
   signal?: AbortSignal;
+  /** Visible answer budget. Digest needs more room than a chat reply. */
+  maxOutputTokens?: number;
 }
 
 export async function* streamAnswer(
@@ -126,7 +128,7 @@ export async function* streamAnswer(
       apiKey: settings.geminiApiKey,
       systemPrompt,
       temperature: 0.3,
-      maxOutputTokens: 2048,
+      maxOutputTokens: opts.maxOutputTokens ?? 2048,
       signal,
     });
   }

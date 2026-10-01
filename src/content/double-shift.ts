@@ -1,7 +1,7 @@
 /**
  * Double tap of Shift opens the Cortex panel.
  *
- * `chrome.commands` can only describe a chord (Ctrl+Shift+K), never a double
+ * A double tap of Shift is the only keyboard shortcut. Chrome commands cannot describe a double
  * tap, so the gesture has to be recognised in the page. Shift is also held for
  * selection and pressed for every capital letter, so the rules are strict:
  *
@@ -74,7 +74,7 @@ export function installDoubleShift(opts: DoubleShiftOptions): () => void {
     }
     // Holding Shift fires keydown over and over: one press, not two.
     if (ev.repeat) return;
-    // Ctrl+Shift+K and Alt+Shift+C stay the job of chrome.commands.
+    // A held Shift (as in a browser chord) is not a double tap.
     if (ev.ctrlKey || ev.altKey || ev.metaKey) {
       reset();
       return;

@@ -46,7 +46,7 @@ export function notifyFirstInstallHistoryScanFinished(
   if (progress.error) {
     message = `History scan stopped: ${progress.error}. Open Settings to try again.`;
   } else if (progress.indexed > 0) {
-    message = `Indexed ${progress.indexed} page${progress.indexed === 1 ? "" : "s"} from your last 30 days (${progress.skipped} skipped). Press Ctrl+Shift+K to search.`;
+    message = `Indexed ${progress.indexed} page${progress.indexed === 1 ? "" : "s"} from your last 30 days (${progress.skipped} skipped). Tap Shift twice to search.`;
   } else {
     message = `Scan finished (${progress.processed} URLs tried, ${progress.indexed} indexed). Many sites need a live visit: browse normally and Cortex will index as you read.`;
   }

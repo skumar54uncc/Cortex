@@ -343,7 +343,12 @@ ${shadowCss}`;
               <circle cx="12" cy="12" r="3"/>
             </svg>
           </button>
-          <button type="button" class="cortex-x" data-act="close" aria-label="Close">×</button>
+          <button type="button" class="cortex-icon-btn cortex-x" data-act="close" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
         </div>
       </div>
       <p id="cortex-forget-status" class="cortex-forget-status" role="status" hidden></p>
@@ -623,7 +628,7 @@ ${shadowCss}`;
       { id: "search", label: "Search" },
       { id: "ask", label: "Ask" },
       { id: "digest", label: "Digest" },
-      ...(peopleTabEnabled ? [{ id: "people" as OverlayMode, label: "People" }] : []),
+      ...(peopleTabEnabled ? [{ id: "people" as OverlayMode, label: "People & Companies" }] : []),
     ];
 
     for (const tab of tabs) {
@@ -697,13 +702,31 @@ ${shadowCss}`;
       renderChatSidebarList();
     });
     pendingDeletes.set(convId, pd);
+    const wasOpen = releaseOpenChat(convId);
     renderChatSidebarList();
     showUndoToast(label, () => {
       pd.undo();
       pendingDeletes.delete(convId);
+      if (wasOpen && askMessagesEl) {
+        currentConversationId = convId;
+        void loadChatConversation(convId, askMessagesEl);
+      }
       renderChatSidebarList();
     });
     if (askTextareaEl && !askUndoToastEl) focusAskInput(askTextareaEl);
+  }
+
+  /** Drop the open thread as soon as that chat is deleted. Undo loads it back. */
+  function releaseOpenChat(convId: number): boolean {
+    if (currentConversationId !== convId) return false;
+    if (chatController?.isStreaming) {
+      activeStream = null;
+      chatController.abort();
+    }
+    currentConversationId = null;
+    if (askMessagesEl) renderChatThread(askMessagesEl, []);
+    if (askTextareaEl) focusAskInput(askTextareaEl);
+    return true;
   }
 
   function flushPendingDeletes(): void {
@@ -861,7 +884,7 @@ ${shadowCss}`;
     }
 
     renderChatThread(messagesContainer, res.messages);
-    scrollChatToBottom(messagesContainer);
+    scrollChatToBottom(messagesContainer, "smooth");
   }
 
   let askMessagesEl: HTMLElement | null = null;
@@ -901,9 +924,12 @@ ${shadowCss}`;
     return el.scrollHeight - el.scrollTop - el.clientHeight <= thresholdPx;
   }
 
-  function scrollChatToBottom(el: HTMLElement): void {
+  function scrollChatToBottom(el: HTMLElement, behavior: ScrollBehavior = "auto"): void {
+    const reduced =
+      typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mode: ScrollBehavior = reduced ? "auto" : behavior;
     requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
+      el.scrollTo({ top: el.scrollHeight, behavior: mode });
     });
   }
 
@@ -994,6 +1020,16 @@ ${shadowCss}`;
     if (messages.length === 0) {
       const empty = document.createElement("div");
       empty.className = "cortex-chat-empty";
+      const mark = document.createElement("div");
+      mark.className = "cortex-chat-mark";
+      mark.setAttribute("aria-hidden", "true");
+      const markImg = document.createElement("img");
+      markImg.className = "cortex-chat-mark-img";
+      markImg.src = iconUrl;
+      markImg.alt = "";
+      markImg.width = 40;
+      markImg.height = 40;
+      mark.append(markImg);
       const title = document.createElement("p");
       title.className = "cortex-chat-empty-title";
       title.textContent = "What would you like to know?";
@@ -1004,18 +1040,19 @@ ${shadowCss}`;
       const chips = document.createElement("div");
       chips.className = "cortex-example-chips";
       chips.setAttribute("aria-label", "Example questions");
-      empty.append(title, hint, chips);
+      empty.append(mark, title, hint, chips);
       messagesContainer.appendChild(empty);
       void renderExampleChips(chips);
       return;
     }
 
+    let turn: HTMLElement | null = null;
     for (const m of messages) {
       if (m.role === "user") {
-        const userEl = document.createElement("div");
-        userEl.className = "cortex-msg cortex-msg--user";
-        userEl.textContent = m.content;
-        messagesContainer.appendChild(userEl);
+        turn = document.createElement("div");
+        turn.className = "cortex-turn";
+        turn.appendChild(createUserRow(m.content));
+        messagesContainer.appendChild(turn);
         continue;
       }
 
@@ -1030,8 +1067,159 @@ ${shadowCss}`;
       sourcesEl.className = "cortex-msg-sources";
       renderSources(sourcesEl, cited);
       assistantMsgEl.appendChild(sourcesEl);
-      messagesContainer.appendChild(assistantMsgEl);
+      if (turn) turn.appendChild(assistantMsgEl);
+      else messagesContainer.appendChild(assistantMsgEl);
     }
+    refreshTurnActions(messagesContainer);
+  }
+
+  function createUserRow(question: string): HTMLElement {
+    const row = document.createElement("div");
+    row.className = "cortex-user-row";
+    const userEl = document.createElement("div");
+    userEl.className = "cortex-msg cortex-msg--user";
+    userEl.textContent = question;
+    row.appendChild(userEl);
+    return row;
+  }
+
+  function createTypingStatus(label: string): HTMLElement {
+    const waiting = document.createElement("div");
+    waiting.className = "cortex-typing";
+    waiting.setAttribute("role", "status");
+    const dots = document.createElement("span");
+    dots.className = "cortex-typing-dots";
+    dots.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < 3; i++) {
+      dots.appendChild(document.createElement("span"));
+    }
+    const text = document.createElement("span");
+    text.className = "cortex-typing-label";
+    text.textContent = label;
+    waiting.append(dots, text);
+    return waiting;
+  }
+
+  function setWaitingLabel(label: string): void {
+    const text = activeStream?.waiting.querySelector(".cortex-typing-label");
+    if (text) text.textContent = label;
+  }
+
+  function revealAnswerBubble(st: { waiting: HTMLElement; contentEl: HTMLElement }): void {
+    st.waiting.remove();
+    st.contentEl.parentElement?.classList.remove("cortex-msg--thinking");
+  }
+
+  function refreshTurnActions(messagesContainer: HTMLElement): void {
+    messagesContainer.querySelectorAll(".cortex-turn-actions, .cortex-msg-editor-wrap").forEach((node) => {
+      node.remove();
+    });
+    if (chatController?.isStreaming) return;
+    const turns = messagesContainer.querySelectorAll<HTMLElement>(".cortex-turn");
+    const last = turns[turns.length - 1];
+    const question = last?.querySelector(".cortex-msg--user")?.textContent ?? "";
+    if (!last || !question.trim()) return;
+
+    const host = last.querySelector(".cortex-user-row") ?? last;
+    const row = document.createElement("div");
+    row.className = "cortex-turn-actions";
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "cortex-turn-btn";
+    edit.setAttribute("aria-label", "Edit question and regenerate the answer");
+    edit.appendChild(turnIcon("edit"));
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "cortex-turn-btn";
+    retry.setAttribute("aria-label", "Regenerate the answer");
+    retry.appendChild(turnIcon("retry"));
+    edit.addEventListener("click", () => openQuestionEditor(last, question));
+    retry.addEventListener("click", () => {
+      void regenerateQuestion(question);
+    });
+    row.append(edit, retry);
+    const userEl = host.querySelector(".cortex-msg--user");
+    if (userEl) host.insertBefore(row, userEl);
+    else host.appendChild(row);
+  }
+
+  function turnIcon(kind: "edit" | "retry"): SVGElement {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "15");
+    svg.setAttribute("height", "15");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute(
+      "d",
+      kind === "edit"
+        ? "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+        : "M3 12a9 9 0 1 0 3-7.7M3 3v5h5"
+    );
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "1.75");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function openQuestionEditor(turn: HTMLElement, question: string): void {
+    if (chatController?.isStreaming) return;
+    const userEl = turn.querySelector<HTMLElement>(".cortex-msg--user");
+    if (!userEl) return;
+    const userRow = userEl.closest<HTMLElement>(".cortex-user-row");
+    userRow?.setAttribute("hidden", "");
+
+    const wrap = document.createElement("div");
+    wrap.className = "cortex-msg-editor-wrap";
+    const editor = document.createElement("textarea");
+    editor.className = "cortex-msg-editor";
+    editor.value = question;
+    editor.setAttribute("aria-label", "Edit your question");
+    const buttons = document.createElement("div");
+    buttons.className = "cortex-msg-editor-actions";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "cortex-turn-btn cortex-turn-btn--primary";
+    save.textContent = "Update";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "cortex-turn-btn";
+    cancel.textContent = "Cancel";
+    cancel.addEventListener("click", () => {
+      wrap.remove();
+      userRow?.removeAttribute("hidden");
+      if (askMessagesEl) refreshTurnActions(askMessagesEl);
+    });
+    save.addEventListener("click", () => {
+      const next = editor.value.trim();
+      if (!next) return;
+      void regenerateQuestion(next);
+    });
+    buttons.append(cancel, save);
+    wrap.append(editor, buttons);
+    if (userRow) turn.insertBefore(wrap, userRow);
+    else turn.insertBefore(wrap, userEl);
+    editor.focus();
+  }
+
+  async function regenerateQuestion(question: string): Promise<void> {
+    const messages = askMessagesEl;
+    if (!messages || chatController?.isStreaming) return;
+    const trimmed = question.trim();
+    if (!trimmed) return;
+    if (currentConversationId != null) {
+      const res = (await sendRuntimeMessage({
+        type: "CORTEX_CHAT_DROP_TURN",
+        conversationId: currentConversationId,
+        includeUser: true,
+      })) as { ok?: boolean } | undefined;
+      if (!res?.ok) return;
+    }
+    messages.querySelector(".cortex-turn:last-child")?.remove();
+    handleAskSubmit(trimmed, messages);
   }
 
   /** Empty state chips built from local data (Phase 2.8); generic on an empty library. */
@@ -1155,12 +1343,13 @@ ${shadowCss}`;
   function showStreamError(data: ChatErrorData): void {
     const st = activeStream;
     if (!st) return;
-    st.waiting.remove();
+    revealAnswerBubble(st);
     st.renderer.cancel();
     st.contentEl.textContent = "";
     st.contentEl.appendChild(renderErrorBlock(data));
     scrollChatIfFollowing(st.messagesContainer);
     activeStream = null;
+    refreshTurnActions(st.messagesContainer);
   }
 
   function ensureChatController(): ChatStreamController {
@@ -1176,19 +1365,19 @@ ${shadowCss}`;
         onSources: (chunks) => {
           if (!activeStream) return;
           activeStream.citedChunks = chunks as ChunkWithDoc[];
-          activeStream.waiting.textContent = chunks.length
-            ? "Reading what it found..."
-            : "Searching your library...";
+          setWaitingLabel(
+            chunks.length ? "Reading what it found" : "Searching your library"
+          );
         },
         onToken: (text) => {
           if (!activeStream) return;
-          activeStream.waiting.remove();
+          revealAnswerBubble(activeStream);
           activeStream.renderer.push(text);
         },
         onDone: () => {
           const st = activeStream;
           if (!st) return;
-          st.waiting.remove();
+          revealAnswerBubble(st);
           // Final rich render happens in the same frame as the last flush: no jump.
           st.renderer.finish((full) => renderAnswerWithCitations(full, st.citedChunks));
           renderSources(st.sourcesEl, st.citedChunks);
@@ -1196,12 +1385,13 @@ ${shadowCss}`;
           scrollChatIfFollowing(st.messagesContainer);
           void refreshChatSidebar();
           activeStream = null;
+          refreshTurnActions(st.messagesContainer);
         },
         onError: (data) => showStreamError(data),
         onAborted: () => {
           const st = activeStream;
           if (!st) return;
-          st.waiting.remove();
+          revealAnswerBubble(st);
           st.renderer.finish((full) =>
             full ? renderAnswerWithCitations(full, st.citedChunks) : document.createTextNode("")
           );
@@ -1212,6 +1402,7 @@ ${shadowCss}`;
           announcePolite("Answer stopped.");
           scrollChatIfFollowing(st.messagesContainer);
           activeStream = null;
+          refreshTurnActions(st.messagesContainer);
         },
         onStateChange: (state) => updateSendButton(state),
       },
@@ -1221,11 +1412,42 @@ ${shadowCss}`;
 
   let askSendBtn: HTMLButtonElement | null = null;
 
+  function paintSendGlyph(btn: HTMLButtonElement, streaming: boolean): void {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "18");
+    svg.setAttribute("height", "18");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    if (streaming) {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", "7");
+      rect.setAttribute("y", "7");
+      rect.setAttribute("width", "10");
+      rect.setAttribute("height", "10");
+      rect.setAttribute("rx", "1.5");
+      rect.setAttribute("fill", "currentColor");
+      svg.appendChild(rect);
+    } else {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute(
+        "d",
+        "M22 2 11 13M22 2 15 22 11 13 2 9 22 2"
+      );
+      path.setAttribute("stroke", "currentColor");
+      path.setAttribute("stroke-width", "1.75");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(path);
+    }
+    btn.replaceChildren(svg);
+  }
+
   function updateSendButton(state: ChatStreamState): void {
     const btn = askSendBtn;
     if (!btn) return;
     const streaming = state === "streaming";
-    btn.textContent = streaming ? "Stop" : "Send";
+    paintSendGlyph(btn, streaming);
     btn.setAttribute("aria-label", streaming ? "Stop answering" : "Send question");
     btn.classList.toggle("cortex-ask-send--stop", streaming);
     btn.setAttribute("data-state", state);
@@ -1235,21 +1457,25 @@ ${shadowCss}`;
     const ctl = ensureChatController();
     if (ctl.isStreaming) return;
 
-    const userEl = document.createElement("div");
-    userEl.className = "cortex-msg cortex-msg--user";
-    userEl.textContent = question;
-    messagesContainer.appendChild(userEl);
+    messagesContainer.querySelectorAll(".cortex-turn-actions, .cortex-msg-editor-wrap").forEach((node) => {
+      node.remove();
+    });
+
+    const turn = document.createElement("div");
+    turn.className = "cortex-turn";
+    turn.appendChild(createUserRow(question));
 
     const assistantMsgEl = document.createElement("div");
-    assistantMsgEl.className = "cortex-msg cortex-msg--assistant";
+    assistantMsgEl.className = "cortex-msg cortex-msg--assistant cortex-msg--thinking";
     const contentEl = document.createElement("div");
     contentEl.className = "cortex-msg-content";
     const sourcesEl = document.createElement("div");
     sourcesEl.className = "cortex-msg-sources";
     assistantMsgEl.appendChild(contentEl);
     assistantMsgEl.appendChild(sourcesEl);
-    messagesContainer.appendChild(assistantMsgEl);
-    scrollChatToBottom(messagesContainer);
+    turn.appendChild(assistantMsgEl);
+    messagesContainer.appendChild(turn);
+    scrollChatToBottom(messagesContainer, "smooth");
 
     const cursor = document.createElement("span");
     cursor.className = "cortex-streaming-cursor";
@@ -1265,11 +1491,8 @@ ${shadowCss}`;
     });
     // Until the first token arrives the bubble would be empty next to a Stop
     // button, which reads as stuck. Show what Cortex is doing instead.
-    const waiting = document.createElement("p");
-    waiting.className = "cortex-chat-waiting cortex-muted";
-    waiting.setAttribute("role", "status");
-    waiting.textContent = "Searching your library...";
-    contentEl.insertBefore(waiting, cursor);
+    const waiting = createTypingStatus("Searching your library");
+    assistantMsgEl.insertBefore(waiting, contentEl);
 
     activeStream = {
       messagesContainer,
@@ -1304,6 +1527,8 @@ ${shadowCss}`;
       // The model can be cut off mid sentence: show what it finished saying.
       const text = i === lastIndex ? completeSentencesOnly(raw.text) : raw.text;
       const part = { ...raw, text };
+      // A cutoff leaves a stub such as "On codepen.io". Earlier sentences stay.
+      if (i === lastIndex && i > 0 && !/[.!?)]["')\]]*$/.test(part.text.trim())) continue;
       if (!part.text.trim()) continue;
       el.appendChild(document.createTextNode(`${el.childNodes.length ? " " : ""}${part.text} `));
       for (const n of part.sourceIndexes) {
@@ -1623,12 +1848,10 @@ ${shadowCss}`;
     if (currentMode === "search") {
       bodyEl.innerHTML = `
         <input type="search" class="cortex-input cortex-search-input" placeholder="Search your memory: topics, sites, phrases" autocomplete="off" aria-label="Search your saved pages" />
-        <div class="cortex-hint" aria-label="Shortcuts">
+        <div class="cortex-hint" aria-label="How to open Cortex">
           <span class="cortex-hint-main">Local-only recall</span>
           <span class="cortex-hint-sep" aria-hidden="true">·</span>
-          <kbd class="cortex-kbd">⌘/Ctrl</kbd><kbd class="cortex-kbd">Shift</kbd><kbd class="cortex-kbd">K</kbd>
-          <span class="cortex-hint-sep" aria-hidden="true">·</span>
-          <span class="cortex-hint-nav">↑↓ choose · Enter open · ⌘/Ctrl+Enter background tab</span>
+          <span class="cortex-hint-nav">Double-tap Shift to open or close</span>
         </div>
         <div class="cortex-results" role="region" aria-label="Search results"></div>`;
 
@@ -1893,7 +2116,7 @@ ${shadowCss}`;
       const ta = document.createElement("textarea");
       ta.className = "cortex-ask-input";
       ta.placeholder = "Ask anything about what you've read…";
-      ta.rows = 2;
+      ta.rows = 1;
       ta.maxLength = CHAT_LIMITS.MAX_QUESTION_CHARS;
       ta.setAttribute("aria-label", "Your question");
       askTextareaEl = ta;
@@ -1902,22 +2125,20 @@ ${shadowCss}`;
         e.preventDefault();
         focusAskInput(ta);
       });
-      inputInner.appendChild(ta);
+      const sendBtn = document.createElement("button");
+      sendBtn.type = "button";
+      sendBtn.className = "cortex-ask-send";
+      sendBtn.setAttribute("aria-label", "Send question");
+      askSendBtn = sendBtn;
+      updateSendButton(chatController?.state ?? "idle");
+      inputInner.append(ta, sendBtn);
 
       const sendRow = document.createElement("div");
       sendRow.className = "cortex-ask-send-row";
       const hint = document.createElement("span");
-      hint.className = "cortex-ask-send-hint cortex-muted";
+      hint.className = "cortex-ask-send-hint";
       hint.textContent = "Enter to send · Shift+Enter new line";
-      const sendBtn = document.createElement("button");
-      sendBtn.type = "button";
-      sendBtn.className = "cortex-ask-send";
-      sendBtn.textContent = "Send";
-      sendBtn.setAttribute("aria-label", "Send question");
-      askSendBtn = sendBtn;
-      updateSendButton(chatController?.state ?? "idle");
       sendRow.appendChild(hint);
-      sendRow.appendChild(sendBtn);
 
       composer.appendChild(inputInner);
       composer.appendChild(sendRow);

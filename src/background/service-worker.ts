@@ -68,6 +68,7 @@ import {
 } from "../lib/history-import";
 import {
   deleteConversation,
+  dropLastTurn,
   getConversationMessages,
   listRecentConversations,
 } from "../lib/chat/conversation-store";
@@ -959,10 +960,6 @@ configureSidePanelBehavior();
 installActiveTabCacheListeners();
 enableGlobalSidePanel();
 
-async function handleSearchCommand(): Promise<void> {
-  await withOpenCortexSearchGuard(() => openCortexSearchFromShortcut());
-}
-
 /** Toolbar icon — open search immediately (no stats popup). */
 function openCortexSearchFromToolbarClick(tab: chrome.tabs.Tab): void {
   void withOpenCortexSearchGuard(async () => {
@@ -1525,16 +1522,6 @@ chrome.omnibox?.onInputEntered.addListener((text, disposition) => {
   })().catch((e) => devLog.warn("[Cortex] omnibox enter:", e));
 });
 
-chrome.commands.onCommand.addListener((command) => {
-  if (
-    command !== "open-cortex-search" &&
-    command !== "open-cortex-search-alt"
-  ) {
-    return;
-  }
-  void handleSearchCommand();
-});
-
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   if (!msg || typeof msg !== "object") return false;
 
@@ -1906,6 +1893,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
         });
       }
     })();
+    return true;
+  }
+
+  if (type === "CORTEX_CHAT_DROP_TURN") {
+    const conversationIdRaw = (msg as { conversationId?: unknown }).conversationId;
+    const conversationId =
+      typeof conversationIdRaw === "number" && Number.isFinite(conversationIdRaw)
+        ? conversationIdRaw
+        : null;
+    if (conversationId == null) {
+      sendResponse({ ok: false, error: "bad_conversation_id" });
+      return true;
+    }
+    const includeUser = (msg as { includeUser?: unknown }).includeUser !== false;
+    void dropLastTurn(conversationId, includeUser)
+      .then(() => sendResponse({ ok: true as const }))
+      .catch((e) => sendResponse({ ok: false, error: String(e) }));
     return true;
   }
 

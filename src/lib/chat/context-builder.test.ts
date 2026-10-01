@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectChunksForBudget } from "./context-builder";
+import { buildChatPrompt, expandChatEvidence, selectChunksForBudget } from "./context-builder";
 import type { ChunkWithDoc } from "../search-engine";
 
 function chunk(
@@ -67,5 +67,39 @@ describe("selectChunksForBudget", () => {
     const maxPrompt = 1600;
     const picked = selectChunksForBudget([only], maxPrompt, 0);
     expect(picked).toEqual([]);
+  });
+});
+
+describe("expandChatEvidence", () => {
+  it("keeps the ranked passage and adds later passages from the same page that share the question", () => {
+    const lead = chunk(1, 7, "Intro paragraph with no overlap.", "https://notes.test/a");
+    lead.ord = 0;
+    const later = chunk(2, 7, "The flux capacitor design is described here.", "https://notes.test/a");
+    later.ord = 3;
+    const otherPage = chunk(3, 8, "flux capacitor mention on a different site", "https://other.test/b");
+    const picked = expandChatEvidence(
+      [lead],
+      [lead, later, otherPage],
+      "where did I read about the flux capacitor"
+    );
+    expect(picked.map((c) => c.id)).toEqual([1, 2]);
+  });
+
+  it("does not repeat a passage that is already the best hit", () => {
+    const only = chunk(4, 1, "flux capacitor");
+    expect(expandChatEvidence([only], [only], "flux capacitor").map((c) => c.id)).toEqual([4]);
+  });
+});
+
+describe("buildChatPrompt page summary", () => {
+  it("includes the page summary once, on the first passage from that page", () => {
+    const first = chunk(1, 9, "Opening.");
+    const second = chunk(2, 9, "Later detail about capacitors.");
+    first.document.summary = "A lab note about capacitors.";
+    second.document.summary = "A lab note about capacitors.";
+    const prompt = buildChatPrompt({ question: "capacitors", chunks: [first, second] });
+    expect(prompt.match(/Page summary: A lab note about capacitors\./g)).toHaveLength(1);
+    expect(prompt).toContain("Content: Opening.");
+    expect(prompt).toContain("Content: Later detail about capacitors.");
   });
 });

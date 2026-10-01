@@ -3,18 +3,18 @@
  * Imported before popup/options component CSS.
  */
 :root {
-  /* Inter ships with the extension (src/styles/brand-fonts.ts). */
+  /* System UI face: the same sans Chrome uses for its own chrome. */
   --cx-brand-font:
-    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --cx-font-body:
-    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --cx-font-mono:
     ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
 
   --cx-ts-display: 700 19px/1.15 var(--cx-brand-font);
   --cx-ts-title: 700 14px/1.35 var(--cx-font-body);
-  --cx-ts-body: 400 13px/1.5 var(--cx-font-body);
-  --cx-ts-small: 500 12px/1.45 var(--cx-font-body);
+  --cx-ts-body: 400 14px/1.5 var(--cx-font-body);
+  --cx-ts-small: 500 13px/1.45 var(--cx-font-body);
   --cx-ts-caption: 500 11px/1.45 var(--cx-font-body);
   --cx-ts-metric: 700 22px/1.2 var(--cx-font-body);
 

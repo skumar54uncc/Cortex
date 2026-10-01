@@ -50,7 +50,7 @@ test("viewing a LinkedIn profile records the person; People tab lists it; Ask an
   });
 
   await openOverlayViaToolbar(page, serviceWorker);
-  await clickInShadow(page, "cortex-tab", "People");
+  await clickInShadow(page, "cortex-tab", "People & Companies");
   await expect
     .poll(async () => (await queryInShadow(page, "cortex-person-name")).map((m) => m.text))
     .toContain("Mira Okafor-Lind");

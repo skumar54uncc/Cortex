@@ -80,6 +80,31 @@ export async function listRecentConversations(
   return db.conversations.orderBy("updatedAt").reverse().limit(limit).toArray();
 }
 
+/** Removes the latest answer, and the question before it when includeUser is set. */
+export async function dropLastTurn(
+  conversationId: number,
+  includeUser: boolean
+): Promise<void> {
+  const rows = await db.messages
+    .where("conversationId")
+    .equals(conversationId)
+    .sortBy("timestamp");
+  const drop: number[] = [];
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const row = rows[i];
+    if (row.id == null) continue;
+    if (row.role === "assistant") {
+      drop.push(row.id);
+      continue;
+    }
+    if (includeUser && row.role === "user") drop.push(row.id);
+    break;
+  }
+  if (drop.length === 0) return;
+  await db.messages.bulkDelete(drop);
+  await db.conversations.update(conversationId, { updatedAt: Date.now() });
+}
+
 export async function deleteConversation(
   conversationId: number
 ): Promise<void> {

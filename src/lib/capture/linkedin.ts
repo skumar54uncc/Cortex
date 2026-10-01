@@ -36,11 +36,18 @@ export interface LinkedInEntity {
   companySize?: string;
   tagline?: string;
   /**
+   * https URL of the profile photo on LinkedIn's image host, when the top
+   * card actually showed one. Left off for ghost placeholders.
+   */
+  photoUrl?: string;
+  /**
    * One or two plain sentences saying what this profile carried: role and
    * company, where they are, and the opening of the about text. Shown on the
    * person card and searched, so the owner can find someone by what they do.
    */
   summary?: string;
+  /** About, experience and education text, kept so a later search can find a vague memory. */
+  profileText?: string;
 }
 
 const MAX_NAME = 120;
@@ -501,6 +508,20 @@ function educationFrom(main: Element): string[] {
   return out;
 }
 
+const MAX_PROFILE_TEXT = 4000;
+
+/** The readable profile body: about, roles and education, capped. */
+function profileTextFrom(main: Element): string {
+  const parts: string[] = [];
+  for (const id of ["about", "experience", "education"]) {
+    const section = sectionFor(main, id);
+    if (!section) continue;
+    const t = clean(section.textContent, 2000);
+    if (t) parts.push(t);
+  }
+  return clean(parts.join(" "), MAX_PROFILE_TEXT);
+}
+
 function aboutFrom(main: Element): string {
   const section = sectionFor(main, "about");
   const scope =
@@ -513,6 +534,62 @@ function aboutFrom(main: Element): string {
   }
   // Whole card as a last resort: drop the "About" heading it starts with.
   return clean(scope.textContent, MAX_ABOUT + 20).replace(/^about(?:\s+us)?\s+/i, "").slice(0, MAX_ABOUT);
+}
+
+const PHOTO_HOSTS = new Set(["media.licdn.com", "static.licdn.com", "avatars.githubusercontent.com"]);
+
+/** A real LinkedIn profile or logo image. Ghost placeholders and other hosts are dropped. */
+export function profilePhotoUrl(raw: string | null | undefined): string | undefined {
+  const t = String(raw ?? "").trim();
+  if (!t || t.startsWith("data:")) return undefined;
+  let u: URL;
+  try {
+    u = new URL(t);
+  } catch {
+    return undefined;
+  }
+  if (u.protocol !== "https:") return undefined;
+  if (!PHOTO_HOSTS.has(u.hostname.toLowerCase())) return undefined;
+  if (/ghost-person|ghost-company|\/sc\/h\//i.test(`${u.pathname}${u.search}`)) return undefined;
+  if (u.hostname.toLowerCase() === "avatars.githubusercontent.com") {
+    const size = Number(u.searchParams.get("s") || "0");
+    if (!size || size < 400) u.searchParams.set("s", "460");
+  }
+  return u.href.slice(0, 800);
+}
+
+/** The sharpest photo URL the top card actually listed, not a guessed size. */
+function bestListedPhoto(img: Element): string | undefined {
+  const ranked: { href: string; px: number }[] = [];
+  const push = (raw: string | null, hint: number): void => {
+    const href = profilePhotoUrl(raw);
+    if (!href) return;
+    const size = href.match(/(?:shrink|scale)_(\d+)_\d+/i);
+    const px = size ? Number(size[1]) : hint;
+    if (!ranked.some((r) => r.href === href)) ranked.push({ href, px });
+  };
+  for (const part of (img.getAttribute("srcset") ?? "").split(",")) {
+    const bits = part.trim().split(/\s+/);
+    const hinted = Number((bits[1] ?? "").replace(/w$/i, ""));
+    if (bits[0]) push(bits[0], Number.isFinite(hinted) ? hinted : 0);
+  }
+  push(img.getAttribute("src"), 0);
+  push(img.getAttribute("data-delayed-url"), 0);
+  ranked.sort((a, b) => b.px - a.px);
+  const face = ranked.find((r) => /profile-displayphoto|company-logo|displayphoto/i.test(r.href));
+  return (face ?? ranked[0])?.href;
+}
+
+function profilePhotoFrom(card: Element): string | undefined {
+  for (const img of Array.from(card.querySelectorAll("img"))) {
+    const href = bestListedPhoto(img);
+    if (href && /profile-displayphoto|company-logo|displayphoto/i.test(href)) return href;
+  }
+  for (const img of Array.from(card.querySelectorAll("img"))) {
+    const href = bestListedPhoto(img);
+    if (href) return href;
+  }
+  return undefined;
 }
 
 /** The top card, where the location and the network line live. */
@@ -573,6 +650,7 @@ export function parseLinkedInPage(doc: Document, url: string): LinkedInEntity | 
   if (!main) return null;
   const title = titleParts(doc);
   const about = aboutFrom(main);
+  const profileText = profileTextFrom(main);
 
   if (isCompany) {
     const name = resolveProfileName(
@@ -589,17 +667,20 @@ export function parseLinkedInPage(doc: Document, url: string): LinkedInEntity | 
     const rest = items.filter((i) => !/\b(employees|followers?)\b/i.test(i));
     const industry = rest[0] ?? "";
     const location = rest[1] ?? "";
+    const photoUrl = profilePhotoFrom(main);
     const entity: LinkedInEntity = {
       kind: "company",
       name,
       headline,
       company: name,
       profileUrl,
+      ...(photoUrl ? { photoUrl } : {}),
       ...(location ? { location: clean(location, MAX_LOCATION) } : {}),
       ...(about ? { about } : {}),
       ...(industry ? { industry: clean(industry, MAX_INDUSTRY) } : {}),
       ...(size ? { companySize: clean(size, MAX_SIZE) } : {}),
       ...(headline ? { tagline: headline } : {}),
+      ...(profileText ? { profileText } : {}),
     };
     const companySummary = buildProfileSummary(entity);
     return companySummary ? { ...entity, summary: companySummary } : entity;
@@ -630,12 +711,14 @@ export function parseLinkedInPage(doc: Document, url: string): LinkedInEntity | 
   const education = educationFrom(main);
   const pastRoles = roles.slice(1, 1 + MAX_PAST_ROLES);
 
+  const photoUrl = profilePhotoFrom(topCardOf(main));
   const entity: LinkedInEntity = {
     kind: "person",
     name,
     headline,
     company,
     profileUrl,
+    ...(photoUrl ? { photoUrl } : {}),
     ...(location ? { location } : {}),
     ...(about ? { about } : {}),
     ...(current?.title ? { roleTitle: current.title } : {}),
@@ -643,6 +726,7 @@ export function parseLinkedInPage(doc: Document, url: string): LinkedInEntity | 
     ...(education.length ? { education } : {}),
     ...(degree ? { connectionDegree: degree } : {}),
     ...(count !== undefined ? { connectionCount: count } : {}),
+    ...(profileText ? { profileText } : {}),
   };
   const summary = buildProfileSummary(entity);
   return summary ? { ...entity, summary } : entity;
@@ -711,12 +795,16 @@ export function sanitizePersonDetail(raw: unknown): Partial<LinkedInEntity> {
   if (companySize) out.companySize = companySize;
   const tagline = text(o.tagline, 220);
   if (tagline) out.tagline = tagline;
+  const photoUrl = profilePhotoUrl(typeof o.photoUrl === "string" ? o.photoUrl : "");
+  if (photoUrl) out.photoUrl = photoUrl;
 
   // The summary the capture built, capped. Nothing is invented here: a
   // payload without one is left without one, so a restored backup comes back
   // exactly as it was exported, and upsertPerson builds the summary instead.
   const summary = text(o.summary, MAX_STORED_SUMMARY);
   if (summary) out.summary = summary;
+  const profileText = text(o.profileText, 4000);
+  if (profileText) out.profileText = profileText;
 
   return out;
 }

@@ -64,6 +64,8 @@ function detailPatch(e: LinkedInEntity): Partial<PersonRecord> {
     ...(s(e.industry) ? { industry: s(e.industry) } : {}),
     ...(s(e.companySize) ? { companySize: s(e.companySize) } : {}),
     ...(s(e.tagline) ? { tagline: s(e.tagline) } : {}),
+    ...(e.photoUrl ? { photoUrl: e.photoUrl } : {}),
+    ...(s(e.profileText) ? { profileText: s(e.profileText).slice(0, 4000) } : {}),
     ...(summary ? { summary } : {}),
   };
 }
@@ -128,6 +130,7 @@ function haystack(p: PersonRecord): string {
     p.industry,
     p.companySize,
     p.tagline,
+    p.profileText,
   ]
     .filter(Boolean)
     .join(" ")
@@ -190,19 +193,59 @@ async function summaryFromIndexedProfile(rows: PersonRecord[]): Promise<PersonRe
   });
 }
 
+/** Filler in a vague question. Content words such as "based" and "in" stay. */
+const QUERY_FILLER = new Set([
+  "the",
+  "a",
+  "an",
+  "who",
+  "someone",
+  "somebody",
+  "guy",
+  "person",
+  "vaguely",
+  "remember",
+  "mentioned",
+]);
+
+/** Page text already indexed for these profiles, capped, so a phrase from the visit still matches. */
+async function indexedBodyByUrl(urls: string[]): Promise<Map<string, string>> {
+  const wanted = new Set(urls.filter(Boolean));
+  const byUrl = new Map<string, string>();
+  if (!wanted.size) return byUrl;
+  const idToUrl = new Map<number, string>();
+  for (const doc of await db.documents.toArray()) {
+    if (doc.id == null || !wanted.has(doc.url)) continue;
+    idToUrl.set(doc.id, doc.url);
+  }
+  if (!idToUrl.size) return byUrl;
+  for (const chunk of await db.chunks.toArray()) {
+    const url = idToUrl.get(chunk.documentId);
+    if (!url) continue;
+    const prev = byUrl.get(url) ?? "";
+    if (prev.length >= 8000) continue;
+    const bit = String(chunk.text ?? "").replace(/\s+/g, " ").trim();
+    if (bit) byUrl.set(url, `${prev} ${bit}`.trim());
+  }
+  return byUrl;
+}
+
 export async function listPeople(f: PeopleFilter): Promise<PersonRecord[]> {
   const company = f.company?.trim().toLowerCase();
   const words = (f.q ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const keys = words.filter((w) => !QUERY_FILLER.has(w));
+  const needed = keys.length ? keys : words;
   const rows = await summaryFromIndexedProfile(
     (await db.people.orderBy("lastSeen").reverse().toArray()).map(repairedRow)
   );
+  const bodies = needed.length ? await indexedBodyByUrl(rows.map((p) => p.profileUrl)) : new Map<string, string>();
   return rows
     .filter((p) => (f.since == null || p.lastSeen >= f.since) && (f.until == null || p.lastSeen <= f.until))
     .filter((p) => !company || matchesCompany(p, company))
     .filter((p) => {
-      if (!words.length) return true;
-      const hay = haystack(p);
-      return words.every((w) => hay.includes(w));
+      if (!needed.length) return true;
+      const hay = `${haystack(p)} ${(bodies.get(p.profileUrl) ?? "").toLowerCase()}`;
+      return needed.every((w) => hay.includes(w));
     })
     .slice(0, f.limit ?? 500);
 }

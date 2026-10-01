@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   parseLinkedInPage,
   canonicalLinkedInUrl,
+  profilePhotoUrl,
 } from "../src/lib/capture/linkedin";
 
 function doc(name: string): Document {
@@ -26,6 +27,29 @@ describe("canonicalLinkedInUrl", () => {
     expect(canonicalLinkedInUrl("https://www.linkedin.com/feed/")).toBeNull();
     expect(canonicalLinkedInUrl("https://evil.example/in/mira/")).toBeNull();
     expect(canonicalLinkedInUrl("https://linkedin.com.evil.example/in/mira/")).toBeNull();
+  });
+});
+
+describe("profilePhotoUrl", () => {
+  it("keeps a LinkedIn CDN photo and drops ghosts and other hosts", () => {
+    expect(
+      profilePhotoUrl("https://media.licdn.com/dms/image/v2/D4E03AQH/profile-displayphoto-shrink_200_200/0/1")
+    ).toContain("profile-displayphoto-shrink_200_200");
+    expect(profilePhotoUrl("https://static.licdn.com/aero-v1/sc/h/ghost-person")).toBeUndefined();
+    expect(profilePhotoUrl("https://evil.example/photo.jpg")).toBeUndefined();
+    expect(profilePhotoUrl("http://media.licdn.com/x")).toBeUndefined();
+  });
+
+  it("reads the top-card photo onto the parsed profile", () => {
+    const html = `<main><section class="pv-top-card"><h1>Mira Okafor-Lind</h1>
+      <div class="text-body-medium">Head of Field Programs</div>
+      <img src="https://media.licdn.com/dms/image/v2/D4E/profile-displayphoto-shrink_100_100/0/1"
+        srcset="https://media.licdn.com/dms/image/v2/D4E/profile-displayphoto-shrink_100_100/0/1 100w, https://media.licdn.com/dms/image/v2/D4E/profile-displayphoto-shrink_400_400/0/1 400w" />
+      </section></main>`;
+    const d = new DOMParser().parseFromString(html, "text/html");
+    d.title = "Mira Okafor-Lind | LinkedIn";
+    const p = parseLinkedInPage(d, "https://www.linkedin.com/in/mira-okafor-lind/");
+    expect(p?.photoUrl).toContain("profile-displayphoto-shrink_400_400");
   });
 });
 

@@ -5,9 +5,9 @@ import { join } from "node:path";
 import { DEFAULT_USER_SETTINGS } from "../src/shared/extension-settings";
 
 /**
- * The double Shift shortcut is on by default and is offered next to the other
- * keyboard shortcuts on the options page, through the same `data-feature`
- * wiring every other toggle uses (load and save need no extra code).
+ * Double-tap Shift is the only keyboard shortcut, and it is on by default.
+ * The options page offers that one toggle through the same `data-feature`
+ * wiring every other toggle uses.
  */
 
 const OPTIONS_DIR = join(__dirname, "..", "src", "options");
@@ -44,7 +44,7 @@ describe("options page shortcut toggle", () => {
     const box = document.getElementById(TOGGLE_ID);
     expect(box).not.toBeNull();
     const group = box!.closest(".cx-group");
-    expect(group?.querySelector(".cx-group-title")?.textContent).toBe("Keyboard shortcuts");
+    expect(group?.querySelector(".cx-group-title")?.textContent).toBe("Keyboard shortcut");
     expect(box!.closest("#cx-sec-about")).not.toBeNull();
   });
 
@@ -58,7 +58,7 @@ describe("options page shortcut toggle", () => {
       "Open with a double tap of Shift"
     );
     expect(label?.querySelector(".cx-field-hint")?.textContent).toBe(
-      "Tap Shift twice quickly on any page. The shortcuts above keep working."
+      "Tap Shift twice quickly on any page."
     );
   });
 
@@ -69,11 +69,10 @@ describe("options page shortcut toggle", () => {
     for (const box of boxes) expect(keys.has(box.dataset.feature ?? "")).toBe(true);
   });
 
-  it("still documents Ctrl+Shift+K and Alt+Shift+C", () => {
+  it("does not document any other keyboard shortcut", () => {
     const text = document.getElementById("cx-sec-about")?.textContent ?? "";
-    expect(text).toContain("Ctrl");
-    expect(text).toContain("Alt");
-    expect(text).toContain("K");
-    expect(text).toContain("C");
+    expect(text).not.toContain("Ctrl");
+    expect(text).not.toContain("Alt");
+    expect(text).not.toContain("chrome://extensions/shortcuts");
   });
 });

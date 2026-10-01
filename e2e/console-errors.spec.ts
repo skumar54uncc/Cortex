@@ -124,7 +124,7 @@ test("the console stays clean through a full session", async ({ context, service
     await clickInShadow(page, "cortex-tab", "Digest");
     await page.waitForTimeout(3000);
 
-    await clickInShadow(page, "cortex-tab", "People");
+    await clickInShadow(page, "cortex-tab", "People & Companies");
     await page.waitForTimeout(1500);
     await page.keyboard.press("Escape");
 

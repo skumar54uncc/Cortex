@@ -131,7 +131,7 @@ test("the People tab scrolls, so every person is reachable", async ({ context, s
 
   await page.addStyleTag({ content: `* { scrollbar-width: none !important; }` });
   await openOverlayViaToolbar(page, serviceWorker);
-  await clickInShadow(page, "cortex-tab", "People");
+  await clickInShadow(page, "cortex-tab", "People & Companies");
   await expect.poll(async () => (await measure(page)).cards, { timeout: 20_000 }).toBeGreaterThanOrEqual(24);
 
   const before = await measure(page);

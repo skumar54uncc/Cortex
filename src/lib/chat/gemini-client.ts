@@ -1,5 +1,24 @@
-const GEMINI_STREAM_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent";
+/**
+ * Cloud models, in order. The first is the one we want. The rest are tried
+ * when that model is missing, rate-limited, or overloaded.
+ */
+export const GEMINI_MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+] as const;
+
+/** Primary cloud model. Kept for callers that only need the preferred id. */
+export const GEMINI_MODEL = GEMINI_MODELS[0];
+
+/** Statuses where another model may succeed. A bad key or a bad prompt will not. */
+export function geminiStatusIsFallback(status: number): boolean {
+  return status === 404 || status === 408 || status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+}
+
+function modelUrl(model: string): string {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`;
+}
 
 export interface GeminiOptions {
   apiKey: string;
@@ -17,11 +36,33 @@ function sanitizeGeminiErrorBody(body: string, maxLen = 240): string {
   return scrubbed.length > maxLen ? `${scrubbed.slice(0, maxLen)}…` : scrubbed;
 }
 
-export async function* geminiStream(
+class GeminiHttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = "GeminiHttpError";
+  }
+}
+
+function friendlyGeminiFailure(status: number): string {
+  if (status === 503 || status === 429 || status === 500 || status === 502 || status === 504) {
+    return "Gemini is busy right now. Try again in a moment.";
+  }
+  if (status === 404) return "No Gemini model on this API key could answer.";
+  if (status === 401 || status === 403) {
+    return "The Gemini API key was rejected. Check it in Cortex settings.";
+  }
+  return "Gemini could not answer just now.";
+}
+
+async function* streamGeminiModel(
+  model: string,
   prompt: string,
   options: GeminiOptions
 ): AsyncIterable<string> {
-  const url = `${GEMINI_STREAM_URL}?alt=sse`;
+  const url = `${modelUrl(model)}?alt=sse`;
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
@@ -31,6 +72,9 @@ export async function* geminiStream(
     generationConfig: {
       temperature: options.temperature ?? 0.3,
       maxOutputTokens: options.maxOutputTokens ?? 2048,
+      // Gemini 3 counts thinking tokens against maxOutputTokens. Left on its
+      // default, a digest is cut off mid sentence (the visible "On codepen.io").
+      thinkingConfig: { thinkingLevel: "low" },
     },
   };
 
@@ -46,8 +90,9 @@ export async function* geminiStream(
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(
-      `Gemini API error ${response.status}: ${sanitizeGeminiErrorBody(errorBody)}`
+    throw new GeminiHttpError(
+      `Gemini API error ${response.status}: ${sanitizeGeminiErrorBody(errorBody)}`,
+      response.status
     );
   }
 
@@ -91,4 +136,31 @@ export async function* geminiStream(
   } finally {
     options.signal?.removeEventListener("abort", onAbort);
   }
+}
+
+export async function* geminiStream(
+  prompt: string,
+  options: GeminiOptions
+): AsyncIterable<string> {
+  let last: GeminiHttpError | null = null;
+  for (const model of GEMINI_MODELS) {
+    if (options.signal?.aborted) return;
+    let yielded = false;
+    try {
+      for await (const chunk of streamGeminiModel(model, prompt, options)) {
+        yielded = true;
+        yield chunk;
+      }
+      return;
+    } catch (e) {
+      if (yielded) throw e;
+      if (e instanceof DOMException && e.name === "AbortError") throw e;
+      if (e instanceof GeminiHttpError && geminiStatusIsFallback(e.status)) {
+        last = e;
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw new Error(last ? friendlyGeminiFailure(last.status) : "Gemini could not answer just now.");
 }

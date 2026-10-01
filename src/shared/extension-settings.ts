@@ -39,7 +39,7 @@ export interface CortexUserSettings {
   tablesEnabled: boolean;
   imagesEnabled: boolean;
   pdfEnabled: boolean;
-  /** Open the panel by tapping Shift twice; the Chrome shortcuts keep working. */
+  /** Open the panel by tapping Shift twice. */
   doubleShiftShortcutEnabled: boolean;
 }
 

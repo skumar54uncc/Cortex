@@ -63,7 +63,9 @@ async function extractAndIndex(flags: CaptureFlags): Promise<void> {
 
     const host = location.hostname;
     // LinkedIn profile / company pages also feed people memory (Phase 5.1).
-    const person = /(^|\.)linkedin\.com$/i.test(host) ? parseLinkedInPage(document, location.href) : null;
+    const person = /(^|\.)linkedin\.com$/i.test(host)
+      ? parseLinkedInPage(document, location.href)
+      : null;
 
     const localMin =
       host.includes("linkedin.com") ? 28 : host.includes("twitter.com") || host === "x.com" ? 38 : 72;

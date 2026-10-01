@@ -4,6 +4,7 @@ import {
   streamAnswer,
   ChatUnavailableError,
 } from "./llm-router";
+import { GEMINI_MODEL, GEMINI_MODELS, geminiStatusIsFallback } from "./gemini-client";
 import type { ParsedQuestion } from "./question-parser";
 import type { ChatSettings } from "./types";
 import * as nanoClient from "./nano-client";
@@ -149,5 +150,23 @@ describe("streamAnswer abort (nano)", () => {
     }
     expect(out).toEqual(["t1", "t2"]);
     expect(destroy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Gemini model", () => {
+  it("uses the flash model that new API keys can call", () => {
+    expect(GEMINI_MODEL).toBe("gemini-3.8-flash");
+    expect(GEMINI_MODEL).not.toContain("2.5");
+  });
+
+  it("falls through to other flash models when the first is busy or missing", () => {
+    expect(GEMINI_MODELS[0]).toBe("gemini-3.8-flash");
+    expect(GEMINI_MODELS).toContain("gemini-3.5-flash");
+    expect(GEMINI_MODELS).toContain("gemini-3.5-flash-lite");
+    expect(geminiStatusIsFallback(503)).toBe(true);
+    expect(geminiStatusIsFallback(429)).toBe(true);
+    expect(geminiStatusIsFallback(404)).toBe(true);
+    expect(geminiStatusIsFallback(401)).toBe(false);
+    expect(geminiStatusIsFallback(400)).toBe(false);
   });
 });
