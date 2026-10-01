@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { DocumentRecord, ChunkRecord } from "../db/schema";
-import { runAdvancedSearch } from "./search-engine";
+import { FUSION_WITH_SEMANTIC, FUSION_WITHOUT_SEMANTIC, runAdvancedSearch } from "./search-engine";
 
 const mocks = vi.hoisted(() => ({
   docs: [] as DocumentRecord[],
@@ -58,6 +58,15 @@ function ch(id: number, documentId: number, text: string, emb?: number[]): Chunk
     embedState: emb?.length ? "embedded" : undefined,
   };
 }
+
+describe("fusion weights", () => {
+  it("sums to 1 on both branches", () => {
+    const sum = (w: { cosine: number; lexical: number; recency: number; engagement: number }) =>
+      w.cosine + w.lexical + w.recency + w.engagement;
+    expect(sum(FUSION_WITH_SEMANTIC)).toBeCloseTo(1, 5);
+    expect(sum(FUSION_WITHOUT_SEMANTIC)).toBeCloseTo(1, 5);
+  });
+});
 
 describe("runAdvancedSearch", () => {
   const now = 1_700_000_000_000;

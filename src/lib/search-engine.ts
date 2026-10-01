@@ -74,6 +74,46 @@ export interface SearchResponseDTO {
  */
 export const ABSTAIN_FLOOR = 0.18;
 
+/**
+ * Linear fusion. Components sum to 1.
+ * Grid on 2026-10-01 (`eval/src/grid-fusion.ts`, 25 coarse points plus a
+ * neighborhood) kept this vector. The highest overall nDCG point was
+ * cosine 0.48, lexical 0.24, recency 0.00, engagement 0.28 (overall 0.9825)
+ * but factual nDCG fell from 1.000 to 0.996. The nearest improving point
+ * (recency 0.08, engagement 0.20) lifted negatives to 1.000 and dropped
+ * "that video about Episode 32" and "board game publishing overview".
+ * Neither point holds every slice, so the hand tuned vector stays.
+ */
+export interface FusionVector {
+  cosine: number;
+  lexical: number;
+  recency: number;
+  engagement: number;
+}
+
+export const FUSION_WITH_SEMANTIC: FusionVector = {
+  cosine: 0.48,
+  lexical: 0.24,
+  recency: 0.12,
+  engagement: 0.16,
+};
+
+export const FUSION_WITHOUT_SEMANTIC: FusionVector = {
+  cosine: 0,
+  lexical: 0.52,
+  recency: 0.26,
+  engagement: 0.22,
+};
+
+/** Share of the lexical blend that is BM25. The rest is title match. */
+export const LEXICAL_BM25_WEIGHT = 0.72;
+
+export interface FusionOverride {
+  withSemantic: FusionVector;
+  withoutSemantic: FusionVector;
+  bm25InLexical?: number;
+}
+
 export const ABSTAIN_MESSAGE = "I didn't find that in your library.";
 
 /** Chunk plus parent document for grounded answers */
@@ -97,6 +137,8 @@ export interface AdvancedSearchOptions {
    * Production omits this and uses Date.now(). The eval harness pins it.
    */
   now?: number;
+  /** Replaces FUSION_WITH_SEMANTIC / FUSION_WITHOUT_SEMANTIC for an offline grid. */
+  fusion?: FusionOverride;
 }
 
 const BM25_K1 = 1.35;
@@ -183,29 +225,27 @@ function minMaxNorm(values: number[]): number[] {
   return values.map((v) => (Number.isFinite(v) ? (v - lo) / span : 0));
 }
 
-function fuseRankScore(parts: {
-  cosine: number;
-  bm25Norm: number;
-  titleMatch: number;
-  visitedAt: number;
-  engagement: number;
-  hasSemantic: boolean;
-  now: number;
-}): number {
+function fuseRankScore(
+  parts: {
+    cosine: number;
+    bm25Norm: number;
+    titleMatch: number;
+    visitedAt: number;
+    engagement: number;
+    hasSemantic: boolean;
+    now: number;
+  },
+  fusion?: FusionOverride
+): number {
   const rec = recencyBoost(parts.visitedAt, 18, parts.now);
   const eng = Math.min(1, Math.max(0, parts.engagement));
-  const lexicalBlend = 0.72 * parts.bm25Norm + 0.28 * parts.titleMatch;
+  const bm25Share = fusion?.bm25InLexical ?? LEXICAL_BM25_WEIGHT;
+  const lexicalBlend = bm25Share * parts.bm25Norm + (1 - bm25Share) * parts.titleMatch;
+  const w = parts.hasSemantic
+    ? (fusion?.withSemantic ?? FUSION_WITH_SEMANTIC)
+    : (fusion?.withoutSemantic ?? FUSION_WITHOUT_SEMANTIC);
 
-  if (parts.hasSemantic) {
-    return (
-      0.48 * parts.cosine +
-      0.24 * lexicalBlend +
-      0.12 * rec +
-      0.16 * eng
-    );
-  }
-
-  return 0.52 * lexicalBlend + 0.26 * rec + 0.22 * eng;
+  return w.cosine * parts.cosine + w.lexical * lexicalBlend + w.recency * rec + w.engagement * eng;
 }
 
 function pickSnippet(text: string, query: string, maxChars = 200): string {
@@ -443,15 +483,18 @@ export async function runAdvancedSearch(
     const hasSemantic =
       cosine > 0.025 && !!(queryVec?.length && p.chunk.embedding?.length);
 
-    let fused = fuseRankScore({
-      cosine,
-      bm25Norm,
-      titleMatch: tm,
-      visitedAt,
-      engagement,
-      hasSemantic,
-      now,
-    });
+    let fused = fuseRankScore(
+      {
+        cosine,
+        bm25Norm,
+        titleMatch: tm,
+        visitedAt,
+        engagement,
+        hasSemantic,
+        now,
+      },
+      opts?.fusion
+    );
 
     let bonus = 0;
     const pool = p.corpus.toLowerCase();

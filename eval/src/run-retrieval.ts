@@ -1,4 +1,4 @@
-import { runAdvancedSearch } from "../../src/lib/search-engine.js";
+import { runAdvancedSearch, type FusionOverride } from "../../src/lib/search-engine.js";
 import type { CorpusPage, RetrievalQuery, QueryResult, RetrievalHit } from "./types.js";
 import { computeQueryMetrics } from "./metrics.js";
 import { embedText } from "./embed-node.js";
@@ -14,13 +14,14 @@ export function buildUrlToDocIdMap(pages: CorpusPage[]): Map<string, string> {
 export async function runRetrievalEval(
   queries: RetrievalQuery[],
   urlToDocId: Map<string, string>,
-  now: number
+  now: number,
+  fusion?: FusionOverride
 ): Promise<QueryResult[]> {
   const results: QueryResult[] = [];
 
   for (const q of queries) {
     const t0 = performance.now();
-    const response = await runAdvancedSearch(q.query, embedText, { maxHits: 10, now });
+    const response = await runAdvancedSearch(q.query, embedText, { maxHits: 10, now, fusion });
     const latencyMs = performance.now() - t0;
 
     const hits: RetrievalHit[] = (response.hits ?? []).slice(0, 10).map((h, i) => ({

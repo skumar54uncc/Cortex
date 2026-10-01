@@ -219,6 +219,8 @@ Cosine similarity per chunk with stored `embedding`. **`hasSemantic`:** cosine >
 | Recency | 0.12 |
 | Engagement | 0.16 |
 
+A grid over this vector on 2026-10-01 (`eval/src/grid-fusion.ts`) did not find a replacement that raised overall nDCG without dropping another slice. The constants stayed.
+
 **Without semantic:**
 
 | Component | Weight |
