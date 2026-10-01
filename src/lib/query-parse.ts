@@ -72,7 +72,7 @@ export function parseAskQuery(raw: string, now = Date.now()): ParsedAskQuery {
   }
 
   const preferLinkedIn =
-    /\b(profile|linkedin|connection|who\s+works|employee)\b/i.test(trimmed) ||
+    /\b(profile|linkedin|connection|who\s+works?|employee)\b/i.test(trimmed) ||
     /\blinkedin\.com\b/i.test(trimmed);
 
   const entityTerms: string[] = [];

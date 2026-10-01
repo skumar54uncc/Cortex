@@ -227,7 +227,7 @@ Cosine similarity per chunk with stored `embedding`. **`hasSemantic`:** cosine >
 | Recency | 0.26 |
 | Engagement | 0.22 |
 
-**Additional bonuses:** entity terms from `parseAskQuery`, LinkedIn URL boost when query is profile-like.
+**Additional bonuses:** entity terms from `parseAskQuery`, LinkedIn URL boost when the query is profile-like (`who work` and `who works`). Person intent (`person`, `people`, `profile`, `who`) multiplies LinkedIn `/in/` pages by `PERSON_PROFILE_BOOST` (2.4) and multiplies other pages that say "employs N people" by `EMPLOYMENT_HEADCOUNT_DEMOTE` (0.4).
 
 ### 6.7 Query grounding (`query-relevance.ts`)
 

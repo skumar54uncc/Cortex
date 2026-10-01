@@ -41,6 +41,12 @@ describe("query-relevance", () => {
     );
   });
 
+  it("treats who work and who works as LinkedIn profile queries", () => {
+    expect(parseAskQuery("people who work in tidal energy").preferLinkedIn).toBe(true);
+    expect(parseAskQuery("who works at Acme").preferLinkedIn).toBe(true);
+    expect(parseAskQuery("tidal energy overview").preferLinkedIn).toBe(false);
+  });
+
   it("extracts Title Case entity phrases", () => {
     const parsed = parseAskQuery("Atrium Health Career Portal Exploration");
     expect(parsed.entityTerms.some((e) => /atrium health/i.test(e))).toBe(true);

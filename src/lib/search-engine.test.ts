@@ -114,6 +114,27 @@ describe("runAdvancedSearch", () => {
     expect(res.hits.length).toBe(2);
   });
 
+  it("person intent ranks a LinkedIn profile above a page that says it employs N people", async () => {
+    mocks.docs = [
+      doc(1, "https://news.test/hire", "Acme raises a round", now),
+      doc(2, "https://www.linkedin.com/in/ada-l/", "Ada Lovelace | LinkedIn", now),
+    ];
+    mocks.chunks = [
+      ch(1, 1, "hive sensors hive sensors hive sensors. Acme now employs 40 people building hive sensors."),
+      ch(2, 2, "Ada Lovelace. Lead Research. Years in hive sensors."),
+    ];
+    const people = await runAdvancedSearch("people who work in hive sensors", async () => null, {
+      now,
+      abstainFloor: 0,
+    });
+    expect(people.hits[0]!.url).toContain("linkedin.com/in/");
+    const topic = await runAdvancedSearch("hive sensors", async () => null, {
+      now,
+      abstainFloor: 0,
+    });
+    expect(topic.hits[0]!.url).toContain("news.test");
+  });
+
   it("uses the injected now for recency instead of the wall clock", async () => {
     const older = now;
     const newer = now + 40 * 86_400_000;

@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { detectKindIntent, kindBoost, KIND_INTENT_BOOST } from "../src/lib/kind-intent";
+import {
+  detectKindIntent,
+  EMPLOYMENT_HEADCOUNT_DEMOTE,
+  isPersonProfileUrl,
+  kindBoost,
+  KIND_INTENT_BOOST,
+  PERSON_PROFILE_BOOST,
+  personScoreMultiplier,
+  textHasEmploymentHeadcount,
+} from "../src/lib/kind-intent";
 import { DEFAULT_USER_SETTINGS, type CortexUserSettings } from "../src/shared/extension-settings";
 
 describe("detectKindIntent", () => {
@@ -27,6 +36,21 @@ describe("detectKindIntent", () => {
     expect(kindBoost("transcript", i)).toBe(1);
     // Saved highlights always carry a small boost, intent or not.
     expect(kindBoost("highlight", i)).toBeGreaterThan(1);
+  });
+
+  it("boosts LinkedIn profiles and demotes employment headcount pages only under person intent", () => {
+    const profile = "https://www.linkedin.com/in/ada-lovelace/";
+    const news = "https://news.example/acme-round";
+    expect(isPersonProfileUrl(profile)).toBe(true);
+    expect(isPersonProfileUrl("https://www.linkedin.com/company/acme/")).toBe(false);
+    expect(textHasEmploymentHeadcount("Acme now employs 40 people in the city.")).toBe(true);
+    expect(textHasEmploymentHeadcount("I care about people and sensors.")).toBe(false);
+    expect(personScoreMultiplier(true, profile, true)).toBe(PERSON_PROFILE_BOOST);
+    expect(personScoreMultiplier(true, news, true)).toBe(EMPLOYMENT_HEADCOUNT_DEMOTE);
+    expect(personScoreMultiplier(true, news, false)).toBe(1);
+    expect(personScoreMultiplier(false, profile, true)).toBe(1);
+    expect(PERSON_PROFILE_BOOST).toBeGreaterThan(1);
+    expect(EMPLOYMENT_HEADCOUNT_DEMOTE).toBeLessThan(1);
   });
 
   it("boosts only chunks of an intended kind", () => {

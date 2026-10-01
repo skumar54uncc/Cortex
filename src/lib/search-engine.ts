@@ -11,7 +11,12 @@ import {
   type ChunkKind,
   type ChunkLocator,
 } from "../db/schema";
-import { detectKindIntent, kindBoost } from "./kind-intent";
+import {
+  detectKindIntent,
+  kindBoost,
+  personScoreMultiplier,
+  textHasEmploymentHeadcount,
+} from "./kind-intent";
 import { cosineSimilarity } from "./similarity";
 import { titleMatchScore, recencyBoost } from "./ranking";
 import { parseAskQuery, buildEvidenceIntro } from "./query-parse";
@@ -375,6 +380,15 @@ export async function runAdvancedSearch(
   // Intent words ("video", "table", "pdf"...) boost chunks of that kind only.
   const kindIntent = detectKindIntent(rawQuery);
 
+  const employmentDocIds = new Set<number>();
+  if (kindIntent.person) {
+    for (const p of prepared) {
+      if (p.doc.id != null && textHasEmploymentHeadcount(p.corpus)) {
+        employmentDocIds.add(p.doc.id);
+      }
+    }
+  }
+
   const bm25RawList: number[] = [];
   const cosineList: number[] = [];
 
@@ -458,6 +472,11 @@ export async function runAdvancedSearch(
     );
     fused *= relevanceMultiplier(grounding);
     fused *= kindBoost(p.chunk.kind ?? "text", kindIntent);
+    fused *= personScoreMultiplier(
+      kindIntent.person,
+      doc.url,
+      employmentDocIds.has(doc.id!)
+    );
     fused = Math.min(1.45, fused + bonus);
 
     const groundScore = groundingForConfidence(grounding);

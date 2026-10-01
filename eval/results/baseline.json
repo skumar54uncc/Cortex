@@ -1,5 +1,5 @@
 {
-  "runId": "2026-10-01T05:26:06.510Z",
+  "runId": "2026-10-01T05:31:16.455Z",
   "environment": {
     "node": "v20.19.4",
     "embedModelId": "Xenova/all-MiniLM-L6-v2",
@@ -14,7 +14,7 @@
       "queryId": "q-001",
       "query": "how does the quantum sieve algorithm filter candidates",
       "query_type": "factual",
-      "latencyMs": 41.54958399999998,
+      "latencyMs": 40.53658299999995,
       "hits": [
         {
           "rank": 1,
@@ -114,7 +114,7 @@
       "queryId": "q-002",
       "query": "what is the Ortega lattice",
       "query_type": "factual",
-      "latencyMs": 34.227250000000026,
+      "latencyMs": 33.52237500000001,
       "hits": [
         {
           "rank": 1,
@@ -213,7 +213,7 @@
       "queryId": "q-003",
       "query": "coherence margin below 0.12 unstable sieve",
       "query_type": "factual",
-      "latencyMs": 33.024458000000095,
+      "latencyMs": 33.08279099999993,
       "hits": [
         {
           "rank": 1,
@@ -312,7 +312,7 @@
       "queryId": "q-004",
       "query": "Helix Labs toolkit version 3.2 announcement",
       "query_type": "factual",
-      "latencyMs": 38.77879200000007,
+      "latencyMs": 34.86141699999996,
       "hits": [
         {
           "rank": 1,
@@ -347,7 +347,7 @@
       "queryId": "q-005",
       "query": "createSieve SieveConfig typescript",
       "query_type": "factual",
-      "latencyMs": 33.79283299999997,
+      "latencyMs": 33.027375000000006,
       "hits": [
         {
           "rank": 1,
@@ -446,7 +446,7 @@
       "queryId": "q-006",
       "query": "collapse equivalence classes representatives",
       "query_type": "factual",
-      "latencyMs": 33.92975000000001,
+      "latencyMs": 33.3884579999999,
       "hits": [
         {
           "rank": 1,
@@ -546,7 +546,7 @@
       "queryId": "q-007",
       "query": "bucket cap K 64 to 256",
       "query_type": "factual",
-      "latencyMs": 29.697416999999973,
+      "latencyMs": 28.994583000000148,
       "hits": [
         {
           "rank": 1,
@@ -645,7 +645,7 @@
       "queryId": "q-008",
       "query": "synthetic benchmark authors deterministic corpora",
       "query_type": "factual",
-      "latencyMs": 34.10916699999996,
+      "latencyMs": 33.38133400000015,
       "hits": [
         {
           "rank": 1,
@@ -744,7 +744,7 @@
       "queryId": "q-009",
       "query": "that article about my weekend quantum sieve project",
       "query_type": "navigational",
-      "latencyMs": 33.370207999999934,
+      "latencyMs": 33.182417000000214,
       "hits": [
         {
           "rank": 1,
@@ -843,7 +843,7 @@
       "queryId": "q-010",
       "query": "the Helix Labs press release from May 2026",
       "query_type": "navigational",
-      "latencyMs": 37.547374999999874,
+      "latencyMs": 35.25170800000001,
       "hits": [
         {
           "rank": 1,
@@ -942,7 +942,7 @@
       "queryId": "q-011",
       "query": "NexaFilter API reference page I read",
       "query_type": "navigational",
-      "latencyMs": 33.89387499999998,
+      "latencyMs": 33.62737500000003,
       "hits": [
         {
           "rank": 1,
@@ -1041,7 +1041,7 @@
       "queryId": "q-012",
       "query": "wiki page on quantum sieve algorithms",
       "query_type": "navigational",
-      "latencyMs": 30.88391700000011,
+      "latencyMs": 33.89429199999995,
       "hits": [
         {
           "rank": 1,
@@ -1140,7 +1140,7 @@
       "queryId": "q-013",
       "query": "short edge case page about imaginary buckets",
       "query_type": "navigational",
-      "latencyMs": 35.75312500000018,
+      "latencyMs": 34.830625000000055,
       "hits": [
         {
           "rank": 1,
@@ -1239,7 +1239,7 @@
       "queryId": "q-014",
       "query": "how I built a fake demo blog",
       "query_type": "navigational",
-      "latencyMs": 36.02291700000001,
+      "latencyMs": 30.211207999999942,
       "hits": [
         {
           "rank": 1,
@@ -1338,7 +1338,7 @@
       "queryId": "q-015",
       "query": "quantum sieve research and tooling",
       "query_type": "exploratory",
-      "latencyMs": 31.821042000000034,
+      "latencyMs": 30.251792000000023,
       "hits": [
         {
           "rank": 1,
@@ -1439,7 +1439,7 @@
       "queryId": "q-016",
       "query": "bucket functions indexing retrieval",
       "query_type": "exploratory",
-      "latencyMs": 32.69120799999996,
+      "latencyMs": 29.32179199999996,
       "hits": [
         {
           "rank": 1,
@@ -1539,7 +1539,7 @@
       "queryId": "q-017",
       "query": "fictional libraries and eval harnesses",
       "query_type": "exploratory",
-      "latencyMs": 33.09762500000011,
+      "latencyMs": 30.832292000000052,
       "hits": [
         {
           "rank": 1,
@@ -1639,7 +1639,7 @@
       "queryId": "q-018",
       "query": "Helix Labs Ortega lattice documentation",
       "query_type": "exploratory",
-      "latencyMs": 34.82304199999999,
+      "latencyMs": 33.07950000000005,
       "hits": [
         {
           "rank": 1,
@@ -1691,7 +1691,7 @@
       "queryId": "q-019",
       "query": "real commercial rocket radiator manufacturing",
       "query_type": "negative",
-      "latencyMs": 35.57112499999994,
+      "latencyMs": 33.762208999999984,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -1707,7 +1707,7 @@
       "queryId": "q-020",
       "query": "authentic pasta recipe san marzano tomatoes",
       "query_type": "negative",
-      "latencyMs": 34.631374999999935,
+      "latencyMs": 32.89904200000001,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -1723,7 +1723,7 @@
       "queryId": "q-100",
       "query": "Ordrixo 28 percent orbital cargo logistics",
       "query_type": "factual",
-      "latencyMs": 35.45095800000013,
+      "latencyMs": 32.34220800000003,
       "hits": [
         {
           "rank": 1,
@@ -1822,7 +1822,7 @@
       "queryId": "q-101",
       "query": "Veldrixa 36 percent orbital cargo logistics",
       "query_type": "factual",
-      "latencyMs": 42.6211659999999,
+      "latencyMs": 31.456583000000137,
       "hits": [
         {
           "rank": 1,
@@ -1921,7 +1921,7 @@
       "queryId": "q-102",
       "query": "Kelbiso 44 percent orbital cargo logistics",
       "query_type": "factual",
-      "latencyMs": 44.67512499999998,
+      "latencyMs": 33.779625000000124,
       "hits": [
         {
           "rank": 1,
@@ -2020,7 +2020,7 @@
       "queryId": "q-103",
       "query": "Ezra Kaplan linkedin Keltorix",
       "query_type": "factual",
-      "latencyMs": 32.43695899999989,
+      "latencyMs": 32.519415999999865,
       "hits": [
         {
           "rank": 1,
@@ -2119,7 +2119,7 @@
       "queryId": "q-104",
       "query": "createvanebisClient 3351 ms default",
       "query_type": "factual",
-      "latencyMs": 29.490542000000005,
+      "latencyMs": 29.975541999999905,
       "hits": [
         {
           "rank": 1,
@@ -2218,7 +2218,7 @@
       "queryId": "q-105",
       "query": "Ingrid Castellano Kelbiso 23 minutes per day",
       "query_type": "factual",
-      "latencyMs": 35.038125000000036,
+      "latencyMs": 32.73675000000003,
       "hits": [
         {
           "rank": 1,
@@ -2317,7 +2317,7 @@
       "queryId": "q-106",
       "query": "Tordrixo Field 4 price rating table",
       "query_type": "factual",
-      "latencyMs": 34.942416000000094,
+      "latencyMs": 33.381124999999884,
       "hits": [
         {
           "rank": 1,
@@ -2416,7 +2416,7 @@
       "queryId": "q-107",
       "query": "photo essay orbital cargo logistics Astrid Ishikawa",
       "query_type": "factual",
-      "latencyMs": 39.183250000000044,
+      "latencyMs": 38.54062500000009,
       "hits": [
         {
           "rank": 1,
@@ -2515,7 +2515,7 @@
       "queryId": "q-108",
       "query": "Kelquelix 21 million orbital cargo logistics",
       "query_type": "factual",
-      "latencyMs": 33.305834000000004,
+      "latencyMs": 33.540915999999925,
       "hits": [
         {
           "rank": 1,
@@ -2614,7 +2614,7 @@
       "queryId": "q-109",
       "query": "vanevela 53 million orbital cargo logistics",
       "query_type": "factual",
-      "latencyMs": 32.00475000000006,
+      "latencyMs": 31.736834000000044,
       "hits": [
         {
           "rank": 1,
@@ -2713,7 +2713,7 @@
       "queryId": "q-110",
       "query": "Scoteao 19 percent fermented tea brewing",
       "query_type": "factual",
-      "latencyMs": 33.64712499999996,
+      "latencyMs": 31.836458999999877,
       "hits": [
         {
           "rank": 1,
@@ -2812,7 +2812,7 @@
       "queryId": "q-111",
       "query": "that page about Scoteao",
       "query_type": "navigational",
-      "latencyMs": 31.437832999999955,
+      "latencyMs": 29.739915999999994,
       "hits": [
         {
           "rank": 1,
@@ -2911,7 +2911,7 @@
       "queryId": "q-112",
       "query": "Teasco 27 percent fermented tea brewing",
       "query_type": "factual",
-      "latencyMs": 32.79529200000002,
+      "latencyMs": 32.280250000000024,
       "hits": [
         {
           "rank": 1,
@@ -3010,7 +3010,7 @@
       "queryId": "q-113",
       "query": "Emil Halvorsen linkedin Brugard",
       "query_type": "factual",
-      "latencyMs": 33.01770899999997,
+      "latencyMs": 38.82112499999994,
       "hits": [
         {
           "rank": 1,
@@ -3109,7 +3109,7 @@
       "queryId": "q-114",
       "query": "Aiko Sundstrom linkedin morabru",
       "query_type": "factual",
-      "latencyMs": 32.32249999999999,
+      "latencyMs": 32.68091699999991,
       "hits": [
         {
           "rank": 1,
@@ -3208,14 +3208,14 @@
       "queryId": "q-115",
       "query": "that profile about Aiko Sundstrom - Director of Product at morabru",
       "query_type": "navigational",
-      "latencyMs": 40.22629200000006,
+      "latencyMs": 38.26974999999993,
       "hits": [
         {
           "rank": 1,
           "docId": "gen-kombucha-profile-3",
           "url": "https://www.linkedin.com/in/aiko-sundstrom-kombucha3/",
           "title": "Aiko Sundstrom - Director of Product at morabru | LinkedIn",
-          "score": 0.9439488922517801,
+          "score": 1.45,
           "snippet": "Ljubljana, Hybrid · 601 followers · 283+ connections About 13 years in fermented tea brewing.…"
         },
         {
@@ -3223,7 +3223,7 @@
           "docId": "gen-synth-profile-2",
           "url": "https://www.linkedin.com/in/hamish-ngata-synth2/",
           "title": "Hamish Ngata - Principal Product at Ospata | LinkedIn",
-          "score": 0.15791003705420542,
+          "score": 0.308984088930093,
           "snippet": "Adelaide, Hybrid · 794 followers · 415+ connections About 7 years in vintage synthesizer restoration.…"
         },
         {
@@ -3231,7 +3231,7 @@
           "docId": "gen-coldchain-profile-3",
           "url": "https://www.linkedin.com/in/dmitri-veldt-coldchain3/",
           "title": "Dmitri Veldt - Head of Product at Glamanea | LinkedIn",
-          "score": 0.15754827174912112,
+          "score": 0.30811585219789067,
           "snippet": "Tartu, On-site · 667 followers · 309+ connections About 9 years in cold chain pharmacy delivery.…"
         },
         {
@@ -3239,7 +3239,7 @@
           "docId": "gen-synth-profile-1",
           "url": "https://www.linkedin.com/in/aiko-adeyemi-synth1/",
           "title": "Aiko Adeyemi - Senior Field Programs at Ostara | LinkedIn",
-          "score": 0.15518458684888184,
+          "score": 0.30244300843731636,
           "snippet": "Valparaíso, Hybrid · 1663 followers · 221+ connections About 4 years in vintage synthesizer restoration.…"
         },
         {
@@ -3247,7 +3247,7 @@
           "docId": "gen-type-profile-1",
           "url": "https://www.linkedin.com/in/ingrid-veldt-type1/",
           "title": "Ingrid Veldt - Head of Product at Keraxa | LinkedIn",
-          "score": 0.155097742034067,
+          "score": 0.3022345808817608,
           "snippet": "Tartu, On-site · 1454 followers · 225+ connections About 3 years in typeface design tooling.…"
         },
         {
@@ -3255,7 +3255,7 @@
           "docId": "gen-glacier-profile-3",
           "url": "https://www.linkedin.com/in/bjorn-kowalczyk-glacier3/",
           "title": "Bjorn Kowalczyk - Senior Product at Cryvadaix | LinkedIn",
-          "score": 0.155015353685394,
+          "score": 0.3020368488449455,
           "snippet": "Montevideo, Hybrid · 1402 followers · 416+ connections About 8 years in glacier monitoring drones.…"
         },
         {
@@ -3263,7 +3263,7 @@
           "docId": "gen-coldchain-profile-2",
           "url": "https://www.linkedin.com/in/ravi-brannigan-coldchain2/",
           "title": "Ravi Brannigan - Director of Operations at Crytherix | LinkedIn",
-          "score": 0.1510471047929115,
+          "score": 0.2925130515029876,
           "snippet": "Tartu, Hybrid · 1809 followers · 450+ connections About 13 years in cold chain pharmacy delivery.…"
         },
         {
@@ -3271,7 +3271,7 @@
           "docId": "gen-coldchain-profile-1",
           "url": "https://www.linkedin.com/in/bjorn-blackwood-coldchain1/",
           "title": "Bjorn Blackwood - Director of Field Programs at Glaovaix | LinkedIn",
-          "score": 0.150022602063915,
+          "score": 0.29005424495339593,
           "snippet": "Reykjavik, Hybrid · 3196 followers · 312+ connections About 6 years in cold chain pharmacy delivery.…"
         },
         {
@@ -3279,7 +3279,7 @@
           "docId": "gen-boardgames-profile-2",
           "url": "https://www.linkedin.com/in/priya-kaplan-boardgames2/",
           "title": "Priya Kaplan - Principal Product at Hexward | LinkedIn",
-          "score": 0.14904581165015984,
+          "score": 0.28770994796038357,
           "snippet": "Tartu, Hybrid · 654 followers · 247+ connections About 9 years in board game publishing.…"
         },
         {
@@ -3287,7 +3287,7 @@
           "docId": "gen-signlang-profile-2",
           "url": "https://www.linkedin.com/in/ingrid-quist-signlang2/",
           "title": "Ingrid Quist - Principal Product at Gessig | LinkedIn",
-          "score": 0.14354279569569292,
+          "score": 0.274502709669663,
           "snippet": "Hobart, On-site · 999 followers · 403+ connections About 13 years in sign language learning apps.…"
         }
       ],
@@ -3307,7 +3307,7 @@
       "queryId": "q-116",
       "query": "that page about Fizzgarda API reference",
       "query_type": "navigational",
-      "latencyMs": 33.975374999999985,
+      "latencyMs": 32.03645800000004,
       "hits": [
         {
           "rank": 1,
@@ -3406,7 +3406,7 @@
       "queryId": "q-117",
       "query": "createmorawortClient 1025 ms default",
       "query_type": "factual",
-      "latencyMs": 30.280458999999837,
+      "latencyMs": 40.6645410000001,
       "hits": [
         {
           "rank": 1,
@@ -3505,7 +3505,7 @@
       "queryId": "q-118",
       "query": "Ravi Veldt gardfizzo 66 minutes per day",
       "query_type": "factual",
-      "latencyMs": 32.85208399999965,
+      "latencyMs": 33.717125000000124,
       "hits": [
         {
           "rank": 1,
@@ -3604,7 +3604,7 @@
       "queryId": "q-119",
       "query": "Kenji Rahimi Fizzgardix 90 minutes per day",
       "query_type": "factual",
-      "latencyMs": 36.160959000000275,
+      "latencyMs": 29.424125000000004,
       "hits": [
         {
           "rank": 1,
@@ -3703,7 +3703,7 @@
       "queryId": "q-120",
       "query": "gardbrua Max 9 price rating table",
       "query_type": "factual",
-      "latencyMs": 32.43145800000002,
+      "latencyMs": 30.311249999999745,
       "hits": [
         {
           "rank": 1,
@@ -3802,7 +3802,7 @@
       "queryId": "q-121",
       "query": "that page about sparkling sugar ratio comparison, 2024",
       "query_type": "navigational",
-      "latencyMs": 35.376374999999825,
+      "latencyMs": 33.17387499999995,
       "hits": [
         {
           "rank": 1,
@@ -3901,7 +3901,7 @@
       "queryId": "q-122",
       "query": "wortbruo 57 million fermented tea brewing",
       "query_type": "factual",
-      "latencyMs": 31.12816699999985,
+      "latencyMs": 29.408750000000055,
       "hits": [
         {
           "rank": 1,
@@ -4000,7 +4000,7 @@
       "queryId": "q-123",
       "query": "Beetrak 52 percent urban beekeeping sensors",
       "query_type": "factual",
-      "latencyMs": 30.651334000000134,
+      "latencyMs": 29.63629200000014,
       "hits": [
         {
           "rank": 1,
@@ -4099,7 +4099,7 @@
       "queryId": "q-124",
       "query": "vaneapi 85 percent urban beekeeping sensors",
       "query_type": "factual",
-      "latencyMs": 31.734500000000025,
+      "latencyMs": 30.067207999999937,
       "hits": [
         {
           "rank": 1,
@@ -4198,7 +4198,7 @@
       "queryId": "q-125",
       "query": "Yuki Lindqvist linkedin brixtrakix",
       "query_type": "factual",
-      "latencyMs": 30.253999999999905,
+      "latencyMs": 29.92041700000027,
       "hits": [
         {
           "rank": 1,
@@ -4297,7 +4297,7 @@
       "queryId": "q-126",
       "query": "Helga Sato linkedin taravaneix",
       "query_type": "factual",
-      "latencyMs": 33.211207999999715,
+      "latencyMs": 32.93766600000026,
       "hits": [
         {
           "rank": 1,
@@ -4396,7 +4396,7 @@
       "queryId": "q-127",
       "query": "createBeenecoClient 7929 ms default",
       "query_type": "factual",
-      "latencyMs": 30.26120899999978,
+      "latencyMs": 28.418208999999933,
       "hits": [
         {
           "rank": 1,
@@ -4495,7 +4495,7 @@
       "queryId": "q-128",
       "query": "createtraknecaClient 7192 ms default",
       "query_type": "factual",
-      "latencyMs": 30.000542000000223,
+      "latencyMs": 28.46033299999999,
       "hits": [
         {
           "rank": 1,
@@ -4594,7 +4594,7 @@
       "queryId": "q-129",
       "query": "that page about trakneca API reference",
       "query_type": "navigational",
-      "latencyMs": 32.62820899999997,
+      "latencyMs": 32.84225000000015,
       "hits": [
         {
           "rank": 1,
@@ -4693,7 +4693,7 @@
       "queryId": "q-130",
       "query": "Helga Ferreira trakapiix 66 minutes per day",
       "query_type": "factual",
-      "latencyMs": 32.427916000000096,
+      "latencyMs": 31.41879199999994,
       "hits": [
         {
           "rank": 1,
@@ -4792,7 +4792,7 @@
       "queryId": "q-131",
       "query": "that video about Episode 80",
       "query_type": "navigational",
-      "latencyMs": 33.24812500000007,
+      "latencyMs": 31.226666000000023,
       "hits": [
         {
           "rank": 1,
@@ -4891,7 +4891,7 @@
       "queryId": "q-132",
       "query": "vaneapi Max 3 price rating table",
       "query_type": "factual",
-      "latencyMs": 32.81449999999995,
+      "latencyMs": 31.906334000000243,
       "hits": [
         {
           "rank": 1,
@@ -4990,7 +4990,7 @@
       "queryId": "q-133",
       "query": "photo essay urban beekeeping sensors Luca Haldane",
       "query_type": "factual",
-      "latencyMs": 37.191249999999854,
+      "latencyMs": 35.11620800000037,
       "hits": [
         {
           "rank": 1,
@@ -5089,7 +5089,7 @@
       "queryId": "q-134",
       "query": "that page about Photo essay",
       "query_type": "navigational",
-      "latencyMs": 32.738292,
+      "latencyMs": 32.23891700000013,
       "hits": [
         {
           "rank": 1,
@@ -5188,7 +5188,7 @@
       "queryId": "q-135",
       "query": "that page about trakbrix raises 6 million to expand urban beekeeping sensors in Halifax",
       "query_type": "navigational",
-      "latencyMs": 41.488374999999905,
+      "latencyMs": 38.8090000000002,
       "hits": [
         {
           "rank": 1,
@@ -5287,7 +5287,7 @@
       "queryId": "q-136",
       "query": "trakbeea 21 million urban beekeeping sensors",
       "query_type": "factual",
-      "latencyMs": 33.251458000000184,
+      "latencyMs": 32.709292000000005,
       "hits": [
         {
           "rank": 1,
@@ -5386,7 +5386,7 @@
       "queryId": "q-137",
       "query": "that page about trakbeea raises 21 million to expand urban beekeeping sensors in Reykjavik",
       "query_type": "navigational",
-      "latencyMs": 41.339874999999665,
+      "latencyMs": 39.28558299999986,
       "hits": [
         {
           "rank": 1,
@@ -5485,7 +5485,7 @@
       "queryId": "q-138",
       "query": "nixgly 79 percent typeface design tooling",
       "query_type": "factual",
-      "latencyMs": 34.171458999999686,
+      "latencyMs": 32.16391700000031,
       "hits": [
         {
           "rank": 1,
@@ -5584,7 +5584,7 @@
       "queryId": "q-139",
       "query": "Ingrid Veldt linkedin Keraxa",
       "query_type": "factual",
-      "latencyMs": 32.08537499999966,
+      "latencyMs": 30.678667000000132,
       "hits": [
         {
           "rank": 1,
@@ -5683,14 +5683,14 @@
       "queryId": "q-140",
       "query": "that profile about Ingrid Veldt - Head of Product at Keraxa",
       "query_type": "navigational",
-      "latencyMs": 37.83912499999997,
+      "latencyMs": 36.67595900000015,
       "hits": [
         {
           "rank": 1,
           "docId": "gen-type-profile-1",
           "url": "https://www.linkedin.com/in/ingrid-veldt-type1/",
           "title": "Ingrid Veldt - Head of Product at Keraxa | LinkedIn",
-          "score": 0.9474342546379878,
+          "score": 1.45,
           "snippet": "Tartu, On-site · 1454 followers · 225+ connections About 3 years in typeface design tooling.…"
         },
         {
@@ -5698,7 +5698,7 @@
           "docId": "gen-coldchain-profile-3",
           "url": "https://www.linkedin.com/in/dmitri-veldt-coldchain3/",
           "title": "Dmitri Veldt - Head of Product at Glamanea | LinkedIn",
-          "score": 0.39299546932762736,
+          "score": 0.8731891263863057,
           "snippet": "Tartu, On-site · 667 followers · 309+ connections About 9 years in cold chain pharmacy delivery.…"
         },
         {
@@ -5706,7 +5706,7 @@
           "docId": "gen-signlang-profile-1",
           "url": "https://www.linkedin.com/in/priya-kowalczyk-signlang1/",
           "title": "Priya Kowalczyk - Head of Product at turamiaa | LinkedIn",
-          "score": 0.18799649228529208,
+          "score": 0.38119158148470095,
           "snippet": "Salvador, Remote · 1658 followers · 465+ connections About 8 years in sign language learning apps.…"
         },
         {
@@ -5714,7 +5714,7 @@
           "docId": "gen-signlang-profile-2",
           "url": "https://www.linkedin.com/in/ingrid-quist-signlang2/",
           "title": "Ingrid Quist - Principal Product at Gessig | LinkedIn",
-          "score": 0.18604991646396968,
+          "score": 0.37651979951352715,
           "snippet": "Hobart, On-site · 999 followers · 403+ connections About 13 years in sign language learning apps.…"
         },
         {
@@ -5722,7 +5722,7 @@
           "docId": "gen-kombucha-profile-3",
           "url": "https://www.linkedin.com/in/aiko-sundstrom-kombucha3/",
           "title": "Aiko Sundstrom - Director of Product at morabru | LinkedIn",
-          "score": 0.14954421504306878,
+          "score": 0.28890611610336503,
           "snippet": "Ljubljana, Hybrid · 601 followers · 283+ connections About 13 years in fermented tea brewing.…"
         },
         {
@@ -5730,7 +5730,7 @@
           "docId": "gen-type-profile-2",
           "url": "https://www.linkedin.com/in/zanele-ngata-type2/",
           "title": "Zanele Ngata - Head of Research at nixserix | LinkedIn",
-          "score": 0.14818751389587861,
+          "score": 0.28565003335010863,
           "snippet": "Montevideo, On-site · 1867 followers · 435+ connections About 3 years in typeface design tooling.…"
         },
         {
@@ -5738,7 +5738,7 @@
           "docId": "gen-kombucha-profile-2",
           "url": "https://www.linkedin.com/in/helga-ishikawa-kombucha2/",
           "title": "Helga Ishikawa - Head of Engineering at Fizzbyne | LinkedIn",
-          "score": 0.1452598152101437,
+          "score": 0.2786235565043449,
           "snippet": "Ljubljana, On-site · 4041 followers · 490+ connections About 8 years in fermented tea brewing.…"
         },
         {
@@ -5746,7 +5746,7 @@
           "docId": "gen-type-profile-3",
           "url": "https://www.linkedin.com/in/dmitri-veldt-type3/",
           "title": "Dmitri Veldt - Lead Research at ifaker | LinkedIn",
-          "score": 0.14513555324781988,
+          "score": 0.2783253277947677,
           "snippet": "Hobart, Hybrid · 2460 followers · 474+ connections About 6 years in typeface design tooling.…"
         },
         {
@@ -5754,7 +5754,7 @@
           "docId": "gen-synth-profile-2",
           "url": "https://www.linkedin.com/in/hamish-ngata-synth2/",
           "title": "Hamish Ngata - Principal Product at Ospata | LinkedIn",
-          "score": 0.14456923228931517,
+          "score": 0.2769661574943564,
           "snippet": "Adelaide, Hybrid · 794 followers · 415+ connections About 7 years in vintage synthesizer restoration.…"
         },
         {
@@ -5762,7 +5762,7 @@
           "docId": "gen-boardgames-profile-2",
           "url": "https://www.linkedin.com/in/priya-kaplan-boardgames2/",
           "title": "Priya Kaplan - Principal Product at Hexward | LinkedIn",
-          "score": 0.13875806635051796,
+          "score": 0.2630193592412431,
           "snippet": "Tartu, Hybrid · 654 followers · 247+ connections About 9 years in board game publishing.…"
         }
       ],
@@ -5782,7 +5782,7 @@
       "queryId": "q-141",
       "query": "Zanele Ngata linkedin nixserix",
       "query_type": "factual",
-      "latencyMs": 33.828500000000076,
+      "latencyMs": 30.744958000000224,
       "hits": [
         {
           "rank": 1,
@@ -5881,7 +5881,7 @@
       "queryId": "q-142",
       "query": "Dmitri Veldt linkedin ifaker",
       "query_type": "factual",
-      "latencyMs": 37.658082999999806,
+      "latencyMs": 38.113332999999784,
       "hits": [
         {
           "rank": 1,
@@ -5980,7 +5980,7 @@
       "queryId": "q-143",
       "query": "createnixphonClient 1152 ms default",
       "query_type": "factual",
-      "latencyMs": 30.326916999999867,
+      "latencyMs": 29.16458300000022,
       "hits": [
         {
           "rank": 1,
@@ -6079,7 +6079,7 @@
       "queryId": "q-144",
       "query": "that page about nixphon API reference",
       "query_type": "navigational",
-      "latencyMs": 33.45912500000031,
+      "latencyMs": 31.708875000000262,
       "hits": [
         {
           "rank": 1,
@@ -6178,7 +6178,7 @@
       "queryId": "q-145",
       "query": "createifaaxoClient 7566 ms default",
       "query_type": "factual",
-      "latencyMs": 29.956791000000067,
+      "latencyMs": 27.516665999999987,
       "hits": [
         {
           "rank": 1,
@@ -6277,7 +6277,7 @@
       "queryId": "q-146",
       "query": "Luca Ferreira Axphona 8 minutes per day",
       "query_type": "factual",
-      "latencyMs": 32.25329099999999,
+      "latencyMs": 30.83987500000012,
       "hits": [
         {
           "rank": 1,
@@ -6376,7 +6376,7 @@
       "queryId": "q-147",
       "query": "nixifa Max 9 price rating table",
       "query_type": "factual",
-      "latencyMs": 32.439750000000004,
+      "latencyMs": 31.194209000000228,
       "hits": [
         {
           "rank": 1,
@@ -6475,7 +6475,7 @@
       "queryId": "q-148",
       "query": "photo essay typeface design tooling Farah Brannigan",
       "query_type": "factual",
-      "latencyMs": 38.07224999999971,
+      "latencyMs": 34.82208300000002,
       "hits": [
         {
           "rank": 1,
@@ -6574,7 +6574,7 @@
       "queryId": "q-149",
       "query": "Serifa 39 million typeface design tooling",
       "query_type": "factual",
-      "latencyMs": 33.97550000000001,
+      "latencyMs": 31.706166999999823,
       "hits": [
         {
           "rank": 1,
@@ -6673,7 +6673,7 @@
       "queryId": "q-150",
       "query": "that page about Serifa raises 39 million to expand typeface design tooling in Kyoto",
       "query_type": "navigational",
-      "latencyMs": 42.047415999999885,
+      "latencyMs": 38.828791000000365,
       "hits": [
         {
           "rank": 1,
@@ -6772,7 +6772,7 @@
       "queryId": "q-151",
       "query": "phonsera 8 million typeface design tooling",
       "query_type": "factual",
-      "latencyMs": 34.38608400000021,
+      "latencyMs": 30.802999999999884,
       "hits": [
         {
           "rank": 1,
@@ -6871,7 +6871,7 @@
       "queryId": "q-152",
       "query": "Tiner 92 percent tidal energy microgrids",
       "query_type": "factual",
-      "latencyMs": 39.71604100000013,
+      "latencyMs": 34.154957999999624,
       "hits": [
         {
           "rank": 1,
@@ -6970,7 +6970,7 @@
       "queryId": "q-153",
       "query": "that page about Tiner",
       "query_type": "navigational",
-      "latencyMs": 33.99162499999966,
+      "latencyMs": 29.244583000000148,
       "hits": [
         {
           "rank": 1,
@@ -7069,7 +7069,7 @@
       "queryId": "q-154",
       "query": "Nerlineix 13 percent tidal energy microgrids",
       "query_type": "factual",
-      "latencyMs": 39.16783399999986,
+      "latencyMs": 32.90437499999962,
       "hits": [
         {
           "rank": 1,
@@ -7168,7 +7168,7 @@
       "queryId": "q-155",
       "query": "Ravi Oyelaran linkedin Ebbner",
       "query_type": "factual",
-      "latencyMs": 34.86691699999983,
+      "latencyMs": 32.155125000000226,
       "hits": [
         {
           "rank": 1,
@@ -7267,14 +7267,14 @@
       "queryId": "q-156",
       "query": "that profile about Ravi Oyelaran - Lead Research at Ebbner",
       "query_type": "navigational",
-      "latencyMs": 41.32749999999987,
+      "latencyMs": 38.5347499999998,
       "hits": [
         {
           "rank": 1,
           "docId": "gen-tidal-profile-1",
           "url": "https://www.linkedin.com/in/ravi-oyelaran-tidal1/",
           "title": "Ravi Oyelaran - Lead Research at Ebbner | LinkedIn",
-          "score": 0.9837986114983213,
+          "score": 1.45,
           "snippet": "Gdańsk, On-site · 1951 followers · 392+ connections About 4 years in tidal energy microgrids.…"
         },
         {
@@ -7282,7 +7282,7 @@
           "docId": "gen-type-profile-3",
           "url": "https://www.linkedin.com/in/dmitri-veldt-type3/",
           "title": "Dmitri Veldt - Lead Research at ifaker | LinkedIn",
-          "score": 0.36437860035583175,
+          "score": 0.7205086408539962,
           "snippet": "Hobart, Hybrid · 2460 followers · 474+ connections About 6 years in typeface design tooling.…"
         },
         {
@@ -7290,7 +7290,7 @@
           "docId": "gen-tidal-profile-2",
           "url": "https://www.linkedin.com/in/mireille-ishikawa-tidal2/",
           "title": "Mireille Ishikawa - Lead Research at Nertio | LinkedIn",
-          "score": 0.36206077270861087,
+          "score": 0.7149458545006661,
           "snippet": "Kyoto, On-site · 3772 followers · 459+ connections About 11 years in tidal energy microgrids.…"
         },
         {
@@ -7298,7 +7298,7 @@
           "docId": "gen-boardgames-profile-3",
           "url": "https://www.linkedin.com/in/zanele-petrova-boardgames3/",
           "title": "Zanele Petrova - Lead Research at wardmeeix | LinkedIn",
-          "score": 0.34658620777861293,
+          "score": 0.677806898668671,
           "snippet": "Tallinn, On-site · 358 followers · 269+ connections About 13 years in board game publishing.…"
         },
         {
@@ -7306,7 +7306,7 @@
           "docId": "gen-tidal-profile-3",
           "url": "https://www.linkedin.com/in/astrid-vasquez-tidal3/",
           "title": "Astrid Vasquez - Lead Research at mereebbo | LinkedIn",
-          "score": 0.33821465473387885,
+          "score": 0.6577151713613092,
           "snippet": "Kigali, Remote · 352 followers · 310+ connections About 11 years in tidal energy microgrids.…"
         },
         {
@@ -7314,7 +7314,7 @@
           "docId": "gen-bees-profile-1",
           "url": "https://www.linkedin.com/in/ezra-vasquez-bees1/",
           "title": "Ezra Vasquez - Lead Research at Apitrak | LinkedIn",
-          "score": 0.33007872187535586,
+          "score": 0.6381889325008541,
           "snippet": "Salvador, On-site · 1992 followers · 305+ connections About 12 years in urban beekeeping sensors.…"
         },
         {
@@ -7322,7 +7322,7 @@
           "docId": "gen-synth-profile-3",
           "url": "https://www.linkedin.com/in/tariq-brannigan-synth3/",
           "title": "Tariq Brannigan - Lead Field Programs at chwerkosa | LinkedIn",
-          "score": 0.15486677652888686,
+          "score": 0.30168026366932843,
           "snippet": "Kyoto, Remote · 2181 followers · 388+ connections About 11 years in vintage synthesizer restoration.…"
         },
         {
@@ -7330,7 +7330,7 @@
           "docId": "gen-glacier-profile-2",
           "url": "https://www.linkedin.com/in/tariq-castellano-glacier2/",
           "title": "Tariq Castellano - Lead Engineering at nisser | LinkedIn",
-          "score": 0.1512215177014406,
+          "score": 0.29293164248345743,
           "snippet": "Tromsø, Hybrid · 3299 followers · 406+ connections About 6 years in glacier monitoring drones.…"
         },
         {
@@ -7338,7 +7338,7 @@
           "docId": "gen-glacier-profile-1",
           "url": "https://www.linkedin.com/in/kwame-kowalczyk-glacier1/",
           "title": "Kwame Kowalczyk - Principal Research at vadaonix | LinkedIn",
-          "score": 0.14476808098562421,
+          "score": 0.2774433943654981,
           "snippet": "Bergen, On-site · 560 followers · 431+ connections About 9 years in glacier monitoring drones.…"
         },
         {
@@ -7346,7 +7346,7 @@
           "docId": "gen-type-profile-2",
           "url": "https://www.linkedin.com/in/zanele-ngata-type2/",
           "title": "Zanele Ngata - Head of Research at nixserix | LinkedIn",
-          "score": 0.1438411181279619,
+          "score": 0.27521868350710854,
           "snippet": "Montevideo, On-site · 1867 followers · 435+ connections About 3 years in typeface design tooling.…"
         }
       ],
@@ -7366,7 +7366,7 @@
       "queryId": "q-157",
       "query": "Mireille Ishikawa linkedin Nertio",
       "query_type": "factual",
-      "latencyMs": 36.53158300000041,
+      "latencyMs": 31.973417000000154,
       "hits": [
         {
           "rank": 1,
@@ -7465,7 +7465,7 @@
       "queryId": "q-158",
       "query": "Astrid Vasquez linkedin mereebbo",
       "query_type": "factual",
-      "latencyMs": 32.89141699999982,
+      "latencyMs": 30.777250000000095,
       "hits": [
         {
           "rank": 1,
@@ -7564,7 +7564,7 @@
       "queryId": "q-159",
       "query": "Zanele Rahimi Fluxlineix 75 minutes per day",
       "query_type": "factual",
-      "latencyMs": 32.200250000000324,
+      "latencyMs": 29.886375000000044,
       "hits": [
         {
           "rank": 1,
@@ -7663,7 +7663,7 @@
       "queryId": "q-160",
       "query": "eidlinea Field 2 price rating table",
       "query_type": "factual",
-      "latencyMs": 33.80337499999996,
+      "latencyMs": 31.009915999999976,
       "hits": [
         {
           "rank": 1,
@@ -7762,7 +7762,7 @@
       "queryId": "q-161",
       "query": "that page about subsea spring tide peak comparison, 2025",
       "query_type": "navigational",
-      "latencyMs": 38.48362499999985,
+      "latencyMs": 36.05883399999993,
       "hits": [
         {
           "rank": 1,
@@ -7861,7 +7861,7 @@
       "queryId": "q-162",
       "query": "photo essay tidal energy microgrids Astrid Quist",
       "query_type": "factual",
-      "latencyMs": 40.84979199999998,
+      "latencyMs": 36.43470900000011,
       "hits": [
         {
           "rank": 1,
@@ -7960,7 +7960,7 @@
       "queryId": "q-163",
       "query": "linetia 14 million tidal energy microgrids",
       "query_type": "factual",
-      "latencyMs": 35.84137499999997,
+      "latencyMs": 32.88516699999991,
       "hits": [
         {
           "rank": 1,
@@ -8059,7 +8059,7 @@
       "queryId": "q-164",
       "query": "that page about linetia raises 14 million to expand tidal energy microgrids in Kigali",
       "query_type": "navigational",
-      "latencyMs": 44.085000000000036,
+      "latencyMs": 40.89970800000037,
       "hits": [
         {
           "rank": 1,
@@ -8158,7 +8158,7 @@
       "queryId": "q-165",
       "query": "eidebb 9 million tidal energy microgrids",
       "query_type": "factual",
-      "latencyMs": 35.14212499999985,
+      "latencyMs": 33.885249999999814,
       "hits": [
         {
           "rank": 1,
@@ -8257,7 +8257,7 @@
       "queryId": "q-166",
       "query": "Hexplar 53 percent board game publishing",
       "query_type": "factual",
-      "latencyMs": 32.81095800000003,
+      "latencyMs": 31.60370899999998,
       "hits": [
         {
           "rank": 1,
@@ -8356,7 +8356,7 @@
       "queryId": "q-167",
       "query": "dessaloreo 36 percent board game publishing",
       "query_type": "factual",
-      "latencyMs": 37.442541999999776,
+      "latencyMs": 33.968624999999975,
       "hits": [
         {
           "rank": 1,
@@ -8455,7 +8455,7 @@
       "queryId": "q-168",
       "query": "that page about dessaloreo",
       "query_type": "navigational",
-      "latencyMs": 32.919916999999714,
+      "latencyMs": 30.186999999999898,
       "hits": [
         {
           "rank": 1,
@@ -8554,7 +8554,7 @@
       "queryId": "q-169",
       "query": "Ezra Castellano linkedin plartab",
       "query_type": "factual",
-      "latencyMs": 34.662374999999884,
+      "latencyMs": 32.41412500000024,
       "hits": [
         {
           "rank": 1,
@@ -8653,7 +8653,7 @@
       "queryId": "q-170",
       "query": "Priya Kaplan linkedin Hexward",
       "query_type": "factual",
-      "latencyMs": 31.93100000000004,
+      "latencyMs": 29.401874999999563,
       "hits": [
         {
           "rank": 1,
@@ -8752,7 +8752,7 @@
       "queryId": "q-171",
       "query": "that page about Tabwardo API reference",
       "query_type": "navigational",
-      "latencyMs": 35.13741700000037,
+      "latencyMs": 31.834249999999884,
       "hits": [
         {
           "rank": 1,
@@ -8851,7 +8851,7 @@
       "queryId": "q-172",
       "query": "lorehex Field 9 price rating table",
       "query_type": "factual",
-      "latencyMs": 33.72629199999983,
+      "latencyMs": 30.86225000000013,
       "hits": [
         {
           "rank": 1,
@@ -8950,7 +8950,7 @@
       "queryId": "q-173",
       "query": "that page about loremeea raises 21 million to expand board game publishing in Bergen",
       "query_type": "navigational",
-      "latencyMs": 39.90079100000003,
+      "latencyMs": 38.3762499999998,
       "hits": [
         {
           "rank": 1,
@@ -9049,7 +9049,7 @@
       "queryId": "q-174",
       "query": "that page about ovagla",
       "query_type": "navigational",
-      "latencyMs": 32.088874999999916,
+      "latencyMs": 29.299583999999868,
       "hits": [
         {
           "rank": 1,
@@ -9148,7 +9148,7 @@
       "queryId": "q-175",
       "query": "Crystela 75 percent cold chain pharmacy delivery",
       "query_type": "factual",
-      "latencyMs": 34.44300000000021,
+      "latencyMs": 32.070124999999734,
       "hits": [
         {
           "rank": 1,
@@ -9247,7 +9247,7 @@
       "queryId": "q-176",
       "query": "Therstela 93 percent cold chain pharmacy delivery",
       "query_type": "factual",
-      "latencyMs": 34.61766700000044,
+      "latencyMs": 31.902250000000095,
       "hits": [
         {
           "rank": 1,
@@ -9346,7 +9346,7 @@
       "queryId": "q-177",
       "query": "Dmitri Veldt linkedin Glamanea",
       "query_type": "factual",
-      "latencyMs": 32.45000000000073,
+      "latencyMs": 29.07091700000001,
       "hits": [
         {
           "rank": 1,
@@ -9445,7 +9445,7 @@
       "queryId": "q-178",
       "query": "createovamaneClient 2234 ms default",
       "query_type": "factual",
-      "latencyMs": 31.484583999999813,
+      "latencyMs": 29.308792000000267,
       "hits": [
         {
           "rank": 1,
@@ -9544,7 +9544,7 @@
       "queryId": "q-179",
       "query": "Mireille Ishikawa ovastel 61 minutes per day",
       "query_type": "factual",
-      "latencyMs": 33.85725000000002,
+      "latencyMs": 31.215708000000177,
       "hits": [
         {
           "rank": 1,
@@ -9643,7 +9643,7 @@
       "queryId": "q-180",
       "query": "Kwame Veldt manecryix 21 minutes per day",
       "query_type": "factual",
-      "latencyMs": 31.230875000000196,
+      "latencyMs": 28.498875000000226,
       "hits": [
         {
           "rank": 1,
@@ -9742,7 +9742,7 @@
       "queryId": "q-181",
       "query": "that page about validated temperature log comparison, 2025",
       "query_type": "navigational",
-      "latencyMs": 33.94591599999967,
+      "latencyMs": 31.089249999999993,
       "hits": [
         {
           "rank": 1,
@@ -9841,7 +9841,7 @@
       "queryId": "q-182",
       "query": "photo essay cold chain pharmacy delivery Marcus Voss",
       "query_type": "factual",
-      "latencyMs": 39.18820799999958,
+      "latencyMs": 35.8851250000007,
       "hits": [
         {
           "rank": 1,
@@ -9940,7 +9940,7 @@
       "queryId": "q-183",
       "query": "that page about cierstelix raises 42 million to expand cold chain pharmacy delivery in Halifax",
       "query_type": "navigational",
-      "latencyMs": 43.27445799999987,
+      "latencyMs": 39.50324999999975,
       "hits": [
         {
           "rank": 1,
@@ -10039,7 +10039,7 @@
       "queryId": "q-184",
       "query": "manether 34 million cold chain pharmacy delivery",
       "query_type": "factual",
-      "latencyMs": 33.574249999999665,
+      "latencyMs": 31.21745800000008,
       "hits": [
         {
           "rank": 1,
@@ -10138,7 +10138,7 @@
       "queryId": "q-185",
       "query": "Priya Kowalczyk linkedin turamiaa",
       "query_type": "factual",
-      "latencyMs": 31.721583999999893,
+      "latencyMs": 30.010290999999597,
       "hits": [
         {
           "rank": 1,
@@ -10237,7 +10237,7 @@
       "queryId": "q-186",
       "query": "Ingrid Quist linkedin Gessig",
       "query_type": "factual",
-      "latencyMs": 32.218166000000565,
+      "latencyMs": 29.42016699999931,
       "hits": [
         {
           "rank": 1,
@@ -10336,14 +10336,14 @@
       "queryId": "q-187",
       "query": "that profile about Ingrid Quist - Principal Product at Gessig",
       "query_type": "navigational",
-      "latencyMs": 39.571625000000495,
+      "latencyMs": 36.22141600000032,
       "hits": [
         {
           "rank": 1,
           "docId": "gen-signlang-profile-2",
           "url": "https://www.linkedin.com/in/ingrid-quist-signlang2/",
           "title": "Ingrid Quist - Principal Product at Gessig | LinkedIn",
-          "score": 0.9344441845050466,
+          "score": 1.45,
           "snippet": "Hobart, On-site · 999 followers · 403+ connections About 13 years in sign language learning apps.…"
         },
         {
@@ -10351,7 +10351,7 @@
           "docId": "gen-boardgames-profile-2",
           "url": "https://www.linkedin.com/in/priya-kaplan-boardgames2/",
           "title": "Priya Kaplan - Principal Product at Hexward | LinkedIn",
-          "score": 0.3597347781252252,
+          "score": 0.7093634675005404,
           "snippet": "Tartu, Hybrid · 654 followers · 247+ connections About 9 years in board game publishing.…"
         },
         {
@@ -10359,7 +10359,7 @@
           "docId": "gen-synth-profile-2",
           "url": "https://www.linkedin.com/in/hamish-ngata-synth2/",
           "title": "Hamish Ngata - Principal Product at Ospata | LinkedIn",
-          "score": 0.354616629396029,
+          "score": 0.6970799105504696,
           "snippet": "Adelaide, Hybrid · 794 followers · 415+ connections About 7 years in vintage synthesizer restoration.…"
         },
         {
@@ -10367,7 +10367,7 @@
           "docId": "gen-type-profile-1",
           "url": "https://www.linkedin.com/in/ingrid-veldt-type1/",
           "title": "Ingrid Veldt - Head of Product at Keraxa | LinkedIn",
-          "score": 0.20260558363464037,
+          "score": 0.4162534007231369,
           "snippet": "Tartu, On-site · 1454 followers · 225+ connections About 3 years in typeface design tooling.…"
         },
         {
@@ -10375,7 +10375,7 @@
           "docId": "gen-coldchain-profile-3",
           "url": "https://www.linkedin.com/in/dmitri-veldt-coldchain3/",
           "title": "Dmitri Veldt - Head of Product at Glamanea | LinkedIn",
-          "score": 0.14692890550738308,
+          "score": 0.2826293732177194,
           "snippet": "Tartu, On-site · 667 followers · 309+ connections About 9 years in cold chain pharmacy delivery.…"
         },
         {
@@ -10383,7 +10383,7 @@
           "docId": "gen-kombucha-profile-3",
           "url": "https://www.linkedin.com/in/aiko-sundstrom-kombucha3/",
           "title": "Aiko Sundstrom - Director of Product at morabru | LinkedIn",
-          "score": 0.13852300033767762,
+          "score": 0.2624552008104262,
           "snippet": "Ljubljana, Hybrid · 601 followers · 283+ connections About 13 years in fermented tea brewing.…"
         },
         {
@@ -10391,7 +10391,7 @@
           "docId": "gen-glacier-profile-1",
           "url": "https://www.linkedin.com/in/kwame-kowalczyk-glacier1/",
           "title": "Kwame Kowalczyk - Principal Research at vadaonix | LinkedIn",
-          "score": 0.13216382724383174,
+          "score": 0.2471931853851962,
           "snippet": "Bergen, On-site · 560 followers · 431+ connections About 9 years in glacier monitoring drones.…"
         },
         {
@@ -10399,7 +10399,7 @@
           "docId": "gen-glacier-profile-3",
           "url": "https://www.linkedin.com/in/bjorn-kowalczyk-glacier3/",
           "title": "Bjorn Kowalczyk - Senior Product at Cryvadaix | LinkedIn",
-          "score": 0.12692329283767184,
+          "score": 0.23461590281041245,
           "snippet": "Montevideo, Hybrid · 1402 followers · 416+ connections About 8 years in glacier monitoring drones.…"
         },
         {
@@ -10407,7 +10407,7 @@
           "docId": "gen-signlang-profile-1",
           "url": "https://www.linkedin.com/in/priya-kowalczyk-signlang1/",
           "title": "Priya Kowalczyk - Head of Product at turamiaa | LinkedIn",
-          "score": 0.12398107320303184,
+          "score": 0.22755457568727638,
           "snippet": "Salvador, Remote · 1658 followers · 465+ connections About 8 years in sign language learning apps.…"
         },
         {
@@ -10415,7 +10415,7 @@
           "docId": "gen-bees-profile-2",
           "url": "https://www.linkedin.com/in/yuki-lindqvist-bees2/",
           "title": "Yuki Lindqvist - Principal Operations at brixtrakix | LinkedIn",
-          "score": 0.12068852552883924,
+          "score": 0.21965246126921417,
           "snippet": "Montevideo, On-site · 3074 followers · 345+ connections About 7 years in urban beekeeping sensors.…"
         }
       ],
@@ -10435,7 +10435,7 @@
       "queryId": "q-188",
       "query": "Chiara Larkin linkedin Sigmiao",
       "query_type": "factual",
-      "latencyMs": 33.67516599999999,
+      "latencyMs": 31.098958000000493,
       "hits": [
         {
           "rank": 1,
@@ -10534,7 +10534,7 @@
       "queryId": "q-189",
       "query": "that page about noramiao API reference",
       "query_type": "navigational",
-      "latencyMs": 40.13712499999929,
+      "latencyMs": 37.74833300000046,
       "hits": [
         {
           "rank": 1,
@@ -10633,7 +10633,7 @@
       "queryId": "q-190",
       "query": "photo essay sign language learning apps Ezra Halvorsen",
       "query_type": "factual",
-      "latencyMs": 42.57312499999989,
+      "latencyMs": 38.98070800000005,
       "hits": [
         {
           "rank": 1,
@@ -10732,7 +10732,7 @@
       "queryId": "q-191",
       "query": "miapal 45 million sign language learning apps",
       "query_type": "factual",
-      "latencyMs": 35.62187499999982,
+      "latencyMs": 32.37504199999967,
       "hits": [
         {
           "rank": 1,
@@ -10831,7 +10831,7 @@
       "queryId": "q-192",
       "query": "Patvol 57 percent vintage synthesizer restoration",
       "query_type": "factual",
-      "latencyMs": 32.33845900000051,
+      "latencyMs": 30.15558299999975,
       "hits": [
         {
           "rank": 1,
@@ -10930,7 +10930,7 @@
       "queryId": "q-193",
       "query": "that page about chwerkoso",
       "query_type": "navigational",
-      "latencyMs": 30.725208000000748,
+      "latencyMs": 28.791207999999642,
       "hits": [
         {
           "rank": 1,
@@ -11029,7 +11029,7 @@
       "queryId": "q-194",
       "query": "Aiko Adeyemi linkedin Ostara",
       "query_type": "factual",
-      "latencyMs": 35.52275000000009,
+      "latencyMs": 33.223957999999584,
       "hits": [
         {
           "rank": 1,
@@ -11128,7 +11128,7 @@
       "queryId": "q-195",
       "query": "Hamish Ngata linkedin Ospata",
       "query_type": "factual",
-      "latencyMs": 35.96195799999987,
+      "latencyMs": 31.02966699999979,
       "hits": [
         {
           "rank": 1,
@@ -11227,7 +11227,7 @@
       "queryId": "q-196",
       "query": "createVolresoClient 4036 ms default",
       "query_type": "factual",
-      "latencyMs": 30.283374999999978,
+      "latencyMs": 28.122959000000264,
       "hits": [
         {
           "rank": 1,
@@ -11326,7 +11326,7 @@
       "queryId": "q-197",
       "query": "createResvolClient 8835 ms default",
       "query_type": "factual",
-      "latencyMs": 30.25500000000011,
+      "latencyMs": 27.651834000000235,
       "hits": [
         {
           "rank": 1,
@@ -11425,7 +11425,7 @@
       "queryId": "q-198",
       "query": "Kenji Quist Ospat 55 minutes per day",
       "query_type": "factual",
-      "latencyMs": 32.35804199999984,
+      "latencyMs": 29.31695800000034,
       "hits": [
         {
           "rank": 1,
@@ -11524,7 +11524,7 @@
       "queryId": "q-199",
       "query": "that video about Episode 55",
       "query_type": "navigational",
-      "latencyMs": 32.566791000000194,
+      "latencyMs": 29.947957999999744,
       "hits": [
         {
           "rank": 1,
@@ -11623,7 +11623,7 @@
       "queryId": "q-200",
       "query": "Ravi Kowalczyk Osonix 11 minutes per day",
       "query_type": "factual",
-      "latencyMs": 34.9930830000003,
+      "latencyMs": 31.35174999999981,
       "hits": [
         {
           "rank": 1,
@@ -11722,7 +11722,7 @@
       "queryId": "q-201",
       "query": "that video about Episode 32",
       "query_type": "navigational",
-      "latencyMs": 32.890542000000096,
+      "latencyMs": 28.601208000000042,
       "hits": [
         {
           "rank": 1,
@@ -11821,7 +11821,7 @@
       "queryId": "q-202",
       "query": "onixoso Mini 7 price rating table",
       "query_type": "factual",
-      "latencyMs": 33.908416999999645,
+      "latencyMs": 31.380083000000013,
       "hits": [
         {
           "rank": 1,
@@ -11920,7 +11920,7 @@
       "queryId": "q-203",
       "query": "photo essay vintage synthesizer restoration Ilse Marrow",
       "query_type": "factual",
-      "latencyMs": 38.47841700000026,
+      "latencyMs": 36.21299999999974,
       "hits": [
         {
           "rank": 1,
@@ -12019,7 +12019,7 @@
       "queryId": "q-204",
       "query": "onixresa 52 million vintage synthesizer restoration",
       "query_type": "factual",
-      "latencyMs": 35.323583000000326,
+      "latencyMs": 30.853791999999885,
       "hits": [
         {
           "rank": 1,
@@ -12118,7 +12118,7 @@
       "queryId": "q-205",
       "query": "that page about onixresa raises 52 million to expand vintage synthesizer restoration in Adelaide",
       "query_type": "navigational",
-      "latencyMs": 42.615875000000415,
+      "latencyMs": 38.93041699999958,
       "hits": [
         {
           "rank": 1,
@@ -12217,7 +12217,7 @@
       "queryId": "q-206",
       "query": "Oscillaix 7 million vintage synthesizer restoration",
       "query_type": "factual",
-      "latencyMs": 33.29387499999939,
+      "latencyMs": 30.314374999999927,
       "hits": [
         {
           "rank": 1,
@@ -12316,7 +12316,7 @@
       "queryId": "q-207",
       "query": "Crynis 74 percent glacier monitoring drones",
       "query_type": "factual",
-      "latencyMs": 32.23016699999971,
+      "latencyMs": 30.05304100000012,
       "hits": [
         {
           "rank": 1,
@@ -12415,7 +12415,7 @@
       "queryId": "q-208",
       "query": "Neserix 31 percent glacier monitoring drones",
       "query_type": "factual",
-      "latencyMs": 34.60725000000002,
+      "latencyMs": 32.11895800000002,
       "hits": [
         {
           "rank": 1,
@@ -12514,7 +12514,7 @@
       "queryId": "q-209",
       "query": "Tariq Castellano linkedin nisser",
       "query_type": "factual",
-      "latencyMs": 34.37049999999999,
+      "latencyMs": 31.553874999999607,
       "hits": [
         {
           "rank": 1,
@@ -12613,38 +12613,38 @@
       "queryId": "q-210",
       "query": "that profile about Tariq Castellano - Lead Engineering at nisser",
       "query_type": "navigational",
-      "latencyMs": 40.83854199999951,
+      "latencyMs": 36.9994999999999,
       "hits": [
         {
           "rank": 1,
           "docId": "gen-glacier-profile-2",
           "url": "https://www.linkedin.com/in/tariq-castellano-glacier2/",
           "title": "Tariq Castellano - Lead Engineering at nisser | LinkedIn",
-          "score": 1.021712316407353,
+          "score": 1.45,
           "snippet": "Tromsø, Hybrid · 3299 followers · 406+ connections About 6 years in glacier monitoring drones.…"
         },
         {
           "rank": 2,
-          "docId": "gen-kombucha-profile-1",
-          "url": "https://www.linkedin.com/in/emil-halvorsen-kombucha1/",
-          "title": "Emil Halvorsen - Lead Engineering at Brugard | LinkedIn",
-          "score": 0.36459780236501954,
-          "snippet": "Halifax, Remote · 2421 followers · 204+ connections About 6 years in fermented tea brewing.…"
-        },
-        {
-          "rank": 3,
           "docId": "gen-synth-profile-3",
           "url": "https://www.linkedin.com/in/tariq-brannigan-synth3/",
           "title": "Tariq Brannigan - Lead Field Programs at chwerkosa | LinkedIn",
-          "score": 0.3479468005418438,
+          "score": 0.7650723213004251,
           "snippet": "Kyoto, Remote · 2181 followers · 388+ connections About 11 years in vintage synthesizer restoration.…"
+        },
+        {
+          "rank": 3,
+          "docId": "gen-kombucha-profile-1",
+          "url": "https://www.linkedin.com/in/emil-halvorsen-kombucha1/",
+          "title": "Emil Halvorsen - Lead Engineering at Brugard | LinkedIn",
+          "score": 0.7210347256760469,
+          "snippet": "Halifax, Remote · 2421 followers · 204+ connections About 6 years in fermented tea brewing.…"
         },
         {
           "rank": 4,
           "docId": "gen-boardgames-profile-1",
           "url": "https://www.linkedin.com/in/ezra-castellano-boardgames1/",
           "title": "Ezra Castellano - Head of Engineering at plartab | LinkedIn",
-          "score": 0.20527207703676892,
+          "score": 0.4226529848882453,
           "snippet": "Cork, Remote · 455 followers · 424+ connections About 13 years in board game publishing.…"
         },
         {
@@ -12652,7 +12652,7 @@
           "docId": "gen-tidal-profile-2",
           "url": "https://www.linkedin.com/in/mireille-ishikawa-tidal2/",
           "title": "Mireille Ishikawa - Lead Research at Nertio | LinkedIn",
-          "score": 0.18105752254525015,
+          "score": 0.36453805410860035,
           "snippet": "Kyoto, On-site · 3772 followers · 459+ connections About 11 years in tidal energy microgrids.…"
         },
         {
@@ -12660,7 +12660,7 @@
           "docId": "gen-boardgames-profile-2",
           "url": "https://www.linkedin.com/in/priya-kaplan-boardgames2/",
           "title": "Priya Kaplan - Principal Product at Hexward | LinkedIn",
-          "score": 0.1576823766865436,
+          "score": 0.30843770404770465,
           "snippet": "Tartu, Hybrid · 654 followers · 247+ connections About 9 years in board game publishing.…"
         },
         {
@@ -12668,7 +12668,7 @@
           "docId": "gen-tidal-profile-1",
           "url": "https://www.linkedin.com/in/ravi-oyelaran-tidal1/",
           "title": "Ravi Oyelaran - Lead Research at Ebbner | LinkedIn",
-          "score": 0.15541640599711787,
+          "score": 0.3029993743930829,
           "snippet": "Gdańsk, On-site · 1951 followers · 392+ connections About 4 years in tidal energy microgrids.…"
         },
         {
@@ -12676,7 +12676,7 @@
           "docId": "gen-tidal-profile-3",
           "url": "https://www.linkedin.com/in/astrid-vasquez-tidal3/",
           "title": "Astrid Vasquez - Lead Research at mereebbo | LinkedIn",
-          "score": 0.14776882832016072,
+          "score": 0.2846451879683857,
           "snippet": "Kigali, Remote · 352 followers · 310+ connections About 11 years in tidal energy microgrids.…"
         },
         {
@@ -12684,7 +12684,7 @@
           "docId": "gen-type-profile-3",
           "url": "https://www.linkedin.com/in/dmitri-veldt-type3/",
           "title": "Dmitri Veldt - Lead Research at ifaker | LinkedIn",
-          "score": 0.1455911126813385,
+          "score": 0.27941867043521246,
           "snippet": "Hobart, Hybrid · 2460 followers · 474+ connections About 6 years in typeface design tooling.…"
         },
         {
@@ -12692,7 +12692,7 @@
           "docId": "gen-orbital-profile-1",
           "url": "https://www.linkedin.com/in/dmitri-okonkwo-orbital1/",
           "title": "Dmitri Okonkwo - Lead Field Programs at Orvelix | LinkedIn",
-          "score": 0.14188184258132094,
+          "score": 0.27051642219517025,
           "snippet": "Windhoek, On-site · 491 followers · 382+ connections About 9 years in orbital cargo logistics.…"
         }
       ],
@@ -12712,7 +12712,7 @@
       "queryId": "q-211",
       "query": "Aiko Vasquez acvada 39 minutes per day",
       "query_type": "factual",
-      "latencyMs": 33.10391600000003,
+      "latencyMs": 32.222875000000386,
       "hits": [
         {
           "rank": 1,
@@ -12811,7 +12811,7 @@
       "queryId": "q-212",
       "query": "Piotr Ferreira acvadaa 44 minutes per day",
       "query_type": "factual",
-      "latencyMs": 32.66320900000028,
+      "latencyMs": 30.827290999999605,
       "hits": [
         {
           "rank": 1,
@@ -12910,7 +12910,7 @@
       "queryId": "q-213",
       "query": "Sercrya Field 5 price rating table",
       "query_type": "factual",
-      "latencyMs": 36.532875000000786,
+      "latencyMs": 34.51479199999994,
       "hits": [
         {
           "rank": 1,
@@ -13009,7 +13009,7 @@
       "queryId": "q-214",
       "query": "that page about Photo essay",
       "query_type": "navigational",
-      "latencyMs": 34.94658400000026,
+      "latencyMs": 32.23900000000049,
       "hits": [
         {
           "rank": 1,
@@ -13108,7 +13108,7 @@
       "queryId": "q-215",
       "query": "vadafira 25 million glacier monitoring drones",
       "query_type": "factual",
-      "latencyMs": 39.53862500000014,
+      "latencyMs": 38.459499999999935,
       "hits": [
         {
           "rank": 1,
@@ -13207,7 +13207,7 @@
       "queryId": "q-216",
       "query": "onvada 29 million glacier monitoring drones",
       "query_type": "factual",
-      "latencyMs": 33.95399999999972,
+      "latencyMs": 32.78491699999995,
       "hits": [
         {
           "rank": 1,
@@ -13306,7 +13306,7 @@
       "queryId": "q-217",
       "query": "Velkel Studio 9 price rating table",
       "query_type": "factual",
-      "latencyMs": 33.26816599999984,
+      "latencyMs": 31.672624999999243,
       "hits": [
         {
           "rank": 1,
@@ -13405,7 +13405,7 @@
       "queryId": "q-218",
       "query": "gardworto Mini 9 price rating table",
       "query_type": "factual",
-      "latencyMs": 32.58779200000026,
+      "latencyMs": 32.17687500000011,
       "hits": [
         {
           "rank": 1,
@@ -13504,7 +13504,7 @@
       "queryId": "q-219",
       "query": "that page about sparkling brew vessel comparison, 2026",
       "query_type": "navigational",
-      "latencyMs": 33.72358299999996,
+      "latencyMs": 33.015625,
       "hits": [
         {
           "rank": 1,
@@ -13603,7 +13603,7 @@
       "queryId": "q-220",
       "query": "Necbrix Mini 3 price rating table",
       "query_type": "factual",
-      "latencyMs": 35.64729199999965,
+      "latencyMs": 34.32274999999936,
       "hits": [
         {
           "rank": 1,
@@ -13702,7 +13702,7 @@
       "queryId": "q-221",
       "query": "Axifa Studio 6 price rating table",
       "query_type": "factual",
-      "latencyMs": 36.29804200000035,
+      "latencyMs": 35.57133299999987,
       "hits": [
         {
           "rank": 1,
@@ -13801,7 +13801,7 @@
       "queryId": "q-222",
       "query": "Fluxline Mini 1 price rating table",
       "query_type": "factual",
-      "latencyMs": 32.91041700000005,
+      "latencyMs": 32.38799999999992,
       "hits": [
         {
           "rank": 1,
@@ -13900,7 +13900,7 @@
       "queryId": "q-223",
       "query": "orbital cargo logistics overview",
       "query_type": "exploratory",
-      "latencyMs": 31.87254099999973,
+      "latencyMs": 31.6817089999995,
       "hits": [
         {
           "rank": 1,
@@ -14004,26 +14004,34 @@
       "queryId": "q-224",
       "query": "people who work in orbital cargo logistics",
       "query_type": "exploratory",
-      "latencyMs": 33.05662500000017,
+      "latencyMs": 33.1118749999996,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-orbital-news-2",
-          "url": "https://news.orbital-freight.example/vanevela-round-2",
-          "title": "vanevela raises 53 million to expand orbital cargo logistics in Windhoek",
-          "score": 0.9328353473469513,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for orbital cargo logistics\" and noted that vanevela now employs 215 people.…"
+          "docId": "gen-orbital-profile-2",
+          "url": "https://www.linkedin.com/in/ezra-kaplan-orbital2/",
+          "title": "Ezra Kaplan - Senior Research at Keltorix | LinkedIn",
+          "score": 1.2819358024445764,
+          "snippet": "1112 followers · 330+ connections About 7 years in orbital cargo logistics.…"
         },
         {
           "rank": 2,
-          "docId": "gen-orbital-news-1",
-          "url": "https://news.orbital-freight.example/kelquelix-round-1",
-          "title": "Kelquelix raises 21 million to expand orbital cargo logistics in Valparaíso",
-          "score": 0.9101693879917299,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for orbital cargo logistics\" and noted that Kelquelix now employs 122 people.…"
+          "docId": "gen-orbital-profile-3",
+          "url": "https://www.linkedin.com/in/farah-brannigan-orbital3/",
+          "title": "Farah Brannigan - Senior Product at Velbis | LinkedIn",
+          "score": 1.1742678107696485,
+          "snippet": "3770 followers · 222+ connections About 9 years in orbital cargo logistics.…"
         },
         {
           "rank": 3,
+          "docId": "gen-orbital-profile-1",
+          "url": "https://www.linkedin.com/in/dmitri-okonkwo-orbital1/",
+          "title": "Dmitri Okonkwo - Lead Field Programs at Orvelix | LinkedIn",
+          "score": 1.135833285774828,
+          "snippet": "491 followers · 382+ connections About 9 years in orbital cargo logistics.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-orbital-article-3",
           "url": "https://orbital-freight.example/articles/veldrixa-3",
           "title": "Veldrixa: how launch cadence forecasting changed orbital cargo logistics",
@@ -14031,7 +14039,7 @@
           "snippet": "In practice the payload manifest matters more than the docking window, especially for thermal deployments.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-orbital-article-4",
           "url": "https://orbital-freight.example/articles/kelbiso-4",
           "title": "Kelbiso: how reentry corridor licensing changed orbital cargo logistics",
@@ -14039,7 +14047,7 @@
           "snippet": "A redundant setup inspects the cargo pod roughly 7 times per week. Teams working on reentry corridor licensing usually start with the cargo pod and only later touch the reentry corridor. In practice…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-orbital-article-2",
           "url": "https://orbital-freight.example/articles/vanebisix-2",
           "title": "vanebisix: how reentry corridor licensing changed orbital cargo logistics",
@@ -14047,7 +14055,7 @@
           "snippet": "A low-thrust setup inspects the propellant margin roughly 9 times per week.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-orbital-article-1",
           "url": "https://orbital-freight.example/articles/ordrixo-1",
           "title": "Ordrixo: how reentry corridor licensing changed orbital cargo logistics",
@@ -14055,7 +14063,7 @@
           "snippet": "deployments. ## What Ravi Brannigan learned Teams working on cargo pod thermal limits usually start with the ground station and only later touch the launch cadence.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-orbital-docs-2",
           "url": "https://docs.orbital-freight.example/vanebis/api",
           "title": "vanebis API reference: createvanebisClient and reentryTimeout",
@@ -14063,7 +14071,7 @@
           "snippet": "## Migration notes The pressurized payload manifest certifies each docking window before the next reentry corridor is approved.…"
         },
         {
-          "rank": 8,
+          "rank": 9,
           "docId": "gen-orbital-docs-1",
           "url": "https://docs.orbital-freight.example/torvelix/api",
           "title": "Torvelix API reference: createTorvelixClient and reentryTimeout",
@@ -14071,20 +14079,12 @@
           "snippet": "const client = createTorvelixClient({ reentryTimeout: 3936, retries: 3 }); ## client.schedule(input) Teams working on propellant margin audits usually start with the launch cadence and only later…"
         },
         {
-          "rank": 9,
+          "rank": 10,
           "docId": "gen-orbital-image-1",
           "url": "https://orbital-freight.example/photos/montevideo-1",
           "title": "Photo essay: orbital cargo logistics in Montevideo",
           "score": 0.5946689298100782,
           "snippet": "Photo essay: orbital cargo logistics in Montevideo Alt text and captions for 12 images.…"
-        },
-        {
-          "rank": 10,
-          "docId": "gen-orbital-profile-2",
-          "url": "https://www.linkedin.com/in/ezra-kaplan-orbital2/",
-          "title": "Ezra Kaplan - Senior Research at Keltorix | LinkedIn",
-          "score": 0.5483065843519068,
-          "snippet": "1112 followers · 330+ connections About 7 years in orbital cargo logistics.…"
         }
       ],
       "relevant_doc_ids": [
@@ -14093,10 +14093,10 @@
         "gen-orbital-profile-3"
       ],
       "metrics": {
-        "dcg": 0.2890648263178878,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.13565197343244775,
-        "reciprocalRank": 0.1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -14105,7 +14105,7 @@
       "queryId": "q-225",
       "query": "fermented tea brewing overview",
       "query_type": "exploratory",
-      "latencyMs": 31.31812499999978,
+      "latencyMs": 29.55779199999961,
       "hits": [
         {
           "rank": 1,
@@ -14209,26 +14209,34 @@
       "queryId": "q-226",
       "query": "people who work in fermented tea brewing",
       "query_type": "exploratory",
-      "latencyMs": 30.09929099999954,
+      "latencyMs": 29.368000000000393,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-kombucha-news-1",
-          "url": "https://news.brewlog.example/wortbruo-round-1",
-          "title": "wortbruo raises 57 million to expand fermented tea brewing in Tromsø",
-          "score": 0.9281255755829634,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for fermented tea brewing\" and noted that wortbruo now employs 197 people.…"
+          "docId": "gen-kombucha-profile-2",
+          "url": "https://www.linkedin.com/in/helga-ishikawa-kombucha2/",
+          "title": "Helga Ishikawa - Head of Engineering at Fizzbyne | LinkedIn",
+          "score": 0.8755808703402969,
+          "snippet": "4041 followers · 490+ connections About 8 years in fermented tea brewing. I care about flavor batch naming and second fermentation timing.…"
         },
         {
           "rank": 2,
-          "docId": "gen-kombucha-news-2",
-          "url": "https://news.brewlog.example/wortbyneo-round-2",
-          "title": "wortbyneo raises 22 million to expand fermented tea brewing in Bergen",
-          "score": 0.811746460099694,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for fermented tea brewing\" and noted that wortbyneo now employs 196 people.…"
+          "docId": "gen-kombucha-profile-1",
+          "url": "https://www.linkedin.com/in/emil-halvorsen-kombucha1/",
+          "title": "Emil Halvorsen - Lead Engineering at Brugard | LinkedIn",
+          "score": 0.8378310781187256,
+          "snippet": "2421 followers · 204+ connections About 6 years in fermented tea brewing. I care about flavor batch naming and bottling line sanitation.…"
         },
         {
           "rank": 3,
+          "docId": "gen-kombucha-profile-3",
+          "url": "https://www.linkedin.com/in/aiko-sundstrom-kombucha3/",
+          "title": "Aiko Sundstrom - Director of Product at morabru | LinkedIn",
+          "score": 0.7787075507453546,
+          "snippet": "followers · 283+ connections About 13 years in fermented tea brewing. I care about pH curve logging and pH curve logging.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-kombucha-article-3",
           "url": "https://brewlog.example/articles/teasco-3",
           "title": "Teasco: how sugar ratio experiments changed fermented tea brewing",
@@ -14236,7 +14244,7 @@
           "snippet": "Independent reviewers reported that Teasco cut second fermentation errors by 27 percent in its first season.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-kombucha-article-2",
           "url": "https://brewlog.example/articles/scoworto-2",
           "title": "Scoworto: how sugar ratio experiments changed fermented tea brewing",
@@ -14244,7 +14252,7 @@
           "snippet": "Most guides on flavor batch naming recommend checking the bottling line every 36 minutes.…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-kombucha-article-1",
           "url": "https://brewlog.example/articles/scoteao-1",
           "title": "Scoteao: how bottling line sanitation changed fermented tea brewing",
@@ -14252,7 +14260,7 @@
           "snippet": "The cold-brewed sugar ratio measures each pH curve before the next flavor batch is approved.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-kombucha-article-4",
           "url": "https://brewlog.example/articles/scogardix-4",
           "title": "Scogardix: how starter liquid storage changed fermented tea brewing",
@@ -14260,7 +14268,7 @@
           "snippet": "The tart brew vessel ages each pH curve before the next second fermentation is approved.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-kombucha-image-1",
           "url": "https://brewlog.example/photos/windhoek-1",
           "title": "Photo essay: fermented tea brewing in Windhoek",
@@ -14268,7 +14276,7 @@
           "snippet": "Photo essay: fermented tea brewing in Windhoek Alt text and captions for 12 images.…"
         },
         {
-          "rank": 8,
+          "rank": 9,
           "docId": "gen-kombucha-transcript-2",
           "url": "https://www.youtube.com/watch?v=kom25121",
           "title": "Episode 45: Kenji Rahimi on bottling line sanitation (video transcript)",
@@ -14276,20 +14284,12 @@
           "snippet": "[05:12] Ingrid: Ingrid Adeyemi: and the thing people miss about bottling line sanitation is the scoby culture, right?…"
         },
         {
-          "rank": 9,
-          "docId": "gen-kombucha-transcript-1",
-          "url": "https://www.youtube.com/watch?v=kom14883",
-          "title": "Episode 16: Ravi Veldt on sugar ratio experiments (video transcript)",
-          "score": 0.40182068354013173,
-          "snippet": "deployments. [06:03] Marcus: Marcus Sato: and the thing people miss about bottling line sanitation is the brew vessel, right?…"
-        },
-        {
           "rank": 10,
-          "docId": "gen-kombucha-profile-2",
-          "url": "https://www.linkedin.com/in/helga-ishikawa-kombucha2/",
-          "title": "Helga Ishikawa - Head of Engineering at Fizzbyne | LinkedIn",
-          "score": 0.37899202930845705,
-          "snippet": "4041 followers · 490+ connections About 8 years in fermented tea brewing. I care about flavor batch naming and second fermentation timing.…"
+          "docId": "gen-kombucha-news-1",
+          "url": "https://news.brewlog.example/wortbruo-round-1",
+          "title": "wortbruo raises 57 million to expand fermented tea brewing in Tromsø",
+          "score": 0.4072502302331854,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for fermented tea brewing\" and noted that wortbruo now employs 197 people.…"
         }
       ],
       "relevant_doc_ids": [
@@ -14298,10 +14298,10 @@
         "gen-kombucha-profile-3"
       ],
       "metrics": {
-        "dcg": 0.2890648263178878,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.13565197343244775,
-        "reciprocalRank": 0.1,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -14310,7 +14310,7 @@
       "queryId": "q-227",
       "query": "urban beekeeping sensors overview",
       "query_type": "exploratory",
-      "latencyMs": 31.718791999999667,
+      "latencyMs": 29.57037500000024,
       "hits": [
         {
           "rank": 1,
@@ -14414,26 +14414,34 @@
       "queryId": "q-228",
       "query": "people who work in urban beekeeping sensors",
       "query_type": "exploratory",
-      "latencyMs": 33.264499999999316,
+      "latencyMs": 30.24541599999975,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-bees-news-2",
-          "url": "https://news.hivewatch.example/trakbeea-round-2",
-          "title": "trakbeea raises 21 million to expand urban beekeeping sensors in Reykjavik",
-          "score": 1.0427149419897122,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for urban beekeeping sensors\" and noted that trakbeea now employs 199 people.…"
+          "docId": "gen-bees-profile-3",
+          "url": "https://www.linkedin.com/in/helga-sato-bees3/",
+          "title": "Helga Sato - Senior Engineering at taravaneix | LinkedIn",
+          "score": 1.0741849322299917,
+          "snippet": "Experience Senior Engineering at taravaneix · taravaneix · 2023 to present · Tromsø Led forager count cameras for 3 teams; Teams working on hive scale calibration usually start with the brood…"
         },
         {
           "rank": 2,
-          "docId": "gen-bees-news-1",
-          "url": "https://news.hivewatch.example/trakbrix-round-1",
-          "title": "trakbrix raises 6 million to expand urban beekeeping sensors in Halifax",
-          "score": 1.0189253433925665,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for urban beekeeping sensors\" and noted that trakbrix now employs 13 people.…"
+          "docId": "gen-bees-profile-1",
+          "url": "https://www.linkedin.com/in/ezra-vasquez-bees1/",
+          "title": "Ezra Vasquez - Lead Research at Apitrak | LinkedIn",
+          "score": 0.9884022500183611,
+          "snippet": "followers · 305+ connections About 12 years in urban beekeeping sensors. I care about varroa reading schedules and brood temperature bands.…"
         },
         {
           "rank": 3,
+          "docId": "gen-bees-profile-2",
+          "url": "https://www.linkedin.com/in/yuki-lindqvist-bees2/",
+          "title": "Yuki Lindqvist - Principal Operations at brixtrakix | LinkedIn",
+          "score": 0.9879365288619267,
+          "snippet": "3074 followers · 345+ connections About 7 years in urban beekeeping sensors.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-bees-article-2",
           "url": "https://hivewatch.example/articles/beetrak-2",
           "title": "Beetrak: how swarm alert thresholds changed urban beekeeping sensors",
@@ -14441,7 +14449,7 @@
           "snippet": "founded in 2024 in Montevideo by Hamish Quist. Teams working on apiary map sharing usually start with the entrance camera and only later touch the apiary map.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-bees-image-1",
           "url": "https://hivewatch.example/photos/kyoto-1",
           "title": "Photo essay: urban beekeeping sensors in Kyoto",
@@ -14449,7 +14457,7 @@
           "snippet": "Figure 2: wireless varroa reading photographed in Kyoto by Luca Haldane. Teams working on forager count cameras usually start with the swarm alert and only later touch the swarm alert. Figure 3:…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-bees-article-4",
           "url": "https://hivewatch.example/articles/vaneapi-4",
           "title": "vaneapi: how apiary map sharing changed urban beekeeping sensors",
@@ -14457,7 +14465,7 @@
           "snippet": "founded in 2019 in Salvador by Bjorn Nakagawa. Teams working on varroa reading schedules usually start with the forager count and only later touch the forager count.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-bees-article-1",
           "url": "https://hivewatch.example/articles/beeneco-1",
           "title": "Beeneco: how hive scale calibration changed urban beekeeping sensors",
@@ -14465,7 +14473,7 @@
           "snippet": "The solar-powered brood temperature predicts each forager count before the next nectar flow is approved.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-bees-article-3",
           "url": "https://hivewatch.example/articles/vanebrixix-3",
           "title": "vanebrixix: how brood temperature bands changed urban beekeeping sensors",
@@ -14473,7 +14481,7 @@
           "snippet": "A solar-powered setup alerts the entrance camera roughly 2 times per week.…"
         },
         {
-          "rank": 8,
+          "rank": 9,
           "docId": "gen-bees-transcript-2",
           "url": "https://www.youtube.com/watch?v=bee23184",
           "title": "Episode 80: Piotr Halvorsen on hive scale calibration (video transcript)",
@@ -14481,20 +14489,12 @@
           "snippet": "camera. [05:23] Sofia: Sofia Moreau: and the thing people miss about varroa reading schedules is the hive scale, right?…"
         },
         {
-          "rank": 9,
-          "docId": "gen-bees-profile-3",
-          "url": "https://www.linkedin.com/in/helga-sato-bees3/",
-          "title": "Helga Sato - Senior Engineering at taravaneix | LinkedIn",
-          "score": 0.46174372176249656,
-          "snippet": "Experience Senior Engineering at taravaneix · taravaneix · 2023 to present · Tromsø Led forager count cameras for 3 teams; Teams working on hive scale calibration usually start with the brood…"
-        },
-        {
           "rank": 10,
-          "docId": "gen-bees-transcript-1",
-          "url": "https://www.youtube.com/watch?v=bee15515",
-          "title": "Episode 53: Helga Ferreira on hive scale calibration (video transcript)",
-          "score": 0.44754646274729054,
-          "snippet": "[06:04] Sofia: Sofia Kowalczyk: and the thing people miss about forager count cameras is the apiary map, right?…"
+          "docId": "gen-bees-news-2",
+          "url": "https://news.hivewatch.example/trakbeea-round-2",
+          "title": "trakbeea raises 21 million to expand urban beekeeping sensors in Reykjavik",
+          "score": 0.45308597679588486,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for urban beekeeping sensors\" and noted that trakbeea now employs 199 people.…"
         }
       ],
       "relevant_doc_ids": [
@@ -14503,10 +14503,10 @@
         "gen-bees-profile-3"
       ],
       "metrics": {
-        "dcg": 0.30102999566398114,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.14126697285982898,
-        "reciprocalRank": 0.1111111111111111,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -14515,7 +14515,7 @@
       "queryId": "q-229",
       "query": "typeface design tooling overview",
       "query_type": "exploratory",
-      "latencyMs": 32.00354200000038,
+      "latencyMs": 30.100374999999985,
       "hits": [
         {
           "rank": 1,
@@ -14619,26 +14619,34 @@
       "queryId": "q-230",
       "query": "people who work in typeface design tooling",
       "query_type": "exploratory",
-      "latencyMs": 35.065207999999984,
+      "latencyMs": 32.77629099999922,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-type-news-2",
-          "url": "https://news.glyphforge.example/phonsera-round-2",
-          "title": "phonsera raises 8 million to expand typeface design tooling in Kyoto",
-          "score": 0.9757953579668792,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for typeface design tooling\" and noted that phonsera now employs 85 people.…"
+          "docId": "gen-type-profile-2",
+          "url": "https://www.linkedin.com/in/zanele-ngata-type2/",
+          "title": "Zanele Ngata - Head of Research at nixserix | LinkedIn",
+          "score": 0.966396025504661,
+          "snippet": "Experience Head of Research at nixserix · nixserix · 2025 to present · Montevideo Led variable axis naming for 3 teams; Teams working on hinting pass automation usually start with the glyph outline…"
         },
         {
           "rank": 2,
-          "docId": "gen-type-news-1",
-          "url": "https://news.glyphforge.example/serifa-round-1",
-          "title": "Serifa raises 39 million to expand typeface design tooling in Kyoto",
-          "score": 0.97298734839617,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for typeface design tooling\" and noted that Serifa now employs 118 people.…"
+          "docId": "gen-type-profile-3",
+          "url": "https://www.linkedin.com/in/dmitri-veldt-type3/",
+          "title": "Dmitri Veldt - Lead Research at ifaker | LinkedIn",
+          "score": 0.9085406051575615,
+          "snippet": "2460 followers · 474+ connections About 6 years in typeface design tooling.…"
         },
         {
           "rank": 3,
+          "docId": "gen-type-profile-1",
+          "url": "https://www.linkedin.com/in/ingrid-veldt-type1/",
+          "title": "Ingrid Veldt - Head of Product at Keraxa | LinkedIn",
+          "score": 0.8437568433612804,
+          "snippet": "1454 followers · 225+ connections About 3 years in typeface design tooling.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-type-image-1",
           "url": "https://glyphforge.example/photos/windhoek-1",
           "title": "Photo essay: typeface design tooling in Windhoek",
@@ -14646,7 +14654,7 @@
           "snippet": "Figure 1: grotesque interpolation master photographed in Windhoek by Farah Brannigan.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-type-article-2",
           "url": "https://glyphforge.example/articles/ifaker-2",
           "title": "ifaker: how optical size masters changed typeface design tooling",
@@ -14654,7 +14662,7 @@
           "snippet": "A monospaced setup hints the interpolation master roughly 11 times per week.…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-type-article-1",
           "url": "https://glyphforge.example/articles/nixgly-1",
           "title": "nixgly: how ligature set testing changed typeface design tooling",
@@ -14662,7 +14670,7 @@
           "snippet": "A monospaced setup kerns the kerning table roughly 6 times per week. Teams working on ligature set testing usually start with the kerning table and only later touch the interpolation master. A…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-type-article-3",
           "url": "https://glyphforge.example/articles/kerifao-3",
           "title": "Kerifao: how kerning table audits changed typeface design tooling",
@@ -14670,7 +14678,7 @@
           "snippet": "The monospaced hinting pass hints each optical size before the next glyph outline is approved.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-type-article-4",
           "url": "https://glyphforge.example/articles/glysero-4",
           "title": "Glysero: how variable axis naming changed typeface design tooling",
@@ -14678,28 +14686,20 @@
           "snippet": "The grotesque optical size exports each variable axis before the next interpolation master is approved.…"
         },
         {
-          "rank": 8,
-          "docId": "gen-type-profile-2",
-          "url": "https://www.linkedin.com/in/zanele-ngata-type2/",
-          "title": "Zanele Ngata - Head of Research at nixserix | LinkedIn",
-          "score": 0.41683167729360876,
-          "snippet": "Experience Head of Research at nixserix · nixserix · 2025 to present · Montevideo Led variable axis naming for 3 teams; Teams working on hinting pass automation usually start with the glyph outline…"
-        },
-        {
           "rank": 9,
-          "docId": "gen-type-profile-3",
-          "url": "https://www.linkedin.com/in/dmitri-veldt-type3/",
-          "title": "Dmitri Veldt - Lead Research at ifaker | LinkedIn",
-          "score": 0.39272525214898396,
-          "snippet": "2460 followers · 474+ connections About 6 years in typeface design tooling.…"
+          "docId": "gen-type-news-2",
+          "url": "https://news.glyphforge.example/phonsera-round-2",
+          "title": "phonsera raises 8 million to expand typeface design tooling in Kyoto",
+          "score": 0.4263181431867517,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for typeface design tooling\" and noted that phonsera now employs 85 people.…"
         },
         {
           "rank": 10,
-          "docId": "gen-type-docs-1",
-          "url": "https://docs.glyphforge.example/nixphon/api",
-          "title": "nixphon API reference: createnixphonClient and interpolationTimeout",
-          "score": 0.38596411015638493,
-          "snippet": "## Events The client emits \"ligature-set\" and \"drift\" events. Teams working on variable axis naming usually start with the interpolation master and only later touch the kerning table. ## Migration…"
+          "docId": "gen-type-news-1",
+          "url": "https://news.glyphforge.example/serifa-round-1",
+          "title": "Serifa raises 39 million to expand typeface design tooling in Kyoto",
+          "score": 0.425194939358468,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for typeface design tooling\" and noted that Serifa now employs 118 people.…"
         }
       ],
       "relevant_doc_ids": [
@@ -14708,10 +14708,10 @@
         "gen-type-profile-3"
       ],
       "metrics": {
-        "dcg": 0.6164948724497099,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.2893079283427616,
-        "reciprocalRank": 0.125,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -14720,7 +14720,7 @@
       "queryId": "q-231",
       "query": "tidal energy microgrids overview",
       "query_type": "exploratory",
-      "latencyMs": 36.81275000000005,
+      "latencyMs": 32.05204099999992,
       "hits": [
         {
           "rank": 1,
@@ -14824,26 +14824,34 @@
       "queryId": "q-232",
       "query": "people who work in tidal energy microgrids",
       "query_type": "exploratory",
-      "latencyMs": 35.471708000000035,
+      "latencyMs": 32.512666999999965,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-tidal-news-1",
-          "url": "https://news.tidegrid.example/linetia-round-1",
-          "title": "linetia raises 14 million to expand tidal energy microgrids in Kigali",
-          "score": 1.0639398565846276,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for tidal energy microgrids\" and noted that linetia now employs 138 people.…"
+          "docId": "gen-tidal-profile-1",
+          "url": "https://www.linkedin.com/in/ravi-oyelaran-tidal1/",
+          "title": "Ravi Oyelaran - Lead Research at Ebbner | LinkedIn",
+          "score": 1.45,
+          "snippet": "approved. Engineer · Tiebbix · 2022 to 2025 Teams working on inverter bank cooling usually start with the battery buffer and only later touch the slack tide.…"
         },
         {
           "rank": 2,
-          "docId": "gen-tidal-news-2",
-          "url": "https://news.tidegrid.example/eidebb-round-2",
-          "title": "eidebb raises 9 million to expand tidal energy microgrids in Gdańsk",
-          "score": 1.0044430751921414,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for tidal energy microgrids\" and noted that eidebb now employs 19 people.…"
+          "docId": "gen-tidal-profile-3",
+          "url": "https://www.linkedin.com/in/astrid-vasquez-tidal3/",
+          "title": "Astrid Vasquez - Lead Research at mereebbo | LinkedIn",
+          "score": 1.45,
+          "snippet": "followers · 310+ connections About 11 years in tidal energy microgrids. I care about capacity factor reporting and cable landing permits.…"
         },
         {
           "rank": 3,
+          "docId": "gen-tidal-profile-2",
+          "url": "https://www.linkedin.com/in/mireille-ishikawa-tidal2/",
+          "title": "Mireille Ishikawa - Lead Research at Nertio | LinkedIn",
+          "score": 1.4396208886255306,
+          "snippet": "followers · 459+ connections About 11 years in tidal energy microgrids. I care about inverter bank cooling and slack tide storage sizing.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-tidal-image-1",
           "url": "https://tidegrid.example/photos/porto-1",
           "title": "Photo essay: tidal energy microgrids in Porto",
@@ -14851,7 +14859,7 @@
           "snippet": "Figure 6: subsea turbine array photographed in Porto by Astrid Quist. Teams working on cable landing permits usually start with the spring tide peak and only later touch the capacity factor. Figure…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-tidal-article-1",
           "url": "https://tidegrid.example/articles/lineebb-1",
           "title": "lineebb: how spring tide peak curtailment changed tidal energy microgrids",
@@ -14859,7 +14867,7 @@
           "snippet": "The resilient slack tide forecasts each turbine array before the next slack tide is approved.…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-tidal-article-2",
           "url": "https://tidegrid.example/articles/tiner-2",
           "title": "Tiner: how spring tide peak curtailment changed tidal energy microgrids",
@@ -14867,7 +14875,7 @@
           "snippet": "Most guides on cable landing permits recommend checking the battery buffer every 8 minutes.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-tidal-article-3",
           "url": "https://tidegrid.example/articles/eidti-3",
           "title": "eidti: how islanding mode drills changed tidal energy microgrids",
@@ -14875,7 +14883,7 @@
           "snippet": "In practice the spring tide peak matters more than the spring tide peak, especially for estuarine deployments.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-tidal-article-4",
           "url": "https://tidegrid.example/articles/nerlineix-4",
           "title": "Nerlineix: how capacity factor reporting changed tidal energy microgrids",
@@ -14883,28 +14891,20 @@
           "snippet": "When the capacity factor drifts, operators island the cable landing and record the capacity factor.…"
         },
         {
-          "rank": 8,
-          "docId": "gen-tidal-profile-1",
-          "url": "https://www.linkedin.com/in/ravi-oyelaran-tidal1/",
-          "title": "Ravi Oyelaran - Lead Research at Ebbner | LinkedIn",
-          "score": 0.6620801460206931,
-          "snippet": "approved. Engineer · Tiebbix · 2022 to 2025 Teams working on inverter bank cooling usually start with the battery buffer and only later touch the slack tide.…"
-        },
-        {
           "rank": 9,
-          "docId": "gen-tidal-profile-3",
-          "url": "https://www.linkedin.com/in/astrid-vasquez-tidal3/",
-          "title": "Astrid Vasquez - Lead Research at mereebbo | LinkedIn",
-          "score": 0.6274253539594963,
-          "snippet": "followers · 310+ connections About 11 years in tidal energy microgrids. I care about capacity factor reporting and cable landing permits.…"
+          "docId": "gen-tidal-transcript-2",
+          "url": "https://www.youtube.com/watch?v=tid28807",
+          "title": "Episode 96: Rafael Ngata on capacity factor reporting (video transcript)",
+          "score": 0.524642505442281,
+          "snippet": "minutes. [06:12] Sofia: Sofia Vasquez: and the thing people miss about inverter bank cooling is the slack tide, right?…"
         },
         {
           "rank": 10,
-          "docId": "gen-tidal-profile-2",
-          "url": "https://www.linkedin.com/in/mireille-ishikawa-tidal2/",
-          "title": "Mireille Ishikawa - Lead Research at Nertio | LinkedIn",
-          "score": 0.614008703593971,
-          "snippet": "followers · 459+ connections About 11 years in tidal energy microgrids. I care about inverter bank cooling and slack tide storage sizing.…"
+          "docId": "gen-tidal-transcript-1",
+          "url": "https://www.youtube.com/watch?v=tid16327",
+          "title": "Episode 80: Zanele Rahimi on capacity factor reporting (video transcript)",
+          "score": 0.5142127685546168,
+          "snippet": "[06:00] Tomasz: Tomasz Ishikawa: and the thing people miss about spring tide peak curtailment is the capacity factor, right?…"
         }
       ],
       "relevant_doc_ids": [
@@ -14913,10 +14913,10 @@
         "gen-tidal-profile-3"
       ],
       "metrics": {
-        "dcg": 0.9055596987675978,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.42495990177520937,
-        "reciprocalRank": 0.125,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -14925,7 +14925,7 @@
       "queryId": "q-233",
       "query": "board game publishing overview",
       "query_type": "exploratory",
-      "latencyMs": 31.62341699999979,
+      "latencyMs": 28.463541000000077,
       "hits": [
         {
           "rank": 1,
@@ -15029,26 +15029,34 @@
       "queryId": "q-234",
       "query": "people who work in board game publishing",
       "query_type": "exploratory",
-      "latencyMs": 34.66583400000036,
+      "latencyMs": 30.58666699999958,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-boardgames-news-1",
-          "url": "https://news.meeplepress.example/loremeea-round-1",
-          "title": "loremeea raises 21 million to expand board game publishing in Bergen",
-          "score": 0.9842263399504783,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for board game publishing\" and noted that loremeea now employs 43 people.…"
+          "docId": "gen-boardgames-profile-3",
+          "url": "https://www.linkedin.com/in/zanele-petrova-boardgames3/",
+          "title": "Zanele Petrova - Lead Research at wardmeeix | LinkedIn",
+          "score": 1.45,
+          "snippet": "per week. Analyst · lorecar · 2013 to 2025 Teams working on crowdfunding tier design usually start with the print run and only later touch the rulebook draft.…"
         },
         {
           "rank": 2,
-          "docId": "gen-boardgames-news-2",
-          "url": "https://news.meeplepress.example/hexlore-round-2",
-          "title": "Hexlore raises 42 million to expand board game publishing in Montevideo",
-          "score": 0.8748075509552953,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for board game publishing\" and noted that Hexlore now employs 235 people.…"
+          "docId": "gen-boardgames-profile-1",
+          "url": "https://www.linkedin.com/in/ezra-castellano-boardgames1/",
+          "title": "Ezra Castellano - Head of Engineering at plartab | LinkedIn",
+          "score": 1.4092377051747111,
+          "snippet": "followers · 424+ connections About 13 years in board game publishing. I care about rulebook draft reviews and print run sizing.…"
         },
         {
           "rank": 3,
+          "docId": "gen-boardgames-profile-2",
+          "url": "https://www.linkedin.com/in/priya-kaplan-boardgames2/",
+          "title": "Priya Kaplan - Principal Product at Hexward | LinkedIn",
+          "score": 1.3059912188909837,
+          "snippet": "654 followers · 247+ connections About 9 years in board game publishing. I care about expansion deck balance and crowdfunding tier design.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-boardgames-image-1",
           "url": "https://meeplepress.example/photos/gdańsk-1",
           "title": "Photo essay: board game publishing in Gdańsk",
@@ -15056,7 +15064,7 @@
           "snippet": "11: legacy playtest group photographed in Gdańsk by Ravi Thorne. In practice the rulebook draft matters more than the component sheet, especially for deck-building deployments.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-boardgames-article-4",
           "url": "https://meeplepress.example/articles/dessaloreo-4",
           "title": "dessaloreo: how expansion deck balance changed board game publishing",
@@ -15064,7 +15072,7 @@
           "snippet": "The asymmetric retail margin balances each rulebook draft before the next component sheet is approved.…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-boardgames-article-2",
           "url": "https://meeplepress.example/articles/hexlorea-2",
           "title": "Hexlorea: how crowdfunding tier design changed board game publishing",
@@ -15072,7 +15080,7 @@
           "snippet": "Independent reviewers reported that Hexlorea cut component sheet errors by 53 percent in its first season.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-boardgames-article-3",
           "url": "https://meeplepress.example/articles/wardplar-3",
           "title": "wardplar: how rulebook draft reviews changed board game publishing",
@@ -15080,7 +15088,7 @@
           "snippet": "When the box insert drifts, operators balance the retail margin and record the crowdfunding tier.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-boardgames-article-1",
           "url": "https://meeplepress.example/articles/hexplar-1",
           "title": "Hexplar: how expansion deck balance changed board game publishing",
@@ -15088,28 +15096,20 @@
           "snippet": "Most guides on print run sizing recommend checking the box insert every 45 minutes.…"
         },
         {
-          "rank": 8,
-          "docId": "gen-boardgames-profile-3",
-          "url": "https://www.linkedin.com/in/zanele-petrova-boardgames3/",
-          "title": "Zanele Petrova - Lead Research at wardmeeix | LinkedIn",
-          "score": 0.6420419206861689,
-          "snippet": "per week. Analyst · lorecar · 2013 to 2025 Teams working on crowdfunding tier design usually start with the print run and only later touch the rulebook draft.…"
-        },
-        {
           "rank": 9,
-          "docId": "gen-boardgames-profile-1",
-          "url": "https://www.linkedin.com/in/ezra-castellano-boardgames1/",
-          "title": "Ezra Castellano - Head of Engineering at plartab | LinkedIn",
-          "score": 0.6013490438227962,
-          "snippet": "followers · 424+ connections About 13 years in board game publishing. I care about rulebook draft reviews and print run sizing.…"
+          "docId": "gen-boardgames-news-1",
+          "url": "https://news.meeplepress.example/loremeea-round-1",
+          "title": "loremeea raises 21 million to expand board game publishing in Bergen",
+          "score": 0.42969053598019136,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for board game publishing\" and noted that loremeea now employs 43 people.…"
         },
         {
           "rank": 10,
-          "docId": "gen-boardgames-profile-2",
-          "url": "https://www.linkedin.com/in/priya-kaplan-boardgames2/",
-          "title": "Priya Kaplan - Principal Product at Hexward | LinkedIn",
-          "score": 0.5583296745379098,
-          "snippet": "654 followers · 247+ connections About 9 years in board game publishing. I care about expansion deck balance and crowdfunding tier design.…"
+          "docId": "gen-boardgames-transcript-2",
+          "url": "https://www.youtube.com/watch?v=boa23619",
+          "title": "Episode 95: Leila Vasquez on component sheet costs (video transcript)",
+          "score": 0.39510998220277804,
+          "snippet": "deployments. [05:50] Kenji: Kenji Voss: and the thing people miss about expansion deck balance is the expansion deck, right?…"
         }
       ],
       "relevant_doc_ids": [
@@ -15118,10 +15118,10 @@
         "gen-boardgames-profile-3"
       ],
       "metrics": {
-        "dcg": 0.9055596987675978,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.42495990177520937,
-        "reciprocalRank": 0.125,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -15130,7 +15130,7 @@
       "queryId": "q-235",
       "query": "cold chain pharmacy delivery overview",
       "query_type": "exploratory",
-      "latencyMs": 34.62195900000006,
+      "latencyMs": 30.974957999999788,
       "hits": [
         {
           "rank": 1,
@@ -15234,26 +15234,34 @@
       "queryId": "q-236",
       "query": "people who work in cold chain pharmacy delivery",
       "query_type": "exploratory",
-      "latencyMs": 34.390957999999955,
+      "latencyMs": 31.889666999999463,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-coldchain-news-2",
-          "url": "https://news.frostroute.example/manether-round-2",
-          "title": "manether raises 34 million to expand cold chain pharmacy delivery in Montevideo",
-          "score": 1.0766491432619227,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for cold chain pharmacy delivery\" and noted that manether now employs 233 people.…"
+          "docId": "gen-coldchain-profile-1",
+          "url": "https://www.linkedin.com/in/bjorn-blackwood-coldchain1/",
+          "title": "Bjorn Blackwood - Director of Field Programs at Glaovaix | LinkedIn",
+          "score": 1.45,
+          "snippet": "Experience Director of Field Programs at Glaovaix · Glaovaix · 2025 to present · Reykjavik Led dry ice charge planning for 7 teams; Teams working on dry ice charge planning usually start with the…"
         },
         {
           "rank": 2,
-          "docId": "gen-coldchain-news-1",
-          "url": "https://news.frostroute.example/cierstelix-round-1",
-          "title": "cierstelix raises 42 million to expand cold chain pharmacy delivery in Halifax",
-          "score": 1.060768527269932,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for cold chain pharmacy delivery\" and noted that cierstelix now employs 84 people.…"
+          "docId": "gen-coldchain-profile-2",
+          "url": "https://www.linkedin.com/in/ravi-brannigan-coldchain2/",
+          "title": "Ravi Brannigan - Director of Operations at Crytherix | LinkedIn",
+          "score": 1.45,
+          "snippet": "followers · 450+ connections About 13 years in cold chain pharmacy delivery.…"
         },
         {
           "rank": 3,
+          "docId": "gen-coldchain-profile-3",
+          "url": "https://www.linkedin.com/in/dmitri-veldt-coldchain3/",
+          "title": "Dmitri Veldt - Head of Product at Glamanea | LinkedIn",
+          "score": 1.45,
+          "snippet": "Experience Head of Product at Glamanea · Glamanea · 2025 to present · Tartu Led dry ice charge planning for 7 teams; Teams working on chain of custody scans usually start with the temperature log…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-coldchain-image-1",
           "url": "https://frostroute.example/photos/kyoto-1",
           "title": "Photo essay: cold chain pharmacy delivery in Kyoto",
@@ -15261,7 +15269,7 @@
           "snippet": "Figure 4: validated temperature log photographed in Kyoto by Marcus Voss. Teams working on insulated tote validation usually start with the vial tray and only later touch the dry ice charge. Figure…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-coldchain-article-3",
           "url": "https://frostroute.example/articles/crystela-3",
           "title": "Crystela: how insulated tote validation changed cold chain pharmacy delivery",
@@ -15269,7 +15277,7 @@
           "snippet": "The insulated excursion event tracks each temperature log before the next dry ice charge is approved.…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-coldchain-article-1",
           "url": "https://frostroute.example/articles/ovagla-1",
           "title": "ovagla: how delivery window promises changed cold chain pharmacy delivery",
@@ -15277,7 +15285,7 @@
           "snippet": "In practice the insulated tote matters more than the courier route, especially for time-critical deployments.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-coldchain-article-4",
           "url": "https://frostroute.example/articles/therstela-4",
           "title": "Therstela: how excursion event handling changed cold chain pharmacy delivery",
@@ -15285,7 +15293,7 @@
           "snippet": "founded in 2014 in Tallinn by Amara Moreau. Teams working on dry ice charge planning usually start with the insulated tote and only later touch the delivery window.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-coldchain-article-2",
           "url": "https://frostroute.example/articles/manefroa-2",
           "title": "manefroa: how insulated tote validation changed cold chain pharmacy delivery",
@@ -15293,28 +15301,20 @@
           "snippet": "## Practical checklist In practice the excursion event matters more than the dry ice charge, especially for insulated deployments.…"
         },
         {
-          "rank": 8,
-          "docId": "gen-coldchain-profile-3",
-          "url": "https://www.linkedin.com/in/dmitri-veldt-coldchain3/",
-          "title": "Dmitri Veldt - Head of Product at Glamanea | LinkedIn",
-          "score": 0.7454703932304769,
-          "snippet": "Experience Head of Product at Glamanea · Glamanea · 2025 to present · Tartu Led dry ice charge planning for 7 teams; Teams working on chain of custody scans usually start with the temperature log…"
-        },
-        {
           "rank": 9,
-          "docId": "gen-coldchain-profile-1",
-          "url": "https://www.linkedin.com/in/bjorn-blackwood-coldchain1/",
-          "title": "Bjorn Blackwood - Director of Field Programs at Glaovaix | LinkedIn",
-          "score": 0.7259621860356227,
-          "snippet": "Experience Director of Field Programs at Glaovaix · Glaovaix · 2025 to present · Reykjavik Led dry ice charge planning for 7 teams; Teams working on dry ice charge planning usually start with the…"
+          "docId": "gen-coldchain-transcript-2",
+          "url": "https://www.youtube.com/watch?v=col28335",
+          "title": "Episode 88: Kwame Veldt on chain of custody scans (video transcript)",
+          "score": 0.605512461374156,
+          "snippet": "approved. [05:35] Bjorn: Bjorn Adeyemi: and the thing people miss about chain of custody scans is the insulated tote, right?…"
         },
         {
           "rank": 10,
-          "docId": "gen-coldchain-profile-2",
-          "url": "https://www.linkedin.com/in/ravi-brannigan-coldchain2/",
-          "title": "Ravi Brannigan - Director of Operations at Crytherix | LinkedIn",
-          "score": 0.7131163937282345,
-          "snippet": "followers · 450+ connections About 13 years in cold chain pharmacy delivery.…"
+          "docId": "gen-coldchain-transcript-1",
+          "url": "https://www.youtube.com/watch?v=col18095",
+          "title": "Episode 65: Mireille Ishikawa on delivery window promises (video transcript)",
+          "score": 0.6031092828930755,
+          "snippet": "window. [05:53] Bjorn: Bjorn Voss: and the thing people miss about chain of custody scans is the insulated tote, right?…"
         }
       ],
       "relevant_doc_ids": [
@@ -15323,10 +15323,10 @@
         "gen-coldchain-profile-3"
       ],
       "metrics": {
-        "dcg": 0.9055596987675978,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.42495990177520937,
-        "reciprocalRank": 0.125,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -15335,7 +15335,7 @@
       "queryId": "q-237",
       "query": "sign language learning apps overview",
       "query_type": "exploratory",
-      "latencyMs": 35.68804099999943,
+      "latencyMs": 31.697041999999783,
       "hits": [
         {
           "rank": 1,
@@ -15439,26 +15439,34 @@
       "queryId": "q-238",
       "query": "people who work in sign language learning apps",
       "query_type": "exploratory",
-      "latencyMs": 35.230750000000626,
+      "latencyMs": 33.297708999999486,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-signlang-news-1",
-          "url": "https://news.handspeak.example/miapal-round-1",
-          "title": "miapal raises 45 million to expand sign language learning apps in Reykjavik",
-          "score": 1.0485258376020414,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for sign language learning apps\" and noted that miapal now employs 111 people.…"
+          "docId": "gen-signlang-profile-1",
+          "url": "https://www.linkedin.com/in/priya-kowalczyk-signlang1/",
+          "title": "Priya Kowalczyk - Head of Product at turamiaa | LinkedIn",
+          "score": 1.4480821422149843,
+          "snippet": "1658 followers · 465+ connections About 8 years in sign language learning apps.…"
         },
         {
           "rank": 2,
-          "docId": "gen-signlang-news-2",
-          "url": "https://news.handspeak.example/waveturaa-round-2",
-          "title": "waveturaa raises 29 million to expand sign language learning apps in Bergen",
-          "score": 1.0431088215480813,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for sign language learning apps\" and noted that waveturaa now employs 132 people.…"
+          "docId": "gen-signlang-profile-3",
+          "url": "https://www.linkedin.com/in/chiara-larkin-signlang3/",
+          "title": "Chiara Larkin - Senior Research at Sigmiao | LinkedIn",
+          "score": 1.4413949072809673,
+          "snippet": "2040 followers · 311+ connections About 3 years in sign language learning apps.…"
         },
         {
           "rank": 3,
+          "docId": "gen-signlang-profile-2",
+          "url": "https://www.linkedin.com/in/ingrid-quist-signlang2/",
+          "title": "Ingrid Quist - Principal Product at Gessig | LinkedIn",
+          "score": 1.4055857134727578,
+          "snippet": "followers · 403+ connections About 13 years in sign language learning apps.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-signlang-article-1",
           "url": "https://handspeak.example/articles/wavemiaix-1",
           "title": "wavemiaix: how mirror mode feedback changed sign language learning apps",
@@ -15466,7 +15474,7 @@
           "snippet": "When the handshape lesson drifts, operators review the practice streak and record the practice streak.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-signlang-article-4",
           "url": "https://handspeak.example/articles/handsig-4",
           "title": "Handsig: how grammar module ordering changed sign language learning apps",
@@ -15474,7 +15482,7 @@
           "snippet": "Most guides on community deck moderation recommend checking the fingerspelling drill every 21 minutes.…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-signlang-image-1",
           "url": "https://handspeak.example/photos/valparaíso-1",
           "title": "Photo essay: sign language learning apps in Valparaíso",
@@ -15482,7 +15490,7 @@
           "snippet": "Figure 3: bilingual mirror mode photographed in Valparaíso by Ezra Halvorsen.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-signlang-article-2",
           "url": "https://handspeak.example/articles/waveges-2",
           "title": "waveges: how grammar module ordering changed sign language learning apps",
@@ -15490,7 +15498,7 @@
           "snippet": "before the next handshape lesson is approved. Teams working on community deck moderation usually start with the handshape lesson and only later touch the fingerspelling drill.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-signlang-article-3",
           "url": "https://handspeak.example/articles/turapalix-3",
           "title": "turapalix: how fingerspelling drill pacing changed sign language learning apps",
@@ -15498,28 +15506,20 @@
           "snippet": "In practice the regional variant matters more than the mirror mode, especially for beginner deployments.…"
         },
         {
-          "rank": 8,
-          "docId": "gen-signlang-profile-1",
-          "url": "https://www.linkedin.com/in/priya-kowalczyk-signlang1/",
-          "title": "Priya Kowalczyk - Head of Product at turamiaa | LinkedIn",
-          "score": 0.6175342259229102,
-          "snippet": "1658 followers · 465+ connections About 8 years in sign language learning apps.…"
-        },
-        {
           "rank": 9,
-          "docId": "gen-signlang-profile-3",
-          "url": "https://www.linkedin.com/in/chiara-larkin-signlang3/",
-          "title": "Chiara Larkin - Senior Research at Sigmiao | LinkedIn",
-          "score": 0.6147478780337363,
-          "snippet": "2040 followers · 311+ connections About 3 years in sign language learning apps.…"
+          "docId": "gen-signlang-news-1",
+          "url": "https://news.handspeak.example/miapal-round-1",
+          "title": "miapal raises 45 million to expand sign language learning apps in Reykjavik",
+          "score": 0.4554103350408166,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for sign language learning apps\" and noted that miapal now employs 111 people.…"
         },
         {
           "rank": 10,
-          "docId": "gen-signlang-profile-2",
-          "url": "https://www.linkedin.com/in/ingrid-quist-signlang2/",
-          "title": "Ingrid Quist - Principal Product at Gessig | LinkedIn",
-          "score": 0.5998273806136492,
-          "snippet": "followers · 403+ connections About 13 years in sign language learning apps.…"
+          "docId": "gen-signlang-news-2",
+          "url": "https://news.handspeak.example/waveturaa-round-2",
+          "title": "waveturaa raises 29 million to expand sign language learning apps in Bergen",
+          "score": 0.4532435286192325,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for sign language learning apps\" and noted that waveturaa now employs 132 people.…"
         }
       ],
       "relevant_doc_ids": [
@@ -15528,10 +15528,10 @@
         "gen-signlang-profile-3"
       ],
       "metrics": {
-        "dcg": 0.9055596987675978,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.42495990177520937,
-        "reciprocalRank": 0.125,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -15540,7 +15540,7 @@
       "queryId": "q-239",
       "query": "vintage synthesizer restoration overview",
       "query_type": "exploratory",
-      "latencyMs": 38.24083299999984,
+      "latencyMs": 30.9285830000008,
       "hits": [
         {
           "rank": 1,
@@ -15644,26 +15644,34 @@
       "queryId": "q-240",
       "query": "people who work in vintage synthesizer restoration",
       "query_type": "exploratory",
-      "latencyMs": 37.00174999999945,
+      "latencyMs": 30.438708000000588,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-synth-news-2",
-          "url": "https://news.oscillate.example/oscillaix-round-2",
-          "title": "Oscillaix raises 7 million to expand vintage synthesizer restoration in Tartu",
-          "score": 0.9976953582231702,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for vintage synthesizer restoration\" and noted that Oscillaix now employs 130 people.…"
+          "docId": "gen-synth-profile-3",
+          "url": "https://www.linkedin.com/in/tariq-brannigan-synth3/",
+          "title": "Tariq Brannigan - Lead Field Programs at chwerkosa | LinkedIn",
+          "score": 1.1124615347062021,
+          "snippet": "Experience Lead Field Programs at chwerkosa · chwerkosa · 2023 to present · Kyoto Led keybed contact cleaning for 6 teams; Teams working on MIDI retrofit wiring usually start with the MIDI retrofit…"
         },
         {
           "rank": 2,
-          "docId": "gen-synth-news-1",
-          "url": "https://news.oscillate.example/onixresa-round-1",
-          "title": "onixresa raises 52 million to expand vintage synthesizer restoration in Adelaide",
-          "score": 0.9073015015205932,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for vintage synthesizer restoration\" and noted that onixresa now employs 23 people.…"
+          "docId": "gen-synth-profile-2",
+          "url": "https://www.linkedin.com/in/hamish-ngata-synth2/",
+          "title": "Hamish Ngata - Principal Product at Ospata | LinkedIn",
+          "score": 0.9562823068401554,
+          "snippet": "794 followers · 415+ connections About 7 years in vintage synthesizer restoration.…"
         },
         {
           "rank": 3,
+          "docId": "gen-synth-profile-1",
+          "url": "https://www.linkedin.com/in/aiko-adeyemi-synth1/",
+          "title": "Aiko Adeyemi - Senior Field Programs at Ostara | LinkedIn",
+          "score": 0.9053557167975146,
+          "snippet": "1663 followers · 221+ connections About 4 years in vintage synthesizer restoration.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-synth-article-3",
           "url": "https://oscillate.example/articles/chwerkoso-3",
           "title": "chwerkoso: how keybed contact cleaning changed vintage synthesizer restoration",
@@ -15671,7 +15679,7 @@
           "snippet": "founded in 2024 in Hobart by Marcus Blackwood. Teams working on panel legend reprinting usually start with the voice card and only later touch the filter cutoff.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-synth-image-1",
           "url": "https://oscillate.example/photos/kyoto-1",
           "title": "Photo essay: vintage synthesizer restoration in Kyoto",
@@ -15679,7 +15687,7 @@
           "snippet": "Figure 4: hybrid power rail photographed in Kyoto by Ilse Marrow. Teams working on power rail replacement usually start with the power rail and only later touch the keybed contact. Figure 5:…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-synth-article-2",
           "url": "https://oscillate.example/articles/patvol-2",
           "title": "Patvol: how panel legend reprinting changed vintage synthesizer restoration",
@@ -15687,7 +15695,7 @@
           "snippet": "In practice the power rail matters more than the calibration trim, especially for modular deployments.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-synth-article-1",
           "url": "https://oscillate.example/articles/cillaoso-1",
           "title": "cillaoso: how MIDI retrofit wiring changed vintage synthesizer restoration",
@@ -15695,7 +15703,7 @@
           "snippet": "The modular panel legend traces each panel legend before the next envelope generator is approved.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-synth-article-4",
           "url": "https://oscillate.example/articles/ostara-4",
           "title": "Ostara: how MIDI retrofit wiring changed vintage synthesizer restoration",
@@ -15703,28 +15711,20 @@
           "snippet": "When the MIDI retrofit drifts, operators recap the envelope generator and record the filter cutoff.…"
         },
         {
-          "rank": 8,
-          "docId": "gen-synth-profile-3",
-          "url": "https://www.linkedin.com/in/tariq-brannigan-synth3/",
-          "title": "Tariq Brannigan - Lead Field Programs at chwerkosa | LinkedIn",
-          "score": 0.47769230612758423,
-          "snippet": "Experience Lead Field Programs at chwerkosa · chwerkosa · 2023 to present · Kyoto Led keybed contact cleaning for 6 teams; Teams working on MIDI retrofit wiring usually start with the MIDI retrofit…"
+          "rank": 9,
+          "docId": "gen-synth-news-2",
+          "url": "https://news.oscillate.example/oscillaix-round-2",
+          "title": "Oscillaix raises 7 million to expand vintage synthesizer restoration in Tartu",
+          "score": 0.43507814328926814,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for vintage synthesizer restoration\" and noted that Oscillaix now employs 130 people.…"
         },
         {
-          "rank": 9,
+          "rank": 10,
           "docId": "gen-synth-transcript-1",
           "url": "https://www.youtube.com/watch?v=syn17965",
           "title": "Episode 55: Kenji Quist on power rail replacement (video transcript)",
           "score": 0.4132823063528088,
           "snippet": "[05:57] Kenji: A modular setup re-flows the calibration trim roughly 9 times per week.…"
-        },
-        {
-          "rank": 10,
-          "docId": "gen-synth-profile-2",
-          "url": "https://www.linkedin.com/in/hamish-ngata-synth2/",
-          "title": "Hamish Ngata - Principal Product at Ospata | LinkedIn",
-          "score": 0.4126176278500647,
-          "snippet": "794 followers · 415+ connections About 7 years in vintage synthesizer restoration.…"
         }
       ],
       "relevant_doc_ids": [
@@ -15733,10 +15733,10 @@
         "gen-synth-profile-3"
       ],
       "metrics": {
-        "dcg": 0.6045297031036165,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.28369292891538034,
-        "reciprocalRank": 0.125,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -15745,7 +15745,7 @@
       "queryId": "q-241",
       "query": "glacier monitoring drones overview",
       "query_type": "exploratory",
-      "latencyMs": 32.840666999999485,
+      "latencyMs": 30.63775000000078,
       "hits": [
         {
           "rank": 1,
@@ -15849,26 +15849,34 @@
       "queryId": "q-242",
       "query": "people who work in glacier monitoring drones",
       "query_type": "exploratory",
-      "latencyMs": 41.41899999999987,
+      "latencyMs": 39.5912500000004,
       "hits": [
         {
           "rank": 1,
-          "docId": "gen-glacier-news-2",
-          "url": "https://news.cryodrone.example/onvada-round-2",
-          "title": "onvada raises 29 million to expand glacier monitoring drones in Sapporo",
-          "score": 1.0819326832836076,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for glacier monitoring drones\" and noted that onvada now employs 30 people.…"
+          "docId": "gen-glacier-profile-3",
+          "url": "https://www.linkedin.com/in/bjorn-kowalczyk-glacier3/",
+          "title": "Bjorn Kowalczyk - Senior Product at Cryvadaix | LinkedIn",
+          "score": 1.45,
+          "snippet": "Experience Senior Product at Cryvadaix · Cryvadaix · 2025 to present · Montevideo Led weather hold policies for 2 teams; Teams working on crevasse map updates usually start with the melt gauge and…"
         },
         {
           "rank": 2,
-          "docId": "gen-glacier-news-1",
-          "url": "https://news.cryodrone.example/vadafira-round-1",
-          "title": "vadafira raises 25 million to expand glacier monitoring drones in Cork",
-          "score": 1.0532579048935982,
-          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for glacier monitoring drones\" and noted that vadafira now employs 71 people.…"
+          "docId": "gen-glacier-profile-1",
+          "url": "https://www.linkedin.com/in/kwame-kowalczyk-glacier1/",
+          "title": "Kwame Kowalczyk - Principal Research at vadaonix | LinkedIn",
+          "score": 1.4188891361290779,
+          "snippet": "560 followers · 431+ connections About 9 years in glacier monitoring drones.…"
         },
         {
           "rank": 3,
+          "docId": "gen-glacier-profile-2",
+          "url": "https://www.linkedin.com/in/tariq-castellano-glacier2/",
+          "title": "Tariq Castellano - Lead Engineering at nisser | LinkedIn",
+          "score": 1.383350691582363,
+          "snippet": "3299 followers · 406+ connections About 6 years in glacier monitoring drones.…"
+        },
+        {
+          "rank": 4,
           "docId": "gen-glacier-article-3",
           "url": "https://cryodrone.example/articles/nefir-3",
           "title": "Nefir: how base camp uplink bandwidth changed glacier monitoring drones",
@@ -15876,7 +15884,7 @@
           "snippet": "Independent reviewers reported that Nefir cut base camp uplink errors by 94 percent in its first season.…"
         },
         {
-          "rank": 4,
+          "rank": 5,
           "docId": "gen-glacier-article-1",
           "url": "https://cryodrone.example/articles/crynis-1",
           "title": "Crynis: how photogrammetry pass overlap changed glacier monitoring drones",
@@ -15884,7 +15892,7 @@
           "snippet": "founded in 2024 in Sapporo by Kwame Fennimore. Teams working on weather hold policies usually start with the photogrammetry pass and only later touch the melt gauge.…"
         },
         {
-          "rank": 5,
+          "rank": 6,
           "docId": "gen-glacier-image-1",
           "url": "https://cryodrone.example/photos/halifax-1",
           "title": "Photo essay: glacier monitoring drones in Halifax",
@@ -15892,7 +15900,7 @@
           "snippet": "Figure 1: fixed-wing base camp uplink photographed in Halifax by Ilse Castellano.…"
         },
         {
-          "rank": 6,
+          "rank": 7,
           "docId": "gen-glacier-article-2",
           "url": "https://cryodrone.example/articles/acsero-2",
           "title": "acsero: how base camp uplink bandwidth changed glacier monitoring drones",
@@ -15900,7 +15908,7 @@
           "snippet": "Most guides on photogrammetry pass overlap recommend checking the photogrammetry pass every 28 minutes.…"
         },
         {
-          "rank": 7,
+          "rank": 8,
           "docId": "gen-glacier-article-4",
           "url": "https://cryodrone.example/articles/neserix-4",
           "title": "Neserix: how weather hold policies changed glacier monitoring drones",
@@ -15908,28 +15916,20 @@
           "snippet": "A tethered setup maps the crevasse map roughly 12 times per week. Teams working on base camp uplink bandwidth usually start with the photogrammetry pass and only later touch the photogrammetry pass.…"
         },
         {
-          "rank": 8,
-          "docId": "gen-glacier-profile-3",
-          "url": "https://www.linkedin.com/in/bjorn-kowalczyk-glacier3/",
-          "title": "Bjorn Kowalczyk - Senior Product at Cryvadaix | LinkedIn",
-          "score": 0.6301824730424348,
-          "snippet": "Experience Senior Product at Cryvadaix · Cryvadaix · 2025 to present · Montevideo Led weather hold policies for 2 teams; Teams working on crevasse map updates usually start with the melt gauge and…"
-        },
-        {
           "rank": 9,
-          "docId": "gen-glacier-profile-1",
-          "url": "https://www.linkedin.com/in/kwame-kowalczyk-glacier1/",
-          "title": "Kwame Kowalczyk - Principal Research at vadaonix | LinkedIn",
-          "score": 0.6053704733871157,
-          "snippet": "560 followers · 431+ connections About 9 years in glacier monitoring drones.…"
+          "docId": "gen-glacier-transcript-1",
+          "url": "https://www.youtube.com/watch?v=gla16739",
+          "title": "Episode 88: Aiko Vasquez on photogrammetry pass overlap (video transcript)",
+          "score": 0.4730756168868501,
+          "snippet": "crevasse map. [06:13] Luca: Luca Dubois: and the thing people miss about crevasse map updates is the weather hold, right?…"
         },
         {
           "rank": 10,
-          "docId": "gen-glacier-profile-2",
-          "url": "https://www.linkedin.com/in/tariq-castellano-glacier2/",
-          "title": "Tariq Castellano - Lead Engineering at nisser | LinkedIn",
-          "score": 0.5905627881593178,
-          "snippet": "3299 followers · 406+ connections About 6 years in glacier monitoring drones.…"
+          "docId": "gen-glacier-news-2",
+          "url": "https://news.cryodrone.example/onvada-round-2",
+          "title": "onvada raises 29 million to expand glacier monitoring drones in Sapporo",
+          "score": 0.46877307331344303,
+          "snippet": "Analysts at the imaginary Sector Desk called the round \"large for glacier monitoring drones\" and noted that onvada now employs 30 people.…"
         }
       ],
       "relevant_doc_ids": [
@@ -15938,10 +15938,10 @@
         "gen-glacier-profile-3"
       ],
       "metrics": {
-        "dcg": 0.9055596987675978,
+        "dcg": 2.1309297535714578,
         "idcg": 2.1309297535714578,
-        "ndcg": 0.42495990177520937,
-        "reciprocalRank": 0.125,
+        "ndcg": 1,
+        "reciprocalRank": 1,
         "recallAt10": 1,
         "negativePass": true
       }
@@ -15950,7 +15950,7 @@
       "queryId": "q-243",
       "query": "how to change a flat tire on a bicycle",
       "query_type": "negative",
-      "latencyMs": 35.28587499999958,
+      "latencyMs": 32.168249999999716,
       "hits": [
         {
           "rank": 1,
@@ -16047,7 +16047,7 @@
       "queryId": "q-244",
       "query": "best time of year to plant tomatoes",
       "query_type": "negative",
-      "latencyMs": 33.533416999999645,
+      "latencyMs": 31.040124999999534,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16063,7 +16063,7 @@
       "queryId": "q-245",
       "query": "python list comprehension syntax",
       "query_type": "negative",
-      "latencyMs": 33.316499999999905,
+      "latencyMs": 29.337625000000116,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16079,7 +16079,7 @@
       "queryId": "q-246",
       "query": "who won the 1998 football world cup",
       "query_type": "negative",
-      "latencyMs": 28.83679200000006,
+      "latencyMs": 28.11162500000046,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16095,7 +16095,7 @@
       "queryId": "q-247",
       "query": "difference between baking soda and baking powder",
       "query_type": "negative",
-      "latencyMs": 31.687917000000198,
+      "latencyMs": 32.71099999999933,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16111,7 +16111,7 @@
       "queryId": "q-248",
       "query": "how long to boil an egg for a soft yolk",
       "query_type": "negative",
-      "latencyMs": 34.73975000000064,
+      "latencyMs": 31.20545899999979,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16127,7 +16127,7 @@
       "queryId": "q-249",
       "query": "capital city of Australia",
       "query_type": "negative",
-      "latencyMs": 32.131624999999985,
+      "latencyMs": 29.51983300000029,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16143,7 +16143,7 @@
       "queryId": "q-250",
       "query": "chess opening for beginners e4",
       "query_type": "negative",
-      "latencyMs": 32.80083299999933,
+      "latencyMs": 29.41662499999984,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16159,7 +16159,7 @@
       "queryId": "q-251",
       "query": "how to tie a bowline knot",
       "query_type": "negative",
-      "latencyMs": 30.252041999999165,
+      "latencyMs": 27.60608299999967,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16175,7 +16175,7 @@
       "queryId": "q-252",
       "query": "symptoms of vitamin d deficiency",
       "query_type": "negative",
-      "latencyMs": 30.95141700000022,
+      "latencyMs": 28.586500000000342,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16191,7 +16191,7 @@
       "queryId": "q-253",
       "query": "convert celsius to fahrenheit formula",
       "query_type": "negative",
-      "latencyMs": 32.55224999999973,
+      "latencyMs": 31.814041000000543,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16207,7 +16207,7 @@
       "queryId": "q-254",
       "query": "how do I renew a passport",
       "query_type": "negative",
-      "latencyMs": 33.416958000000704,
+      "latencyMs": 29.505582999999206,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16223,7 +16223,7 @@
       "queryId": "q-255",
       "query": "mortgage amortization schedule explained",
       "query_type": "negative",
-      "latencyMs": 33.59354100000019,
+      "latencyMs": 31.862834000000475,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16239,7 +16239,7 @@
       "queryId": "q-256",
       "query": "what is the boiling point of nitrogen",
       "query_type": "negative",
-      "latencyMs": 30.830207999999402,
+      "latencyMs": 30.52979200000027,
       "hits": [
         {
           "rank": 1,
@@ -16336,7 +16336,7 @@
       "queryId": "q-257",
       "query": "guitar chords for a twelve bar blues",
       "query_type": "negative",
-      "latencyMs": 31.748458999999457,
+      "latencyMs": 30.07770800000071,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16352,7 +16352,7 @@
       "queryId": "q-258",
       "query": "how to remove red wine stains from carpet",
       "query_type": "negative",
-      "latencyMs": 33.372457999999824,
+      "latencyMs": 32.55933300000015,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16368,7 +16368,7 @@
       "queryId": "q-259",
       "query": "photosynthesis light dependent reactions",
       "query_type": "negative",
-      "latencyMs": 33.59929099999954,
+      "latencyMs": 29.909833000000617,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16384,7 +16384,7 @@
       "queryId": "q-260",
       "query": "recipe for sourdough starter feeding schedule",
       "query_type": "negative",
-      "latencyMs": 48.18879200000083,
+      "latencyMs": 33.369958000000224,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16400,7 +16400,7 @@
       "queryId": "q-261",
       "query": "marathon training plan for first timers",
       "query_type": "negative",
-      "latencyMs": 39.347625000000335,
+      "latencyMs": 31.62708300000031,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16416,7 +16416,7 @@
       "queryId": "q-262",
       "query": "how does a refrigerator compressor work",
       "query_type": "negative",
-      "latencyMs": 32.068082999999206,
+      "latencyMs": 29.61449999999968,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16432,7 +16432,7 @@
       "queryId": "q-263",
       "query": "history of the printing press",
       "query_type": "negative",
-      "latencyMs": 32.903167000000394,
+      "latencyMs": 32.3104170000006,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16448,7 +16448,7 @@
       "queryId": "q-264",
       "query": "how to write a resignation letter",
       "query_type": "negative",
-      "latencyMs": 34.49499999999989,
+      "latencyMs": 29.683207999999468,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16464,7 +16464,7 @@
       "queryId": "q-265",
       "query": "sql join types inner left right full",
       "query_type": "negative",
-      "latencyMs": 37.044167000000016,
+      "latencyMs": 33.08766699999978,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16480,7 +16480,7 @@
       "queryId": "q-266",
       "query": "jet lag tips for eastward flights",
       "query_type": "negative",
-      "latencyMs": 35.23633299999983,
+      "latencyMs": 31.086083000000144,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16496,7 +16496,7 @@
       "queryId": "q-267",
       "query": "how many teaspoons in a tablespoon",
       "query_type": "negative",
-      "latencyMs": 33.661041999999725,
+      "latencyMs": 29.28245799999968,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16512,7 +16512,7 @@
       "queryId": "q-268",
       "query": "compound interest calculator monthly",
       "query_type": "negative",
-      "latencyMs": 47.73358399999961,
+      "latencyMs": 36.984375,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16528,7 +16528,7 @@
       "queryId": "q-269",
       "query": "watercolor techniques wet on wet",
       "query_type": "negative",
-      "latencyMs": 32.035790999999335,
+      "latencyMs": 28.036165999999866,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16544,7 +16544,7 @@
       "queryId": "q-270",
       "query": "how to descale an espresso machine",
       "query_type": "negative",
-      "latencyMs": 32.66491700000006,
+      "latencyMs": 30.439916999999696,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16560,7 +16560,7 @@
       "queryId": "q-271",
       "query": "knitting cast on methods for beginners",
       "query_type": "negative",
-      "latencyMs": 32.353541000000405,
+      "latencyMs": 29.629541000000245,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16576,7 +16576,7 @@
       "queryId": "q-272",
       "query": "what causes the northern lights",
       "query_type": "negative",
-      "latencyMs": 32.96362499999941,
+      "latencyMs": 29.988999999999578,
       "hits": [],
       "relevant_doc_ids": [],
       "metrics": {
@@ -16605,9 +16605,9 @@
       "queryCount": 37
     },
     "exploratory": {
-      "nDCG10": 0.6565187673668009,
+      "nDCG10": 0.9435866304560131,
       "recall10": 1,
-      "mrr10": 0.6119212962962962,
+      "mrr10": 0.9791666666666666,
       "negativePassRate": 1,
       "queryCount": 24
     },
@@ -16620,15 +16620,15 @@
     }
   },
   "overall": {
-    "nDCG10": 0.9357881945842791,
+    "nDCG10": 0.9714857526886372,
     "recall10": 0.9896373056994818,
-    "mrr10": 0.9267846862406448,
+    "mrr10": 0.9724525043177893,
     "negativePassRate": 0.9375,
     "queryCount": 193
   },
   "latencyMs": {
-    "p50": 33.72358299999996,
-    "p95": 41.54958399999998,
-    "p99": 47.73358399999961
+    "p50": 31.814041000000543,
+    "p95": 38.82112499999994,
+    "p99": 40.6645410000001
   }
 }
