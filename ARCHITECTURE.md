@@ -186,7 +186,7 @@ Search runs in **`src/lib/search-engine.ts`**, invoked from **`offscreen.ts`** v
 
 ### 6.2 Query embedding
 
-`embedQueryForSearch` in offscreen (truncation ~8k chars). If embedding fails, search continues on **BM25 + recency** only.
+`embedQueryForSearch` in offscreen (truncation ~8k chars). Repeated text in one offscreen session reuses a memory cache of 32 embeddings (`query-embed-cache.ts`). The cache is not written to disk and dies with the document. A failed embed is not cached. If embedding fails, search continues on **BM25 + recency** only.
 
 ### 6.3 Lexical retrieval — BM25
 

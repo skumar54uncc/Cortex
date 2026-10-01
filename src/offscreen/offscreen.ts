@@ -4,6 +4,7 @@ import {
   configureTransformersEnv,
   setTransformersLocalModelPath,
 } from "../lib/transformers-env";
+import { embedWithSessionCache } from "../lib/query-embed-cache";
 import { runAdvancedSearch } from "../lib/search-engine";
 import {
   CORTEX_EMBED_MODEL_ID,
@@ -96,21 +97,20 @@ const MAX_EMBED_CHARS = 8000;
 /** Same model as CORTEX_EMBED_TEXT — avoids extra extension messages during search */
 async function embedQueryForSearch(text: string): Promise<number[] | null> {
   try {
-    const pipe = await getPipe();
-    const raw = String(text || "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, MAX_EMBED_CHARS);
-    if (!raw) return null;
-
-    const output = await pipe(raw, {
-      pooling: "mean",
-      normalize: true,
-    });
-
-    const tensorData = output?.data as Float32Array | undefined;
-    if (!tensorData?.length) return null;
-    return Array.from(tensorData);
+    return await embedWithSessionCache(
+      text,
+      async (raw) => {
+        const pipe = await getPipe();
+        const output = await pipe(raw, {
+          pooling: "mean",
+          normalize: true,
+        });
+        const tensorData = output?.data as Float32Array | undefined;
+        if (!tensorData?.length) return null;
+        return Array.from(tensorData);
+      },
+      MAX_EMBED_CHARS
+    );
   } catch {
     return null;
   }
