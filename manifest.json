@@ -4,6 +4,8 @@
   "version": "1.2.0",
   "description": "Ask anything you've read, watched or scanned. Pages, YouTube, tables and images, indexed on your device.",
   "minimum_chrome_version": "116",
+  "incognito": "not_allowed",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1QjXBEZDsFrx7W4UHSNDDxw/V+C1vVFJbxe3Yvd/m8XnXG/5utNzFzVWwWtemjWZ/uc8tLG7f1lEGHIIT5zUK4vs1fb7OLNBeSEXS58JUwsnMjof2gsvSa2T1hNjXg99IfVPQELuYVJe5+Vbzf7MVzsVSwsB8SX+e7/6tFvd6UNF/pEjdsxsKQ74UB2aT36wGF0imlwZSXbJgaS0afNDLMmWnNSqw4L9uZi4YnbLC9JESyYtEIHttUn13mr3DWROuFczl4tvm/9OHZeUCuV/fM9ZLF81WGHm8u4hkVfV6HkFIElOhJj2OvRv+1fP5oME5nYOcegsQ/u+bGHatKwZiwIDAQAB",
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; object-src 'self'"
   },

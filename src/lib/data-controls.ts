@@ -16,6 +16,7 @@
  *   anything is removed.
  * - The legacy `pages` table (pre-v3 full text) is covered too.
  */
+import { wipeAssistantSyncOnLocalDelete } from "../assistant-sync/db";
 import { db, type ConversationMessageRecord } from "../db/schema";
 
 export const HANDLED_TABLES = [
@@ -218,9 +219,15 @@ export async function forgetSince(since: number): Promise<DeleteCounts> {
   return out;
 }
 
-/** Wipes every store, the legacy pages table included. */
+/**
+ * Wipes every store, the legacy pages table included.
+ * Also wipes the Assistant Sync database and asks the Drive hook to trash
+ * the Cortex Memory folder. The hook is a no-op until the Drive client
+ * registers one.
+ */
 export async function forgetAll(): Promise<void> {
   await db.transaction("rw", ALL_TABLES(), async () => {
     for (const t of ALL_TABLES()) await t.clear();
   });
+  await wipeAssistantSyncOnLocalDelete();
 }

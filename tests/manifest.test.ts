@@ -66,4 +66,14 @@ describe("store listing fields (Phase 2.9)", () => {
     const raw = readFileSync(join(__dirname, "..", "manifest.json"), "utf8");
     expect(raw).not.toContain("—");
   });
+
+  it("disables incognito and pins a public extension key", () => {
+    const raw = JSON.parse(readFileSync(join(__dirname, "..", "manifest.json"), "utf8")) as {
+      incognito?: string;
+      key?: string;
+    };
+    expect(raw.incognito).toBe("not_allowed");
+    expect(raw.key && raw.key.length > 80).toBe(true);
+    expect(raw.key).not.toContain("PRIVATE");
+  });
 });

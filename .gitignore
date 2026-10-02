@@ -19,3 +19,6 @@ playwright-report/
 # Generated in CI
 sbom.cdx.json
 dist-e2e/
+
+# Unpacked extension signing key. The public key lives in manifest.json.
+keys/
