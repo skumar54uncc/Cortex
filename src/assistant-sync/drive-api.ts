@@ -1,7 +1,6 @@
 import { headerFormatRequests, SHEET_TABS, type SheetTabName, type Workbook } from "./sheet";
 
 export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-export const DRIVE_HOST_PERMISSION = "https://www.googleapis.com/*";
 
 export interface DriveFileInfo {
   id: string;
@@ -128,10 +127,15 @@ async function readJson(res: Response): Promise<Record<string, unknown>> {
 
 /** Sheets and Drive calls. Constructed in the offscreen document, never in the service worker. */
 export class FetchDriveApi implements DriveApi {
+  private readonly fetchImpl: FetchLike;
+
   constructor(
     private readonly token: string,
-    private readonly fetchImpl: FetchLike = fetch
-  ) {}
+    fetchImpl?: FetchLike
+  ) {
+    // Calling window.fetch without its receiver throws "Illegal invocation".
+    this.fetchImpl = fetchImpl ?? ((url, init) => fetch(url, init));
+  }
 
   private async send(url: string, init: RequestInit): Promise<Response> {
     return this.fetchImpl(url, {
@@ -285,10 +289,4 @@ export async function getDriveToken(
       else resolve(token);
     });
   });
-}
-
-export async function requestDriveHostPermission(permissions: {
-  request: (opts: { origins: string[] }) => Promise<boolean>;
-}): Promise<boolean> {
-  return permissions.request({ origins: [DRIVE_HOST_PERMISSION] });
 }

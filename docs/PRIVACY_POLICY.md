@@ -34,7 +34,7 @@ If you turn on **cloud chat** and add a **Google Gemini API key**, prompts are s
 - **`history` (if requested):** Used only for optional bulk import features you trigger; not continuous surveillance.
 - **`scripting` / `offscreen` / `alarms`:** Required for MV3 lifecycle, embeddings, and periodic maintenance (e.g., storage headroom). The 15 minute Assistant Sync alarm runs only after you enable sync.
 - **`identity`:** Google sign-in, used only when you press Enable for Assistant Sync.
-- **`https://www.googleapis.com/*` (optional host):** Requested on that same click. Used to create and update the Cortex Memory file.
+- **`https://*/*`:** The same page access used for indexing also lets Cortex create and update the Cortex Memory file after you press Enable. Enable asks only for the Drive file permission.
 
 ## Contact
 

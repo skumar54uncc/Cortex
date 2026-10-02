@@ -36,5 +36,4 @@ The Google permission is drive.file. Cortex can create and edit only the files i
 - history: optional import you start yourself. Cortex does not watch history in the background.
 - scripting, offscreen, alarms: run the on-device model and maintenance. The 15 minute sync alarm runs only after you enable Assistant Sync.
 - identity: Google sign-in when you press Enable. The sign-in popup opens from that click.
-- https://www.googleapis.com/* (optional): requested on the same click. Used to create and update the Cortex Memory spreadsheet. Not granted until you allow it.
-- drive.file (OAuth scope): create and edit only the Cortex Memory folder and spreadsheet. Not access to every file in Drive.
+- drive.file (OAuth scope): create and edit only the Cortex Memory folder and spreadsheet. Not access to every file in Drive. The API calls use the page access the extension already has.

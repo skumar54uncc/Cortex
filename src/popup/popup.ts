@@ -147,6 +147,14 @@ document.addEventListener("DOMContentLoaded", () => {
     void chrome.runtime.openOptionsPage();
   });
 
+  qs("#cx-connect-assistant").addEventListener("click", () => {
+    void chrome.tabs.create({
+      url: chrome.runtime.getURL("options.html#cx-sec-assistant"),
+      active: true,
+    });
+    window.close();
+  });
+
   qs("#cx-open-search").addEventListener("click", () => {
     void chrome.runtime.sendMessage({ type: "CORTEX_POPUP_OPEN_SEARCH" });
     window.close();

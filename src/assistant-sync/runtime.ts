@@ -1,16 +1,12 @@
 /// <reference types="chrome"/>
-import { FetchDriveApi, getDriveToken, trashMemory, type DriveApi, type StoredMemoryIds } from "./drive-api";
+import { FetchDriveApi, trashMemory, type DriveApi, type StoredMemoryIds } from "./drive-api";
 import { enableAssistantSync, runSyncTick, type HistoryPerson, type HistoryVisit } from "./sync-engine";
-import { readSyncEngineState } from "./db";
-import {
-  applyAssistantSyncPreferences,
-  ASSISTANT_SYNC_ARCHIVES_KEY,
-  ASSISTANT_SYNC_RETENTION_KEY,
-} from "./preferences";
+import { readSyncEngineState, writeSyncEngineState } from "./db";
+import { applyAssistantSyncPreferences } from "./preferences";
+import { ASSISTANT_SYNC_FILE_ID, ASSISTANT_SYNC_FOLDER_ID } from "./preference-keys";
 import { loadTopicVectors } from "./topics";
 
-export const ASSISTANT_SYNC_FOLDER_ID = "cortex_assistant_sync_folder_id";
-export const ASSISTANT_SYNC_FILE_ID = "cortex_assistant_sync_file_id";
+export { ASSISTANT_SYNC_FILE_ID, ASSISTANT_SYNC_FOLDER_ID };
 
 export interface MemoryIdStore {
   getIds(): Promise<StoredMemoryIds>;
@@ -31,33 +27,28 @@ export async function trashStoredMemory(store: MemoryIdStore, api: DriveApi): Pr
   return { ok: true };
 }
 
-function chromeIdStore(): MemoryIdStore {
+function memoryIdStore(initial: StoredMemoryIds): MemoryIdStore & { current: () => StoredMemoryIds } {
+  let ids: StoredMemoryIds = { folderId: initial.folderId, fileId: initial.fileId };
   return {
     async getIds() {
-      const data = await chrome.storage.local.get([ASSISTANT_SYNC_FOLDER_ID, ASSISTANT_SYNC_FILE_ID]);
-      const folder = data[ASSISTANT_SYNC_FOLDER_ID];
-      const file = data[ASSISTANT_SYNC_FILE_ID];
-      return {
-        folderId: typeof folder === "string" ? folder : null,
-        fileId: typeof file === "string" ? file : null,
-      };
+      return ids;
     },
-    async setIds(ids: StoredMemoryIds) {
-      await chrome.storage.local.set({
-        [ASSISTANT_SYNC_FOLDER_ID]: ids.folderId,
-        [ASSISTANT_SYNC_FILE_ID]: ids.fileId,
-      });
+    async setIds(next) {
+      ids = { folderId: next.folderId, fileId: next.fileId };
     },
     async clearIds() {
-      await chrome.storage.local.remove([ASSISTANT_SYNC_FOLDER_ID, ASSISTANT_SYNC_FILE_ID]);
+      ids = { folderId: null, fileId: null };
     },
+    current: () => ids,
   };
 }
 
-/** Offscreen entry. Fetches Google only from this document. */
-export async function trashStoredMemoryFromChrome(): Promise<{ ok: true; skipped?: boolean }> {
-  const token = await getDriveToken(chrome.identity, () => chrome.runtime.lastError, false);
-  return trashStoredMemory(chromeIdStore(), new FetchDriveApi(token));
+/** Offscreen entry. The service worker supplies the token and the stored ids. */
+export async function trashStoredMemoryFromChrome(
+  token: string,
+  ids: StoredMemoryIds
+): Promise<{ ok: true; skipped?: boolean }> {
+  return trashStoredMemory(memoryIdStore(ids), new FetchDriveApi(token));
 }
 
 function sleep(ms: number): Promise<void> {
@@ -95,20 +86,60 @@ export interface AssistantSyncWorkResult {
   appended?: number;
   created?: boolean;
   warning?: string;
+  ids?: StoredMemoryIds;
+}
+
+function plainSyncError(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (message === "google_403" || message === "drive_folder_failed" || message === "drive_sheet_failed") {
+    return "Google refused the Drive call. Enable the Google Drive API and the Google Sheets API in this Cloud project, then press Enable again.";
+  }
+  if (message === "google_401") {
+    return "Google did not accept the sign-in. Press Enable and choose the test user account.";
+  }
+  if (/failed to fetch/i.test(message)) {
+    return "Cortex could not reach Google. Reload the extension and press Enable again.";
+  }
+  return message || "Sync did not start.";
 }
 
 /** Token comes from the service worker. This function performs the Google fetches. */
 export async function runAssistantSyncFromChrome(
   action: "alarm" | "now" | "enable",
-  token: string
+  token: string,
+  launch: {
+    ids: StoredMemoryIds;
+    retentionDays?: number;
+    archivesEnabled?: boolean;
+  }
+): Promise<AssistantSyncWorkResult> {
+  const store = memoryIdStore(launch.ids);
+  try {
+    const result = await runAssistantSyncWork(action, token, launch, store);
+    return { ...result, ids: store.current() };
+  } catch (error) {
+    const message = plainSyncError(error);
+    try {
+      const state = await readSyncEngineState();
+      await writeSyncEngineState({ ...state, lastError: message });
+    } catch {
+      /* The page still receives the message below. */
+    }
+    return { ok: false, error: message, ids: store.current() };
+  }
+}
+
+async function runAssistantSyncWork(
+  action: "alarm" | "now" | "enable",
+  token: string,
+  launch: { retentionDays?: number; archivesEnabled?: boolean },
+  store: MemoryIdStore
 ): Promise<AssistantSyncWorkResult> {
   const api = new FetchDriveApi(token);
-  const store = chromeIdStore();
   const ids = await store.getIds();
-  const stored = await chrome.storage.local.get([ASSISTANT_SYNC_RETENTION_KEY, ASSISTANT_SYNC_ARCHIVES_KEY]);
   await applyAssistantSyncPreferences({
-    retentionDays: stored[ASSISTANT_SYNC_RETENTION_KEY],
-    archivesEnabled: stored[ASSISTANT_SYNC_ARCHIVES_KEY],
+    retentionDays: launch.retentionDays,
+    archivesEnabled: launch.archivesEnabled,
   });
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const now = Date.now();

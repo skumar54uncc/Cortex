@@ -59,12 +59,6 @@ describe("assistant sync options", () => {
     const order: string[] = [];
     (globalThis as { chrome?: unknown }).chrome = {
       storage: { local: { get: async () => ({}), set: async () => {} } },
-      permissions: {
-        request: async () => {
-          order.push("permission");
-          return true;
-        },
-      },
       identity: {
         getAuthToken: (_details: { interactive: boolean }, callback: (token?: string) => void) => {
           order.push(_details.interactive ? "interactive" : "silent");
@@ -85,7 +79,7 @@ describe("assistant sync options", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     document.getElementById("cx-assistant-enable")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(order).toEqual(["status", "permission", "interactive", "enable", "status"]);
+    expect(order).toEqual(["status", "interactive", "enable", "status"]);
     expect(sent.find((msg) => msg.action === "enable")?.token).toBe("click-token");
     document.getElementById("cx-assistant-now")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 20));

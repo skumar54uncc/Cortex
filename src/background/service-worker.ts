@@ -46,6 +46,12 @@ import {
 } from "../shared/shell-routing";
 import { storageLocalGet, storageLocalSet } from "../shared/storage-local";
 import {
+  ASSISTANT_SYNC_ARCHIVES_KEY,
+  ASSISTANT_SYNC_FILE_ID,
+  ASSISTANT_SYNC_FOLDER_ID,
+  ASSISTANT_SYNC_RETENTION_KEY,
+} from "../assistant-sync/preference-keys";
+import {
   indexPayloadUrlMatchesTab,
   isOptionsPageSender,
   isPrivilegedExtensionSender,
@@ -325,12 +331,43 @@ async function ensureOffscreen(): Promise<void> {
   }
 }
 
-const DRIVE_HOST = "https://www.googleapis.com/*";
+function storedId(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+/** Folder and file ids live in chrome.storage. The offscreen document cannot read it. */
+async function readAssistantSyncLaunch(): Promise<{
+  folderId: string | null;
+  fileId: string | null;
+  retentionDays?: number;
+  archivesEnabled?: boolean;
+}> {
+  const stored = await storageLocalGet([
+    ASSISTANT_SYNC_FOLDER_ID,
+    ASSISTANT_SYNC_FILE_ID,
+    ASSISTANT_SYNC_RETENTION_KEY,
+    ASSISTANT_SYNC_ARCHIVES_KEY,
+  ]);
+  const retention = stored[ASSISTANT_SYNC_RETENTION_KEY];
+  const archives = stored[ASSISTANT_SYNC_ARCHIVES_KEY];
+  return {
+    folderId: storedId(stored[ASSISTANT_SYNC_FOLDER_ID]),
+    fileId: storedId(stored[ASSISTANT_SYNC_FILE_ID]),
+    retentionDays: typeof retention === "number" ? retention : undefined,
+    archivesEnabled: typeof archives === "boolean" ? archives : undefined,
+  };
+}
+
+async function writeAssistantSyncIds(ids: { folderId?: string | null; fileId?: string | null } | undefined): Promise<void> {
+  if (!ids) return;
+  await storageLocalSet({
+    [ASSISTANT_SYNC_FOLDER_ID]: ids.folderId ?? null,
+    [ASSISTANT_SYNC_FILE_ID]: ids.fileId ?? null,
+  });
+}
 
 /** Silent token for the alarm and Sync now. The Enable click gets the interactive token itself. */
 async function silentDriveToken(): Promise<string> {
-  const granted = await chrome.permissions.contains({ origins: [DRIVE_HOST] });
-  if (!granted) throw new Error("Google Drive permission was not granted.");
   return new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive: false }, (token) => {
       const err = chrome.runtime.lastError;
@@ -347,13 +384,34 @@ async function forwardAssistantSync(action: "alarm" | "now" | "enable", tokenFro
   try {
     const token = action === "enable" ? tokenFromPage : await silentDriveToken();
     if (!token) throw new Error("Sign in to Google is needed before Cortex can sync.");
+    const launch = await readAssistantSyncLaunch();
     await ensureOffscreen();
-    return await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: "CORTEX_ASSISTANT_SYNC_WORK", action, token }, (response) => {
-        if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
-        else resolve(response);
-      });
+    const response = await new Promise<
+      { ok?: boolean; error?: string; ids?: { folderId?: string | null; fileId?: string | null } } | undefined
+    >((resolve) => {
+      chrome.runtime.sendMessage(
+        {
+          type: "CORTEX_ASSISTANT_SYNC_WORK",
+          action,
+          token,
+          folderId: launch.folderId,
+          fileId: launch.fileId,
+          retentionDays: launch.retentionDays,
+          archivesEnabled: launch.archivesEnabled,
+        },
+        (result) => {
+          if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
+          else
+            resolve(
+              result as
+                | { ok?: boolean; error?: string; ids?: { folderId?: string | null; fileId?: string | null } }
+                | undefined
+            );
+        }
+      );
     });
+    await writeAssistantSyncIds(response?.ids);
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Sign in to Google is needed before Cortex can sync.";
     const state = await readSyncEngineState();
@@ -386,14 +444,26 @@ function captureAssistantSyncVisit(visit: { id: string; url: string; title: stri
 }
 
 setDriveFolderTrashHandler(async () => {
+  const launch = await readAssistantSyncLaunch();
+  if (!launch.folderId && !launch.fileId) return;
+  const token = await silentDriveToken();
   await ensureOffscreen();
-  const res = await new Promise<{ ok?: boolean; error?: string } | undefined>((resolve) => {
-    chrome.runtime.sendMessage({ type: "CORTEX_ASSISTANT_SYNC_TRASH" }, (response) => {
-      if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
-      else resolve(response as { ok?: boolean; error?: string } | undefined);
-    });
+  const res = await new Promise<{ ok?: boolean; error?: string; skipped?: boolean } | undefined>((resolve) => {
+    chrome.runtime.sendMessage(
+      { type: "CORTEX_ASSISTANT_SYNC_TRASH", token, folderId: launch.folderId, fileId: launch.fileId },
+      (response) => {
+        if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
+        else resolve(response as { ok?: boolean; error?: string; skipped?: boolean } | undefined);
+      }
+    );
   });
   if (!res?.ok) throw new Error(res?.error || "drive_trash_failed");
+  if (!res.skipped) {
+    await storageLocalSet({
+      [ASSISTANT_SYNC_FOLDER_ID]: null,
+      [ASSISTANT_SYNC_FILE_ID]: null,
+    });
+  }
 });
 
 function embedViaOffscreen(text: string): Promise<number[]> {
@@ -2419,8 +2489,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (type === "CORTEX_ASSISTANT_SYNC") {
-    if (!isPrivilegedExtensionSender(sender)) {
-      sendResponse({ ok: false, error: "forbidden" });
+    // Options opens in a tab, so sender.tab is set. A web page still cannot send this.
+    if (!isPrivilegedExtensionSender(sender) && !isOptionsPageSender(sender)) {
+      sendResponse({ ok: false, error: "This action is only available from Cortex settings." });
       return true;
     }
     const action = (msg as { action?: string }).action;

@@ -77,7 +77,7 @@ describe("store listing fields (Phase 2.9)", () => {
     expect(raw.key).not.toContain("PRIVATE");
   });
 
-  it("keeps Google hosts optional and limits OAuth to drive.file", () => {
+  it("limits OAuth to drive.file and does not repeat the Google host", () => {
     const raw = JSON.parse(readFileSync(join(__dirname, "..", "manifest.json"), "utf8")) as {
       permissions: string[];
       host_permissions: string[];
@@ -85,8 +85,8 @@ describe("store listing fields (Phase 2.9)", () => {
       oauth2?: { client_id: string; scopes: string[] };
     };
     expect(raw.permissions).toContain("identity");
-    expect(raw.host_permissions.join(" ")).not.toContain("googleapis.com");
-    expect(raw.optional_host_permissions).toEqual(["https://www.googleapis.com/*"]);
+    expect(raw.host_permissions).toEqual(["http://*/*", "https://*/*"]);
+    expect(raw.optional_host_permissions).toBeUndefined();
     expect(raw.oauth2?.scopes).toEqual(["https://www.googleapis.com/auth/drive.file"]);
     expect(raw.oauth2?.client_id).toBe(
       "1001602130427-c4skn7nc1rglp56h5egnchv2khlafk5v.apps.googleusercontent.com"

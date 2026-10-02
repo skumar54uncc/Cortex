@@ -280,10 +280,25 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     }
     const action = msg.action === "enable" || msg.action === "now" || msg.action === "alarm" ? msg.action : "alarm";
     const token = typeof msg.token === "string" ? msg.token : "";
+    const folderId = typeof msg.folderId === "string" ? msg.folderId : null;
+    const fileId = typeof msg.fileId === "string" ? msg.fileId : null;
+    const retentionDays = typeof msg.retentionDays === "number" ? msg.retentionDays : undefined;
+    const archivesEnabled = typeof msg.archivesEnabled === "boolean" ? msg.archivesEnabled : undefined;
     void import(/* webpackChunkName: "assistant-sync" */ "../assistant-sync/runtime")
-      .then((mod) => mod.runAssistantSyncFromChrome(action, token))
+      .then((mod) =>
+        mod.runAssistantSyncFromChrome(action, token, {
+          ids: { folderId, fileId },
+          retentionDays,
+          archivesEnabled,
+        })
+      )
       .then((result) => sendResponse(result))
-      .catch(() => sendResponse({ ok: false, error: "sync_failed" }));
+      .catch((error: unknown) =>
+        sendResponse({
+          ok: false,
+          error: error instanceof Error && error.message ? error.message : "Sync did not start.",
+        })
+      );
     return true;
   }
 
@@ -308,8 +323,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (msg?.type === "CORTEX_ASSISTANT_SYNC_TRASH") {
+    if (!isServiceWorkerSender(sender)) {
+      sendResponse({ ok: false, error: "foreign_sender" });
+      return true;
+    }
+    const token = typeof msg.token === "string" ? msg.token : "";
+    const folderId = typeof msg.folderId === "string" ? msg.folderId : null;
+    const fileId = typeof msg.fileId === "string" ? msg.fileId : null;
     void import(/* webpackChunkName: "assistant-sync" */ "../assistant-sync/runtime")
-      .then((mod) => mod.trashStoredMemoryFromChrome())
+      .then((mod) => mod.trashStoredMemoryFromChrome(token, { folderId, fileId }))
       .then((result) => sendResponse(result))
       .catch(() => sendResponse({ ok: false as const, error: "drive_trash_failed" }));
     return true;

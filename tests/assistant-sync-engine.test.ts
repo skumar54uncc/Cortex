@@ -354,7 +354,15 @@ describe("sync engine", () => {
     expect(source).not.toContain("permissions.request");
     expect(source).not.toContain("interactive: true");
     expect(source).toContain("interactive: false");
+    const runtime = readFileSync(join(__dirname, "..", "src", "assistant-sync", "runtime.ts"), "utf8");
+    expect(runtime).not.toContain("chrome.storage");
     expect(source).toContain("CORTEX_ASSISTANT_SYNC");
     expect(source).toContain("ASSISTANT_SYNC_ALARM");
+    const syncGate = source.slice(
+      source.indexOf('type === "CORTEX_ASSISTANT_SYNC"'),
+      source.indexOf('type === "CORTEX_OPEN_OPTIONS"')
+    );
+    expect(syncGate).toContain("isOptionsPageSender(sender)");
+    expect(syncGate).not.toContain('error: "forbidden"');
   });
 });

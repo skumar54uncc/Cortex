@@ -21,9 +21,6 @@
     "contextMenus",
     "identity"
   ],
-  "optional_host_permissions": [
-    "https://www.googleapis.com/*"
-  ],
   "oauth2": {
     "client_id": "1001602130427-c4skn7nc1rglp56h5egnchv2khlafk5v.apps.googleusercontent.com",
     "scopes": [

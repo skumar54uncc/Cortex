@@ -7,8 +7,6 @@ function clampDays(days: number): number {
   return Math.max(7, Math.min(365, Math.round(days)));
 }
 
-const DRIVE_HOST = "https://www.googleapis.com/*";
-
 function byId<T extends HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
 }
@@ -58,8 +56,7 @@ async function refresh(): Promise<void> {
 
 /** Interactive sign-in. Called only from the Enable click, which is the user gesture. */
 export function driveTokenFromClick(): Promise<string> {
-  const permission = chrome.permissions.request({ origins: [DRIVE_HOST] });
-  const token = new Promise<string>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive: true }, (value) => {
       const err = chrome.runtime.lastError;
       if (err?.message || !value) {
@@ -68,10 +65,6 @@ export function driveTokenFromClick(): Promise<string> {
       }
       resolve(value);
     });
-  });
-  return permission.then((granted) => {
-    if (!granted) return Promise.reject(new Error("Google Drive permission was not granted."));
-    return token;
   });
 }
 

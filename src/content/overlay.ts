@@ -327,7 +327,7 @@ ${shadowCss}`;
           </span>
           <div class="cx-brand-text">
             <span id="cortex-overlay-title" class="cx-brand-wordmark">Cortex</span>
-            <span id="cortex-overlay-tagline" class="cx-brand-tagline">Private memory from pages you read</span>
+            <span id="cortex-overlay-tagline" class="cx-brand-tagline">Your AI assistant's memory of what you browse and read</span>
           </div>
         </div>
         <div class="cortex-head-actions">

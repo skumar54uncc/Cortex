@@ -8,7 +8,9 @@ Phase 3 is committed. This phase is not. The Google account smoke test is ready 
 
 Settings has an Assistant Sync section. The consent text sits above Enable. It names what is copied (page titles, URLs, excerpts after a 5 minute read, searches, LinkedIn profiles, topics), the folder Cortex Memory in the user's Google Drive, and that a connected assistant can receive the relevant rows.
 
-Enable is the user gesture. In that same click the options page requests `https://www.googleapis.com/*` and calls `chrome.identity.getAuthToken({ interactive: true })`. Both calls start before the first await, so the click is still the gesture. The token is sent with `CORTEX_ASSISTANT_SYNC` action `enable`. The service worker does not open a second sign-in popup. Sync now sends action `now` and uses the silent token. The 15 minute alarm uses that same silent path.
+Enable is the user gesture. That click calls `chrome.identity.getAuthToken({ interactive: true })` and sends the token with `CORTEX_ASSISTANT_SYNC` action `enable`. The service worker does not open a second sign-in popup. Sync now sends action `now` and uses the silent token. The 15 minute alarm uses that same silent path.
+
+`https://*/*` is already a required host permission, so a separate optional permission for `https://www.googleapis.com/*` is redundant. Chrome omits it and warns. Enable does not request that host.
 
 Status shows sync on or off, the last successful sync time, the last error in plain language, and backfill as done/total plus the phase. Retention is a number from 7 to 365, default 90. The archive switch defaults to off. Its note says archives are personal backups and assistants do not read them. Those two settings are stored locally and applied on the next sync pass.
 
@@ -38,7 +40,7 @@ The policy states the `drive.file` scope, the single Cortex Memory folder, that 
 
 Use a fresh Chrome profile. Load unpacked `dist/` from `npm run build`. The id should be `fkhaacmaaaheapelljjcmfdmifmfbboa`. Open the extension's Settings page.
 
-1. Read the Assistant Sync consent. Press Enable. Allow the `googleapis.com` permission if Chrome asks. On the Google screen, expect the app name Cortex and this line: `See, edit, create, and delete only the specific Google Drive files you use with this app`. If the project is in Testing, continue only with a test user. Status should show Sync on.
+1. Read the Assistant Sync consent. Press Enable. On the Google screen, expect the app name Cortex and this line: `See, edit, create, and delete only the specific Google Drive files you use with this app`. If the project is in Testing, continue only with a test user. Status should show Sync on.
 
 2. In Drive, open the folder Cortex Memory and the spreadsheet Cortex Memory. Seven tabs, in order: About, Visits, Content, Searches, People, Companies, Daily. About ends with `schema_version: 3`. Dates are text.
 
