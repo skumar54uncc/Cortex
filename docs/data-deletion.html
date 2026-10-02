@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cortex data deletion</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #1a1a1a;
+        --muted: #555;
+        --bg: #faf9f7;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #e8e6e3;
+          --muted: #a8a6a3;
+          --bg: #1c1b19;
+        }
+      }
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.55;
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: 1.5rem clamp(16px, 4vw, 28px) 3rem;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      h1 { font-size: 1.5rem; margin-top: 0; }
+      .muted { color: var(--muted); font-size: 0.9rem; }
+      a { color: #c72a09; }
+      @media (prefers-color-scheme: dark) {
+        a { color: #f06543; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Delete your Cortex data</h1>
+    <p class="muted">Last updated: October 2026</p>
+    <p>
+      Cortex keeps your library on this device. If you turned on Assistant Sync, it also keeps one folder
+      named Cortex Memory in your Google Drive. You own that folder. These steps remove both.
+    </p>
+    <ol>
+      <li>Open the Cortex extension and go to Settings.</li>
+      <li>Open Privacy and data.</li>
+      <li>Choose Delete all indexed data.</li>
+      <li>Type DELETE and confirm.</li>
+    </ol>
+    <p>
+      That removes indexed pages, text, visit history, and chats from this browser. It also moves the
+      Cortex Memory folder to the Google Drive trash. Extension settings such as your blocklist stay.
+    </p>
+    <p>
+      You can also open Google Drive, find the folder Cortex Memory, and move it to the trash yourself.
+      Files stay in the Drive trash until Google removes them or you delete them there.
+    </p>
+    <p>
+      Removing the extension does not empty the Drive trash. Use Delete all indexed data first, or trash
+      the folder in Drive, if you want that copy gone.
+    </p>
+    <p>
+      <a href="privacy-policy.html">Privacy policy</a>
+    </p>
+  </body>
+</html>

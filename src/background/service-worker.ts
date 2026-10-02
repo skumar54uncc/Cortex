@@ -327,13 +327,12 @@ async function ensureOffscreen(): Promise<void> {
 
 const DRIVE_HOST = "https://www.googleapis.com/*";
 
-async function assistantSyncAuthToken(interactive: boolean): Promise<string> {
-  const granted = interactive
-    ? await chrome.permissions.request({ origins: [DRIVE_HOST] })
-    : await chrome.permissions.contains({ origins: [DRIVE_HOST] });
+/** Silent token for the alarm and Sync now. The Enable click gets the interactive token itself. */
+async function silentDriveToken(): Promise<string> {
+  const granted = await chrome.permissions.contains({ origins: [DRIVE_HOST] });
   if (!granted) throw new Error("Google Drive permission was not granted.");
   return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive }, (token) => {
+    chrome.identity.getAuthToken({ interactive: false }, (token) => {
       const err = chrome.runtime.lastError;
       if (err?.message || !token) {
         reject(new Error(err?.message || "Sign in to Google is needed before Cortex can sync."));
@@ -344,9 +343,10 @@ async function assistantSyncAuthToken(interactive: boolean): Promise<string> {
   });
 }
 
-async function forwardAssistantSync(action: "alarm" | "now" | "enable"): Promise<unknown> {
+async function forwardAssistantSync(action: "alarm" | "now" | "enable", tokenFromPage?: string): Promise<unknown> {
   try {
-    const token = await assistantSyncAuthToken(action === "enable");
+    const token = action === "enable" ? tokenFromPage : await silentDriveToken();
+    if (!token) throw new Error("Sign in to Google is needed before Cortex can sync.");
     await ensureOffscreen();
     return await new Promise((resolve) => {
       chrome.runtime.sendMessage({ type: "CORTEX_ASSISTANT_SYNC_WORK", action, token }, (response) => {
@@ -2432,7 +2432,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       sendResponse({ ok: false, error: "bad_action" });
       return true;
     }
-    void forwardAssistantSync(action).then((result) => sendResponse(result));
+    const pageToken = (msg as { token?: unknown }).token;
+    void forwardAssistantSync(action, typeof pageToken === "string" ? pageToken : undefined).then((result) =>
+      sendResponse(result)
+    );
     return true;
   }
 

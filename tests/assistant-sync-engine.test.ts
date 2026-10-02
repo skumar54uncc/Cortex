@@ -151,6 +151,7 @@ describe("sync engine", () => {
     const first = await runSyncTick(clock(sheets, READY));
     expect(first.status).toBe("ready");
     expect(first.created).toBe(false);
+    expect((await assistantSyncDb.state.get("engine"))?.lastSyncedAt).toBe(NOW);
     const second = await runSyncTick(clock(sheets, READY));
     expect(second.appended).toBe(0);
     await assistantSyncDb.synced.clear();
@@ -350,6 +351,9 @@ describe("sync engine", () => {
     expect(source).not.toContain("assistant-sync/drive-api");
     expect(source).not.toContain("assistant-sync/sync-engine");
     expect(source).not.toContain("sheets.googleapis.com");
+    expect(source).not.toContain("permissions.request");
+    expect(source).not.toContain("interactive: true");
+    expect(source).toContain("interactive: false");
     expect(source).toContain("CORTEX_ASSISTANT_SYNC");
     expect(source).toContain("ASSISTANT_SYNC_ALARM");
   });

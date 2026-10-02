@@ -765,4 +765,8 @@ document.addEventListener("DOMContentLoaded", () => {
   qs<HTMLButtonElement>("#cx-opt-history-cancel").addEventListener("click", () => {
     void chrome.runtime.sendMessage({ type: "CORTEX_HISTORY_IMPORT_CANCEL" });
   });
+
+  void import(/* webpackChunkName: "assistant-sync-options" */ "./assistant-sync-panel").then((mod) => {
+    mod.mountAssistantSyncPanel();
+  });
 });

@@ -80,6 +80,8 @@ export interface SyncEngineState {
   consecutiveFailures: number;
   stoppedUntilAlarm: boolean;
   lastError: string;
+  /** Epoch ms of the last successful sync. 0 until the first one finishes. */
+  lastSyncedAt: number;
   backfillDone: number;
   backfillTotal: number;
   backfillPhase: BackfillPhase;
@@ -100,6 +102,7 @@ export function defaultSyncEngineState(): SyncEngineState {
     consecutiveFailures: 0,
     stoppedUntilAlarm: false,
     lastError: "",
+    lastSyncedAt: 0,
     backfillDone: 0,
     backfillTotal: 0,
     backfillPhase: "idle",
@@ -177,7 +180,7 @@ export async function clearAssistantSyncDatabase(): Promise<void> {
 
 export async function readSyncEngineState(): Promise<SyncEngineState> {
   const row = await assistantSyncDb.state.get(SYNC_ENGINE_STATE_ID);
-  return row ?? defaultSyncEngineState();
+  return { ...defaultSyncEngineState(), ...row, id: SYNC_ENGINE_STATE_ID };
 }
 
 export async function writeSyncEngineState(state: SyncEngineState): Promise<void> {

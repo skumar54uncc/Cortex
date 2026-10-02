@@ -2,6 +2,11 @@
 import { FetchDriveApi, getDriveToken, trashMemory, type DriveApi, type StoredMemoryIds } from "./drive-api";
 import { enableAssistantSync, runSyncTick, type HistoryPerson, type HistoryVisit } from "./sync-engine";
 import { readSyncEngineState } from "./db";
+import {
+  applyAssistantSyncPreferences,
+  ASSISTANT_SYNC_ARCHIVES_KEY,
+  ASSISTANT_SYNC_RETENTION_KEY,
+} from "./preferences";
 import { loadTopicVectors } from "./topics";
 
 export const ASSISTANT_SYNC_FOLDER_ID = "cortex_assistant_sync_folder_id";
@@ -100,6 +105,11 @@ export async function runAssistantSyncFromChrome(
   const api = new FetchDriveApi(token);
   const store = chromeIdStore();
   const ids = await store.getIds();
+  const stored = await chrome.storage.local.get([ASSISTANT_SYNC_RETENTION_KEY, ASSISTANT_SYNC_ARCHIVES_KEY]);
+  await applyAssistantSyncPreferences({
+    retentionDays: stored[ASSISTANT_SYNC_RETENTION_KEY],
+    archivesEnabled: stored[ASSISTANT_SYNC_ARCHIVES_KEY],
+  });
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const now = Date.now();
   if (action === "enable") {

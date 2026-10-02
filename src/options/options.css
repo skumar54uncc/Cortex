@@ -1478,3 +1478,24 @@ body {
 .cx-history-result {
   border-radius: var(--radius-md);
 }
+
+.cx-assistant-status {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.cx-assistant-status div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: var(--space-2);
+}
+
+.cx-assistant-status dt {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.cx-assistant-status dd {
+  margin: 0;
+}

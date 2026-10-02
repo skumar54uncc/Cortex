@@ -21,6 +21,8 @@ export const BUNDLE_BUDGETS = {
   "assistant-sync.js": 48 * KB,
   "assistant-sync-topics.js": 48 * KB,
   "assistant-sync-capture.js": 16 * KB,
+  // Options Assistant Sync panel. Stays far under a Dexie or Drive client import.
+  "assistant-sync-options.js": 16 * KB,
   // pdfjs-dist (Phase 5.9): lazy chunk and worker, loaded only when a PDF is read.
   "pdf.js": 560 * KB,
   "pdf.worker.min.mjs": 1400 * KB,

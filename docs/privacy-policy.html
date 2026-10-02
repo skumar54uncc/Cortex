@@ -100,7 +100,7 @@
       />
       <div>
         <h1>Cortex — Privacy policy</h1>
-        <p class="muted policy-header-meta">Last updated: April 2026</p>
+        <p class="muted policy-header-meta">Last updated: October 2026</p>
       </div>
     </header>
 
@@ -134,6 +134,11 @@
           <td>Recency ranking, digests</td>
         </tr>
         <tr>
+          <td>Assistant Sync copy (titles, URLs, long-read excerpts, searches, LinkedIn profiles, topics)</td>
+          <td>A folder named Cortex Memory in your Google Drive, only if you enable it</td>
+          <td>So an assistant you connect can answer from that file</td>
+        </tr>
+        <tr>
           <td>Settings (blocklist, pause, chat mode, optional API key)</td>
           <td><code>chrome.storage.local</code> on your device</td>
           <td>Extension behavior</td>
@@ -142,7 +147,27 @@
     </table>
 
     <p>
-      There is no Cortex account and no Cortex-hosted sync. <strong>Cortex does not sell your data.</strong>
+      There is no Cortex account and no Cortex server that stores your browsing.
+      <strong>Cortex does not sell your data.</strong>
+    </p>
+
+    <h2>Optional Assistant Sync</h2>
+    <p>
+      Assistant Sync is off until you press Enable in settings. When it is on, Cortex copies a memory of
+      your browsing into <strong>your own Google Drive</strong>, in one folder named Cortex Memory. That
+      copy can include page titles, URLs, excerpts of pages you read for 5 minutes or more, searches,
+      LinkedIn profiles you opened, and topic labels.
+    </p>
+    <p>
+      The Google permission is <code>drive.file</code>. It lets Cortex create and edit only the files it
+      creates, not the rest of your Drive. The spreadsheet in that folder is yours. If you connect another
+      assistant to your Drive, that assistant can read the rows that are relevant to a question you ask it.
+      Cortex does not send those rows to a Cortex server.
+    </p>
+    <p>
+      Delete all indexed data, after you type DELETE, removes the local library and moves the Cortex Memory
+      folder to the Drive trash. Steps are on the
+      <a href="data-deletion.html">data deletion page</a>.
     </p>
 
     <h2>Optional cloud chat (Gemini)</h2>
@@ -157,7 +182,9 @@
       <li><strong>tabs / broad host access:</strong> Read active-tab context for indexing and show the in-page overlay when you use Cortex.</li>
       <li><strong>storage:</strong> Saves settings and local extension state.</li>
       <li><strong>history:</strong> Used only for optional bulk import features you trigger (e.g. first-install backfill), not continuous surveillance.</li>
-      <li><strong>scripting / offscreen / alarms:</strong> Required for MV3 lifecycle, embeddings, and periodic maintenance (e.g. storage headroom).</li>
+      <li><strong>scripting / offscreen / alarms:</strong> Required for MV3 lifecycle, embeddings, and periodic maintenance (e.g. storage headroom). The 15 minute Assistant Sync alarm runs only after you enable sync.</li>
+      <li><strong>identity:</strong> Google sign-in, used only when you press Enable for Assistant Sync.</li>
+      <li><strong>googleapis.com (optional host):</strong> Requested on that same click. Used to create and update the Cortex Memory file. Not granted until you allow it.</li>
     </ul>
 
     <h2>Contact</h2>

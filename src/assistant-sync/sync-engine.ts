@@ -469,6 +469,7 @@ export async function runSyncTick(deps: SyncClock): Promise<SyncTickResult> {
     state.consecutiveFailures = 0;
     state.stoppedUntilAlarm = false;
     state.lastError = "";
+    state.lastSyncedAt = deps.now;
     await writeSyncEngineState(state);
     return { status: "ready", appended, created: false, ...(warning ? { warning } : {}) };
   } catch (error) {

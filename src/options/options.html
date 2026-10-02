@@ -38,6 +38,7 @@
           <li><a class="cx-nav-link" href="#cx-sec-appearance">Appearance</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-capture">Capture</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-intelligence">Intelligence</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-assistant">Assistant Sync</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-privacy">Privacy and data</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-backup">Backup</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-about">About</a></li>
@@ -375,6 +376,77 @@
         </section>
 
         <!-- 5. Privacy and data ---------------------------------------- -->
+        <section class="cx-sec" id="cx-sec-assistant" tabindex="-1" aria-labelledby="cx-assistant-h">
+          <div class="cx-sec-head">
+            <h2 class="cx-sec-title" id="cx-assistant-h">Assistant Sync</h2>
+          </div>
+          <div class="cx-sec-body">
+            <div class="cx-group" id="cx-assistant-consent">
+              <h3 class="cx-group-title">Before you turn this on</h3>
+              <p class="cx-group-desc">
+                Assistant Sync copies a memory of your browsing into your own Google Drive. It syncs page titles, URLs, excerpts of pages you read for 5 minutes or more, searches, LinkedIn profiles, and topics. The file lives in a folder named Cortex Memory. When you connect an assistant to that Drive folder, it can receive the relevant rows while it answers you. Sync stays off until you press Enable.
+              </p>
+              <p class="cx-field-hint">
+                <a href="https://skumar54uncc.github.io/Cortex/privacy-policy.html" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+                ·
+                <a href="https://skumar54uncc.github.io/Cortex/data-deletion.html" target="_blank" rel="noopener noreferrer">How to delete this data</a>
+              </p>
+              <div class="cx-actions-row">
+                <button type="button" id="cx-assistant-enable" class="cx-btn cx-btn-primary">Enable</button>
+                <button type="button" id="cx-assistant-now" class="cx-btn cx-btn-secondary">Sync now</button>
+              </div>
+              <p id="cx-assistant-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+            </div>
+            <div class="cx-group">
+              <h3 class="cx-group-title">Status</h3>
+              <dl class="cx-assistant-status">
+                <div><dt>Sync</dt><dd id="cx-assistant-enabled">Off</dd></div>
+                <div><dt>Last sync</dt><dd id="cx-assistant-last">Not yet</dd></div>
+                <div><dt>Last error</dt><dd id="cx-assistant-error">None</dd></div>
+                <div><dt>Backfill</dt><dd id="cx-assistant-backfill">idle</dd></div>
+              </dl>
+            </div>
+            <div class="cx-group">
+              <h3 class="cx-group-title">Retention</h3>
+              <div class="cx-field">
+                <label class="cx-field-label" for="cx-assistant-retention">Keep Drive rows for this many days</label>
+                <input type="number" id="cx-assistant-retention" class="cx-input cx-field-narrow" min="7" max="365" step="1" value="90" />
+                <p class="cx-field-hint">From 7 to 365 days. The default is 90. Older rows are deleted from the sheet.</p>
+              </div>
+              <div class="cx-feature-row">
+                <label for="cx-assistant-archives" class="cx-feature-label">
+                  <span class="cx-field-label">Monthly archives</span>
+                  <span class="cx-field-hint" id="cx-assistant-archives-note">Archives are personal backups. Assistants do not read them.</span>
+                </label>
+                <input type="checkbox" id="cx-assistant-archives" class="cx-check-native cx-switch" />
+              </div>
+            </div>
+            <div class="cx-group">
+              <h3 class="cx-group-title">Connect an assistant</h3>
+              <details class="cx-disclosure" data-assistant-guide="muse">
+                <summary>Muse</summary>
+                <p>Connect Muse to Google Drive. Open the spreadsheet named Cortex Memory in the folder Cortex Memory. Read the About tab first. About lists the tabs and the rules. Before Muse answers from its own knowledge, ask it to check the Content tab. Content holds excerpts from pages you read for 5 minutes or more. Use Visits, Searches, People, Companies, and Daily for the other questions. Leave monthly archive files alone. Those are personal backups.</p>
+              </details>
+              <details class="cx-disclosure" data-assistant-guide="grok">
+                <summary>Grok</summary>
+                <p>Connect Grok to Google Drive. Open the spreadsheet named Cortex Memory in the folder Cortex Memory. Read the About tab first. When a question is about something you read, tell Grok to use the Content tab before it uses its own knowledge. Content has excerpts of pages you read for 5 minutes or more. Visits lists every page. Searches, People, Companies, and Daily cover the rest. Do not use the monthly archive files. They are personal backups.</p>
+              </details>
+              <details class="cx-disclosure" data-assistant-guide="chatgpt">
+                <summary>ChatGPT</summary>
+                <p>Connect ChatGPT to Google Drive. Open the spreadsheet named Cortex Memory in the folder Cortex Memory. Read the About tab first. For questions about what a page said, tell ChatGPT to check the Content tab before answering from its own knowledge. Content stores excerpts of pages you read for 5 minutes or more. Use Visits for where you went, and Searches, People, Companies, and Daily for the rest. Skip monthly archive files. They are personal backups.</p>
+              </details>
+              <details class="cx-disclosure" data-assistant-guide="claude">
+                <summary>Claude</summary>
+                <p>Connect Claude to Google Drive. Open the spreadsheet named Cortex Memory in the folder Cortex Memory. Read the About tab first. Ask Claude to check the Content tab before it relies on its own knowledge. Content contains excerpts of pages you read for 5 minutes or more. Visits, Searches, People, Companies, and Daily answer the other kinds of questions. Do not read the monthly archive files. They are personal backups.</p>
+              </details>
+              <details class="cx-disclosure" data-assistant-guide="generic">
+                <summary>Another assistant</summary>
+                <p>Connect your assistant to Google Drive. Open the spreadsheet named Cortex Memory in the folder Cortex Memory. Read the About tab first. About explains every tab. When you ask what a page said, tell the assistant to check the Content tab before using its own knowledge. Content holds excerpts of pages you read for 5 minutes or more. The other tabs are Visits, Searches, People, Companies, and Daily. Monthly archive files in the same folder are personal backups, so leave them out.</p>
+              </details>
+            </div>
+          </div>
+        </section>
+
         <section class="cx-sec" id="cx-sec-privacy" tabindex="-1" aria-labelledby="cx-privacy-h">
           <div class="cx-sec-head">
             <h2 class="cx-sec-title" id="cx-privacy-h">Privacy and data</h2>
@@ -510,7 +582,7 @@
             <div class="cx-group cx-danger-zone">
               <h3 class="cx-group-title cx-danger-title">Forget all</h3>
               <p class="cx-group-desc">
-                Deletes all indexed pages, text chunks, visit history and chats from this browser. Your
+                Deletes all indexed pages, text chunks, visit history and chats from this browser. If Assistant Sync has been used, this also moves the Cortex Memory folder in Google Drive to the trash. Your
                 extension settings (blocklist, chat mode) are kept. This cannot be undone.
               </p>
               <button type="button" id="cx-opt-delete-all" class="cx-btn cx-btn-danger">
