@@ -1,6 +1,7 @@
 const path = require("path");
 const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const { resolveOAuthClientId } = require("./scripts/oauth-client.cjs");
 
 module.exports = (env, argv) => {
   const mode = argv.mode || "production";
@@ -14,6 +15,12 @@ module.exports = (env, argv) => {
    * The shipped build (dist/) always uses a closed shadow root.
    */
   const e2eAudit = Boolean(env && env.e2e);
+  /**
+   * `npm run build:store` passes `--env store`. Resolving here, before compile,
+   * aborts the process when the release client id is still empty.
+   */
+  const oauthTarget = env && env.store ? "release" : "dev";
+  const oauthClientId = resolveOAuthClientId(oauthTarget);
 
   return {
   entry: {
@@ -85,7 +92,15 @@ module.exports = (env, argv) => {
     }),
     new CopyWebpackPlugin({
       patterns: [
-        { from: "manifest.json", to: "." },
+        {
+          from: "manifest.json",
+          to: ".",
+          transform(content) {
+            const manifest = JSON.parse(content.toString());
+            manifest.oauth2.client_id = oauthClientId;
+            return JSON.stringify(manifest, null, 2);
+          },
+        },
         { from: "managed_schema.json", to: "." },
         { from: "src/offscreen/offscreen.html", to: "." },
         { from: "src/popup/popup.html", to: "." },

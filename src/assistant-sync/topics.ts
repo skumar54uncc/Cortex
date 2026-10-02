@@ -1,5 +1,4 @@
 import { cosineSimilarity } from "../lib/similarity";
-import labelFile from "./topic-label-embeddings.json";
 import { TOPIC_LABELS } from "./topic-catalog";
 
 export interface TopicVector {
@@ -16,13 +15,11 @@ export const TOPIC_SIMILARITY_THRESHOLD = 0.42;
 
 export const MAX_TOPICS = 3;
 
-const LABEL_VECTORS: TopicVector[] = labelFile.labels;
-
 /** Top 1 to 3 labels at or above the threshold. None when nothing clears it. */
 export function tagTopics(
   pageEmbedding: number[] | null | undefined,
   threshold: number = TOPIC_SIMILARITY_THRESHOLD,
-  labels: readonly TopicVector[] = LABEL_VECTORS
+  labels: readonly TopicVector[] = []
 ): string[] {
   if (!pageEmbedding?.length || !labels.length) return [];
   const ranked = labels
@@ -39,4 +36,10 @@ export function tagTopics(
     if (out.length >= MAX_TOPICS) break;
   }
   return out;
+}
+
+/** Lazy chunk. The float label file stays out of the extension bundles. */
+export async function loadTopicVectors(): Promise<TopicVector[]> {
+  const mod = await import(/* webpackChunkName: "assistant-sync-topics" */ "./topic-vectors");
+  return mod.decodedTopicVectors();
 }

@@ -16,6 +16,11 @@ export const BUNDLE_BUDGETS = {
   "overlay.js": 140 * KB,
   "service-worker.js": 220 * KB,
   "offscreen.js": 700 * KB,
+  // Assistant Sync: Drive client and int8 topic vectors, lazy only.
+  // Caps stay under the 130 KB float file so that file cannot return.
+  "assistant-sync.js": 48 * KB,
+  "assistant-sync-topics.js": 48 * KB,
+  "assistant-sync-capture.js": 16 * KB,
   // pdfjs-dist (Phase 5.9): lazy chunk and worker, loaded only when a PDF is read.
   "pdf.js": 560 * KB,
   "pdf.worker.min.mjs": 1400 * KB,

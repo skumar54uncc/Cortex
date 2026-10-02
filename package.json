@@ -5,6 +5,7 @@
   "description": "Local second brain for everything you read on the web",
   "scripts": {
     "build": "webpack --mode production",
+    "build:store": "webpack --mode production --env store",
     "typecheck": "tsc --noEmit",
     "test": "vitest run && npm run eval:test",
     "test:watch": "vitest",
@@ -16,6 +17,7 @@
     "eval": "tsx eval/src/cli.ts",
     "eval:baseline": "tsx eval/src/cli.ts --baseline",
     "eval:test": "vitest run --config vitest.config.eval.ts",
+    "assistant-sync:seed": "tsx src/assistant-sync/seed-cli.ts",
     "e2e": "playwright test",
     "check:budget": "node scripts/check-bundle-budget.mjs",
     "sbom": "cyclonedx-npm --omit dev --output-format JSON --output-file sbom.cdx.json",

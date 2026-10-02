@@ -18,8 +18,18 @@
     "history",
     "notifications",
     "sidePanel",
-    "contextMenus"
+    "contextMenus",
+    "identity"
   ],
+  "optional_host_permissions": [
+    "https://www.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "1001602130427-c4skn7nc1rglp56h5egnchv2khlafk5v.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
   "storage": {
     "managed_schema": "managed_schema.json"
   },

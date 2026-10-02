@@ -76,4 +76,20 @@ describe("store listing fields (Phase 2.9)", () => {
     expect(raw.key && raw.key.length > 80).toBe(true);
     expect(raw.key).not.toContain("PRIVATE");
   });
+
+  it("keeps Google hosts optional and limits OAuth to drive.file", () => {
+    const raw = JSON.parse(readFileSync(join(__dirname, "..", "manifest.json"), "utf8")) as {
+      permissions: string[];
+      host_permissions: string[];
+      optional_host_permissions?: string[];
+      oauth2?: { client_id: string; scopes: string[] };
+    };
+    expect(raw.permissions).toContain("identity");
+    expect(raw.host_permissions.join(" ")).not.toContain("googleapis.com");
+    expect(raw.optional_host_permissions).toEqual(["https://www.googleapis.com/*"]);
+    expect(raw.oauth2?.scopes).toEqual(["https://www.googleapis.com/auth/drive.file"]);
+    expect(raw.oauth2?.client_id).toBe(
+      "1001602130427-c4skn7nc1rglp56h5egnchv2khlafk5v.apps.googleusercontent.com"
+    );
+  });
 });

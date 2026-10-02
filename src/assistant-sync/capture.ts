@@ -6,7 +6,7 @@ import { linkedInSyncRow } from "./linkedin-sync";
 import { pageTypeForUrl } from "./page-type";
 import { redactForSync } from "./redact-sync";
 import { parseSearchQuery } from "./search-capture";
-import { tagTopics } from "./topics";
+import { loadTopicVectors, tagTopics, TOPIC_SIMILARITY_THRESHOLD } from "./topics";
 
 export interface FinalizedVisitInput {
   id: string;
@@ -70,7 +70,9 @@ export async function captureFinalizedVisit(input: FinalizedVisitInput): Promise
   if (denied) return { stored: false, reason: denied };
 
   const title = redactForSync(input.title.replace(/\s+/g, " ").trim());
-  const topics = tagTopics(input.pageEmbedding);
+  const topics = input.pageEmbedding?.length
+    ? tagTopics(input.pageEmbedding, TOPIC_SIMILARITY_THRESHOLD, await loadTopicVectors())
+    : [];
   const dwellMinutes = blankToNull(input.dwellMinutes);
   const maxScrollPct = clampScroll(input.maxScrollPct);
 

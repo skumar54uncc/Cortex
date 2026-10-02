@@ -273,6 +273,48 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
     return true;
   }
 
+  if (msg?.type === "CORTEX_ASSISTANT_SYNC_WORK") {
+    if (!isServiceWorkerSender(sender)) {
+      sendResponse({ ok: false, error: "foreign_sender" });
+      return true;
+    }
+    const action = msg.action === "enable" || msg.action === "now" || msg.action === "alarm" ? msg.action : "alarm";
+    const token = typeof msg.token === "string" ? msg.token : "";
+    void import(/* webpackChunkName: "assistant-sync" */ "../assistant-sync/runtime")
+      .then((mod) => mod.runAssistantSyncFromChrome(action, token))
+      .then((result) => sendResponse(result))
+      .catch(() => sendResponse({ ok: false, error: "sync_failed" }));
+    return true;
+  }
+
+  if (msg?.type === "CORTEX_ASSISTANT_SYNC_CAPTURE") {
+    if (!isServiceWorkerSender(sender)) {
+      sendResponse({ ok: false, error: "foreign_sender" });
+      return true;
+    }
+    const visit = msg.visit as { id?: string; url?: string; title?: string; visitedAt?: number } | undefined;
+    void import(/* webpackChunkName: "assistant-sync" */ "../assistant-sync/runtime")
+      .then((mod) =>
+        mod.captureVisitFromChrome({
+          id: String(visit?.id ?? ""),
+          url: String(visit?.url ?? ""),
+          title: String(visit?.title ?? ""),
+          visitedAt: Number(visit?.visitedAt ?? 0),
+        })
+      )
+      .then((result) => sendResponse(result))
+      .catch(() => sendResponse({ ok: false, error: "capture_failed" }));
+    return true;
+  }
+
+  if (msg?.type === "CORTEX_ASSISTANT_SYNC_TRASH") {
+    void import(/* webpackChunkName: "assistant-sync" */ "../assistant-sync/runtime")
+      .then((mod) => mod.trashStoredMemoryFromChrome())
+      .then((result) => sendResponse(result))
+      .catch(() => sendResponse({ ok: false as const, error: "drive_trash_failed" }));
+    return true;
+  }
+
   if (msg?.type === "CORTEX_PDF_EXTRACT") {
     // Phase 5.9: the service worker already ran the privacy gate for this URL.
     void fetchAndExtractPdf(String(msg.url ?? ""))

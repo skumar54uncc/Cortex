@@ -222,8 +222,8 @@ export async function forgetSince(since: number): Promise<DeleteCounts> {
 /**
  * Wipes every store, the legacy pages table included.
  * Also wipes the Assistant Sync database and asks the Drive hook to trash
- * the Cortex Memory folder. The hook is a no-op until the Drive client
- * registers one.
+ * the Cortex Memory folder. The service worker points that hook at the
+ * offscreen Drive client.
  */
 export async function forgetAll(): Promise<void> {
   await db.transaction("rw", ALL_TABLES(), async () => {

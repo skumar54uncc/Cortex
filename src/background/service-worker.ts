@@ -11,6 +11,13 @@ import {
 } from "../db/schema";
 import { chunkArticle } from "../lib/chunking";
 import {
+  ASSISTANT_SYNC_ALARM,
+  ASSISTANT_SYNC_ALARM_PERIOD_MIN,
+  readSyncEngineState,
+  setDriveFolderTrashHandler,
+  writeSyncEngineState,
+} from "../assistant-sync/db";
+import {
   applyRetention,
   forgetAll,
   forgetSince,
@@ -318,6 +325,77 @@ async function ensureOffscreen(): Promise<void> {
   }
 }
 
+const DRIVE_HOST = "https://www.googleapis.com/*";
+
+async function assistantSyncAuthToken(interactive: boolean): Promise<string> {
+  const granted = interactive
+    ? await chrome.permissions.request({ origins: [DRIVE_HOST] })
+    : await chrome.permissions.contains({ origins: [DRIVE_HOST] });
+  if (!granted) throw new Error("Google Drive permission was not granted.");
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive }, (token) => {
+      const err = chrome.runtime.lastError;
+      if (err?.message || !token) {
+        reject(new Error(err?.message || "Sign in to Google is needed before Cortex can sync."));
+        return;
+      }
+      resolve(token);
+    });
+  });
+}
+
+async function forwardAssistantSync(action: "alarm" | "now" | "enable"): Promise<unknown> {
+  try {
+    const token = await assistantSyncAuthToken(action === "enable");
+    await ensureOffscreen();
+    return await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "CORTEX_ASSISTANT_SYNC_WORK", action, token }, (response) => {
+        if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
+        else resolve(response);
+      });
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Sign in to Google is needed before Cortex can sync.";
+    const state = await readSyncEngineState();
+    await writeSyncEngineState({ ...state, lastError: message });
+    return { ok: false, error: message };
+  }
+}
+
+async function runAssistantSyncAlarm(): Promise<void> {
+  const state = await readSyncEngineState();
+  if (!state.syncEnabled) return;
+  await forwardAssistantSync("alarm");
+}
+
+function captureAssistantSyncVisit(visit: { id: string; url: string; title: string; visitedAt: number }): Promise<void> {
+  return readSyncEngineState()
+    .then((state) => {
+      if (!state.syncEnabled) return;
+      return ensureOffscreen().then(
+        () =>
+          new Promise<void>((resolve) => {
+            chrome.runtime.sendMessage({ type: "CORTEX_ASSISTANT_SYNC_CAPTURE", visit }, () => {
+              chrome.runtime.lastError;
+              resolve();
+            });
+          })
+      );
+    })
+    .then(() => undefined);
+}
+
+setDriveFolderTrashHandler(async () => {
+  await ensureOffscreen();
+  const res = await new Promise<{ ok?: boolean; error?: string } | undefined>((resolve) => {
+    chrome.runtime.sendMessage({ type: "CORTEX_ASSISTANT_SYNC_TRASH" }, (response) => {
+      if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
+      else resolve(response as { ok?: boolean; error?: string } | undefined);
+    });
+  });
+  if (!res?.ok) throw new Error(res?.error || "drive_trash_failed");
+});
+
 function embedViaOffscreen(text: string): Promise<number[]> {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(
@@ -599,6 +677,12 @@ async function commitIndexPayload(
     hostname: domain,
     visitedAt: p.visitedAt,
     textLength: p.text.length,
+  });
+  void captureAssistantSyncVisit({
+    id: `doc:${docId}:${p.visitedAt}`,
+    url: p.url,
+    title: p.title,
+    visitedAt: p.visitedAt,
   });
 
   onIndexCommitted();
@@ -1207,6 +1291,7 @@ chrome.runtime.onStartup.addListener(() => {
 
 function scheduleStorageMaintenanceAlarm(): void {
   void syncContextMenus().catch(() => undefined);
+  chrome.alarms.create(ASSISTANT_SYNC_ALARM, { periodInMinutes: ASSISTANT_SYNC_ALARM_PERIOD_MIN });
   chrome.alarms.create("cortex-evict-storage", { periodInMinutes: 360 });
   // Phase 4.2: daily retention sweep (no-op while retention is off).
   chrome.alarms.create(RETENTION_ALARM, { delayInMinutes: 2, periodInMinutes: 24 * 60 });
@@ -1266,6 +1351,10 @@ async function runRechunkTick(): Promise<void> {
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === ASSISTANT_SYNC_ALARM) {
+    void runAssistantSyncAlarm();
+    return;
+  }
   if (alarm.name === RECHUNK_ALARM) {
     void runRechunkTick();
     return;
@@ -2326,6 +2415,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       }
       sendResponse({ ok: true });
     })();
+    return true;
+  }
+
+  if (type === "CORTEX_ASSISTANT_SYNC") {
+    if (!isPrivilegedExtensionSender(sender)) {
+      sendResponse({ ok: false, error: "forbidden" });
+      return true;
+    }
+    const action = (msg as { action?: string }).action;
+    if (action === "status") {
+      void readSyncEngineState().then((state) => sendResponse({ ok: true, state }));
+      return true;
+    }
+    if (action !== "enable" && action !== "now") {
+      sendResponse({ ok: false, error: "bad_action" });
+      return true;
+    }
+    void forwardAssistantSync(action).then((result) => sendResponse(result));
     return true;
   }
 
