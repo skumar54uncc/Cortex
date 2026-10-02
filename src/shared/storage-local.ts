@@ -45,3 +45,17 @@ export function storageLocalSet(items: Record<string, unknown>): Promise<void> {
     });
   });
 }
+
+export function storageLocalRemove(keys: string | string[]): Promise<void> {
+  const local = storageLocalArea();
+  if (!local) {
+    return Promise.reject(new Error("Storage unavailable"));
+  }
+  return new Promise((resolve, reject) => {
+    local.remove(keys, () => {
+      const err = chromeApi()?.runtime?.lastError;
+      if (err) reject(new Error(err.message));
+      else resolve();
+    });
+  });
+}

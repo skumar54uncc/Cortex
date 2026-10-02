@@ -67,6 +67,9 @@ export const MIN_RETENTION_DAYS = 7;
 export const MAX_RETENTION_DAYS = 365;
 export const ASSISTANT_SYNC_ALARM = "cortex-assistant-sync";
 export const ASSISTANT_SYNC_ALARM_PERIOD_MIN = 15;
+/** One-shot alarm after LinkedIn (or other) capture. Not a Google call by itself. */
+export const ASSISTANT_SYNC_SOON_ALARM = "cortex-assistant-sync-soon";
+export const ASSISTANT_SYNC_SOON_DELAY_MIN = 2;
 export const MAX_CONSECUTIVE_SYNC_FAILURES = 10;
 
 export type BackfillPhase = "idle" | "reading" | "writing" | "done";

@@ -278,10 +278,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       sendResponse({ ok: false, error: "foreign_sender" });
       return true;
     }
-    const action = msg.action === "enable" || msg.action === "now" || msg.action === "alarm" ? msg.action : "alarm";
+    const action =
+      msg.action === "enable" || msg.action === "now" || msg.action === "alarm" || msg.action === "disable"
+        ? msg.action
+        : "alarm";
     const token = typeof msg.token === "string" ? msg.token : "";
     const folderId = typeof msg.folderId === "string" ? msg.folderId : null;
     const fileId = typeof msg.fileId === "string" ? msg.fileId : null;
+    const backupFileId = typeof msg.backupFileId === "string" ? msg.backupFileId : null;
     const retentionDays = typeof msg.retentionDays === "number" ? msg.retentionDays : undefined;
     const archivesEnabled = typeof msg.archivesEnabled === "boolean" ? msg.archivesEnabled : undefined;
     void import(/* webpackChunkName: "assistant-sync" */ "../assistant-sync/runtime")
@@ -290,6 +294,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           ids: { folderId, fileId },
           retentionDays,
           archivesEnabled,
+          backupFileId,
         })
       )
       .then((result) => sendResponse(result))
@@ -307,7 +312,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       sendResponse({ ok: false, error: "foreign_sender" });
       return true;
     }
-    const visit = msg.visit as { id?: string; url?: string; title?: string; visitedAt?: number } | undefined;
+    const visit = msg.visit as {
+      id?: string;
+      url?: string;
+      title?: string;
+      visitedAt?: number;
+      linkedInFields?: {
+        kind?: string;
+        name?: string;
+        headline?: string;
+        company?: string;
+        profileUrl?: string;
+      } | null;
+    } | undefined;
+    const fields = visit?.linkedInFields;
+    const linkedInFields =
+      fields &&
+      (fields.kind === "person" || fields.kind === "company") &&
+      typeof fields.name === "string" &&
+      typeof fields.profileUrl === "string"
+        ? {
+            kind: fields.kind as "person" | "company",
+            name: fields.name,
+            headline: typeof fields.headline === "string" ? fields.headline : undefined,
+            company: typeof fields.company === "string" ? fields.company : undefined,
+            profileUrl: fields.profileUrl,
+          }
+        : null;
     void import(/* webpackChunkName: "assistant-sync" */ "../assistant-sync/runtime")
       .then((mod) =>
         mod.captureVisitFromChrome({
@@ -315,6 +346,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
           url: String(visit?.url ?? ""),
           title: String(visit?.title ?? ""),
           visitedAt: Number(visit?.visitedAt ?? 0),
+          linkedInFields,
         })
       )
       .then((result) => sendResponse(result))

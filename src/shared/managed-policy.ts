@@ -182,11 +182,15 @@ export async function readManagedPolicy(): Promise<ManagedPolicy> {
 export async function getEffectiveSettings(
   opts: { fresh?: boolean } = {}
 ): Promise<EffectiveSettings> {
-  const [user, policy] = await Promise.all([
+  // Lazy: keep gemini-api-key out of the SW main bundle (budget).
+  const { getGeminiApiKey } = await import("./gemini-api-key");
+  const [user, policy, apiKey] = await Promise.all([
     opts.fresh ? getUserSettingsFresh() : getUserSettings(),
     readManagedPolicy(),
+    getGeminiApiKey(),
   ]);
-  return applyManagedPolicy(user, policy);
+  // Merge secret key only here (SW / options / stats) — never via getUserSettings.
+  return applyManagedPolicy({ ...user, geminiApiKey: apiKey }, policy);
 }
 
 /** Chat routing input; always reads storage fresh, like the 1.0.x getChatSettings. */

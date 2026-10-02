@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cortex Settings</title>
+    <link rel="stylesheet" href="cortex-theme.css" />
+    <link rel="stylesheet" href="cx-buttons.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
@@ -38,7 +40,7 @@
           <li><a class="cx-nav-link" href="#cx-sec-appearance">Appearance</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-capture">Capture</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-intelligence">Intelligence</a></li>
-          <li><a class="cx-nav-link" href="#cx-sec-assistant">Connect assistant</a></li>
+          <li><a class="cx-nav-link" href="#cx-sec-assistant">Assist Sync</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-privacy">Privacy and data</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-backup">Backup</a></li>
           <li><a class="cx-nav-link" href="#cx-sec-about">About</a></li>
@@ -103,7 +105,7 @@
                 </summary>
                 <div class="cx-disclosure-body">
                   <ul id="cx-opt-recent" class="cx-recent-list" role="list"></ul>
-                  <p id="cx-opt-recent-empty" class="cx-field-hint" hidden>No visits logged yet.</p>
+                  <p id="cx-opt-recent-empty" class="cx-field-hint" hidden>No visits logged yet. Keep browsing. Recent pages show up here.</p>
                 </div>
               </details>
             </div>
@@ -114,7 +116,7 @@
         <section class="cx-sec" id="cx-sec-appearance" tabindex="-1" aria-labelledby="cx-theme-h">
           <div class="cx-sec-head">
             <h2 class="cx-sec-title" id="cx-theme-h">Appearance</h2>
-            <p class="cx-sec-desc">How the Cortex panel looks while you browse.</p>
+            <p class="cx-sec-desc">How the Cortex panel looks while you browse. Settings and the toolbar popup stay light.</p>
           </div>
 
           <div class="cx-panel">
@@ -378,13 +380,13 @@
         <!-- 5. Privacy and data ---------------------------------------- -->
         <section class="cx-sec" id="cx-sec-assistant" tabindex="-1" aria-labelledby="cx-assistant-h">
           <div class="cx-sec-head">
-            <h2 class="cx-sec-title" id="cx-assistant-h">Connect with your AI assistant</h2>
+            <h2 class="cx-sec-title" id="cx-assistant-h">Assist Sync</h2>
           </div>
           <div class="cx-sec-body">
             <div class="cx-group" id="cx-assistant-consent">
               <h3 class="cx-group-title">Before you turn this on</h3>
               <p class="cx-group-desc">
-                Connect an AI assistant to your memory of what you browse and read. Cortex copies that memory into your own Google Drive. It syncs page titles, URLs, excerpts of pages you read for 5 minutes or more, searches, LinkedIn profiles, and topics. The file lives in a folder named Cortex Memory. When you connect an assistant to that Drive folder, it can receive the relevant rows while it answers you. Sync stays off until you press Enable.
+                Assist Sync copies your library into a folder named Cortex Memory in your own Google Drive. It syncs page titles, URLs, excerpts of pages you read for 5 minutes or more, searches, LinkedIn profiles, and topics. The Google permission is drive.file: Cortex can create and edit only the files it creates in that folder, not the rest of your Drive. When you connect an assistant to that folder, it can receive the relevant rows while it answers you. Sync stays off until you press Enable.
               </p>
               <p class="cx-field-hint">
                 <a href="https://skumar54uncc.github.io/Cortex/privacy-policy.html" target="_blank" rel="noopener noreferrer">Privacy policy</a>
@@ -393,7 +395,8 @@
               </p>
               <div class="cx-actions-row">
                 <button type="button" id="cx-assistant-enable" class="cx-btn cx-btn-primary">Enable</button>
-                <button type="button" id="cx-assistant-now" class="cx-btn cx-btn-secondary">Sync now</button>
+                <button type="button" id="cx-assistant-disable" class="cx-btn cx-btn-secondary" hidden>Disable</button>
+                <button type="button" id="cx-assistant-now" class="cx-btn cx-btn-secondary" disabled title="Turn Assist Sync on before syncing">Sync now</button>
               </div>
               <p id="cx-assistant-feedback" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
             </div>
@@ -422,7 +425,7 @@
               </div>
             </div>
             <div class="cx-group">
-              <h3 class="cx-group-title">Connect an assistant</h3>
+              <h3 class="cx-group-title">Assistant setup guides</h3>
               <details class="cx-disclosure" data-assistant-guide="muse">
                 <summary>Muse</summary>
                 <p>Connect Muse to Google Drive. Open the spreadsheet named Cortex Memory in the folder Cortex Memory. Read the About tab first. About lists the tabs and the rules. Before Muse answers from its own knowledge, ask it to check the Content tab. Content holds excerpts from pages you read for 5 minutes or more. Use Visits, Searches, People, Companies, and Daily for the other questions. Leave monthly archive files alone. Those are personal backups.</p>
@@ -454,6 +457,20 @@
           </div>
 
           <div class="cx-panel">
+            <div class="cx-group" id="cx-indexing-consent-group" hidden>
+              <h3 class="cx-group-title">Allow on-device indexing</h3>
+              <p class="cx-group-desc">
+                Cortex has not started indexing yet. Press Allow to index pages you read on this
+                device and, if you choose Scan history below, to import recent browser history.
+                Data stays on this device unless you later enable Assistant Sync or Cloud Chat.
+              </p>
+              <div class="cx-actions-row">
+                <button type="button" id="cx-indexing-consent-allow" class="cx-btn cx-btn-primary">
+                  <span class="cx-btn-label">Allow indexing</span>
+                </button>
+              </div>
+              <p id="cx-indexing-consent-msg" class="cx-form-feedback" hidden role="status" aria-live="polite"></p>
+            </div>
             <div class="cx-group">
               <h3 class="cx-group-title">Indexing and retention</h3>
               <p class="cx-group-desc">Pause new indexing or set how long pages are kept.</p>

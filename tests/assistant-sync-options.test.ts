@@ -24,6 +24,7 @@ describe("assistant sync options", () => {
     const consent = document.getElementById("cx-assistant-consent")?.textContent ?? "";
     expect(consent).toMatch(/page titles, URLs, excerpts of pages you read for 5 minutes or more, searches, LinkedIn profiles, and topics/);
     expect(consent).toMatch(/folder named Cortex Memory/);
+    expect(consent).toMatch(/drive\.file/);
     expect(consent).toMatch(/relevant rows/);
     const enable = document.getElementById("cx-assistant-enable");
     const consentNode = document.getElementById("cx-assistant-consent");
@@ -81,10 +82,43 @@ describe("assistant sync options", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(order).toEqual(["status", "interactive", "enable", "status"]);
     expect(sent.find((msg) => msg.action === "enable")?.token).toBe("click-token");
-    document.getElementById("cx-assistant-now")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    // Sync now stays gated until status reports syncEnabled.
+    const nowBtn = document.getElementById("cx-assistant-now") as HTMLButtonElement;
+    expect(nowBtn.disabled).toBe(true);
+  });
+
+  it("shows Disable when sync is on and turns sync off without a Google token", async () => {
+    const { writeSyncEngineState, defaultSyncEngineState } = await import("../src/assistant-sync/db");
+    await writeSyncEngineState({ ...defaultSyncEngineState(), syncEnabled: true });
+    const sent: { type?: string; action?: string; token?: string }[] = [];
+    (globalThis as { chrome?: unknown }).chrome = {
+      storage: { local: { get: async () => ({}), set: async () => {} } },
+      runtime: {
+        lastError: undefined,
+        sendMessage: async (msg: { type?: string; action?: string; token?: string }) => {
+          sent.push(msg);
+          if (msg.action === "status") return { ok: true, state: await readSyncEngineState() };
+          if (msg.action === "disable") {
+            await writeSyncEngineState({ ...(await readSyncEngineState()), syncEnabled: false });
+            return { ok: true, status: "disabled" };
+          }
+          return { ok: true };
+        },
+      },
+    };
+    mountAssistantSyncPanel();
     await new Promise((resolve) => setTimeout(resolve, 20));
-    const now = sent.find((msg) => msg.action === "now");
-    expect(now?.token).toBeUndefined();
+    const disable = document.getElementById("cx-assistant-disable") as HTMLButtonElement;
+    const enable = document.getElementById("cx-assistant-enable") as HTMLButtonElement;
+    const now = document.getElementById("cx-assistant-now") as HTMLButtonElement;
+    expect(disable.hidden).toBe(false);
+    expect(enable.hidden).toBe(true);
+    expect(now.disabled).toBe(false);
+    disable.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(sent.some((msg) => msg.action === "disable")).toBe(true);
+    expect(sent.find((msg) => msg.action === "disable")?.token).toBeUndefined();
+    expect((await readSyncEngineState()).syncEnabled).toBe(false);
   });
 
   it("saves retention and the archive toggle for the next sync", async () => {

@@ -13,8 +13,11 @@ export const BUNDLE_BUDGETS = {
   "extract.js": 70 * KB,
   "resurface-chip.js": 8 * KB,
   "youtube-bridge.js": 4 * KB,
-  "overlay.js": 140 * KB,
+  // Pass 5 Agents UX (tab + coach + local feedback) needs headroom; SW budget unchanged.
+  "overlay.js": 155 * KB,
   "service-worker.js": 220 * KB,
+  // History-import Readability path (lazy from SW only when Scan history runs).
+  "history-extract.js": 40 * KB,
   "offscreen.js": 700 * KB,
   // Assistant Sync: Drive client and int8 topic vectors, lazy only.
   // Caps stay under the 130 KB float file so that file cannot return.
@@ -26,7 +29,7 @@ export const BUNDLE_BUDGETS = {
   // pdfjs-dist (Phase 5.9): lazy chunk and worker, loaded only when a PDF is read.
   "pdf.js": 560 * KB,
   "pdf.worker.min.mjs": 1400 * KB,
-  "search-shell.js": 140 * KB,
+  "search-shell.js": 155 * KB,
   "options.js": 40 * KB,
   "popup.js": 20 * KB,
   "onboarding.js": 10 * KB,

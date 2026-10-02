@@ -1,4 +1,11 @@
-/** chrome.storage.local — fast reads from SW + popup */
+/** chrome.storage.local — fast reads from SW + popup + content (UI flags only).
+ *
+ * S-2: geminiApiKey is NEVER stored in cortex_user_settings. The real key lives
+ * in src/shared/gemini-api-key.ts (session TRUSTED_CONTEXTS + dedicated local
+ * persist). getUserSettings always returns geminiApiKey: "" so content/overlay
+ * never hold the secret. Trusted callers use getGeminiApiKey() /
+ * getEffectiveChatSettings().
+ */
 
 import type { ChatSettings } from "../lib/chat/types";
 import { storageLocalGet, storageLocalSet } from "./storage-local";
@@ -16,6 +23,10 @@ export interface CortexUserSettings {
   allowlist: string[];
   chatMode: ChatMode;
   cloudChatEnabled: boolean;
+  /**
+   * Always empty in getUserSettings / local blob (S-2). Populated only when
+   * trusted code merges getGeminiApiKey() (e.g. getEffectiveSettings).
+   */
   geminiApiKey: string;
   /** Overlay and side panel theme (Phase 2.6). */
   theme: ThemeSetting;
@@ -89,10 +100,12 @@ let memorySettings: CortexUserSettings | null = null;
 function normalizeSettings(
   raw: Partial<CortexUserSettings> | undefined
 ): CortexUserSettings {
+  // Whitelist only known fields — never spread raw (blocks __proto__ / unknown keys).
+  // S-2: never surface geminiApiKey from the local settings blob.
   return {
-    ...DEFAULT_USER_SETTINGS,
-    ...raw,
+    indexingPaused: bool(raw?.indexingPaused, DEFAULT_USER_SETTINGS.indexingPaused),
     blocklist: Array.isArray(raw?.blocklist) ? raw!.blocklist : [],
+    allowlistOnly: bool(raw?.allowlistOnly, DEFAULT_USER_SETTINGS.allowlistOnly),
     allowlist: Array.isArray(raw?.allowlist) ? raw!.allowlist : [],
     chatMode:
       raw?.chatMode === "on-device-only" ||
@@ -101,8 +114,7 @@ function normalizeSettings(
         ? raw.chatMode
         : DEFAULT_USER_SETTINGS.chatMode,
     cloudChatEnabled: Boolean(raw?.cloudChatEnabled),
-    geminiApiKey:
-      typeof raw?.geminiApiKey === "string" ? raw.geminiApiKey : "",
+    geminiApiKey: "",
     theme: normalizeThemeSetting(raw?.theme),
     panelPreference: normalizePanelPreference(raw?.panelPreference),
     retentionDays:
@@ -146,35 +158,55 @@ try {
 
 export async function getUserSettings(): Promise<CortexUserSettings> {
   if (memorySettings) {
-    return { ...memorySettings };
+    return { ...memorySettings, geminiApiKey: "" };
   }
   const loaded = await loadUserSettingsFromStorage();
   memorySettings = loaded;
-  return { ...loaded };
+  return { ...loaded, geminiApiKey: "" };
 }
 
 /** Reads storage directly (bypasses the in-memory cache) and refreshes the cache. */
 export async function getUserSettingsFresh(): Promise<CortexUserSettings> {
   const s = await loadUserSettingsFromStorage();
   memorySettings = s;
-  return { ...s };
+  return { ...s, geminiApiKey: "" };
 }
 
+/**
+ * Chat routing input with the real Gemini key (trusted contexts only).
+ * Prefer getEffectiveChatSettings() so managed policy still applies.
+ */
 export async function getChatSettings(): Promise<ChatSettings> {
   const s = await loadUserSettingsFromStorage();
   memorySettings = s;
+  const { getGeminiApiKey } = await import("./gemini-api-key");
+  const geminiApiKey = await getGeminiApiKey();
   return {
     mode: s.chatMode,
     cloudEnabled: s.cloudChatEnabled,
-    geminiApiKey: s.geminiApiKey.trim(),
+    geminiApiKey,
   };
 }
 
+/**
+ * Persists UI settings. geminiApiKey in `partial` is routed to the secret
+ * store and never written into cortex_user_settings.
+ */
 export async function setUserSettings(
   partial: Partial<CortexUserSettings>
 ): Promise<void> {
+  const { geminiApiKey: keyUpdate, ...safePartial } = partial;
+  if (keyUpdate !== undefined) {
+    const { setGeminiApiKey } = await import("./gemini-api-key");
+    await setGeminiApiKey(typeof keyUpdate === "string" ? keyUpdate : "");
+  }
   const cur = await getUserSettings();
-  const next = { ...cur, ...partial };
+  const next = normalizeSettings({ ...cur, ...safePartial, geminiApiKey: "" });
   memorySettings = next;
   await storageLocalSet({ [KEY]: next });
+}
+
+/** Test helper: drop the in-memory settings cache. */
+export function resetUserSettingsMemoryForTests(): void {
+  memorySettings = null;
 }

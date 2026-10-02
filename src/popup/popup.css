@@ -29,16 +29,35 @@ h1.cx-brand {
 
 .cx-tagline {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--cx-text-muted);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .cx-privacy-note {
   margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--cx-text-muted);
+}
+
+.cx-privacy-sticky {
+  margin: 8px 0 0;
   font-size: 11px;
   line-height: 1.45;
   color: var(--cx-text-muted);
+}
+
+.cx-privacy-sticky-link {
+  color: var(--cx-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cx-privacy-sticky-link:focus-visible {
+  outline: 2px solid var(--cx-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .cx-privacy-blurb {
@@ -64,6 +83,11 @@ h1.cx-brand {
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.cx-privacy-ack:focus-visible {
+  outline: 2px solid var(--cx-focus);
+  outline-offset: 2px;
 }
 
 .cx-privacy-ack:hover {
@@ -107,6 +131,10 @@ h1.cx-brand {
   color: var(--cx-warning);
 }
 
+.cx-indexing-state--off {
+  color: var(--cx-text-muted);
+}
+
 .cx-status-detail {
   font-weight: 400;
 }
@@ -125,67 +153,9 @@ h1.cx-brand {
   margin-bottom: 16px;
 }
 
-.cx-btn-hero {
-  padding: 13px 16px;
-  font-size: 14px;
-  border-radius: 11px;
-  box-shadow: 0 2px 8px rgba(199, 42, 9, 0.25);
-}
-
-.cx-btn-link {
+/* Buttons: shared via cx-buttons.css. Popup-only tweaks below. */
+.cx-popup-actions .cx-btn-link {
   align-self: center;
-  padding: 6px 4px;
-  border: none;
-  background: none;
-  color: var(--cx-text-muted);
-  font-size: 11px;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.cx-btn-link:hover {
-  color: var(--cx-accent);
-}
-
-.cx-btn {
-  font: var(--cx-ts-small);
-  font-weight: 600;
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    opacity 0.15s ease;
-}
-
-.cx-btn:focus-visible {
-  outline: 2px solid var(--cx-focus);
-  outline-offset: 2px;
-}
-
-.cx-btn-primary {
-  background: var(--cx-accent);
-  color: #fffef9;
-  border-color: var(--cx-accent);
-}
-
-.cx-btn-primary:hover {
-  background: var(--cx-accent-hover);
-  border-color: var(--cx-accent-hover);
-}
-
-.cx-btn-secondary {
-  background: var(--cx-surface);
-  color: var(--cx-accent);
-  border-color: rgba(199, 42, 9, 0.45);
-}
-
-.cx-btn-secondary:hover {
-  background: var(--cx-accent-soft);
 }
 
 .cx-btn-inline {
@@ -196,10 +166,17 @@ h1.cx-brand {
   background: transparent;
   border: 1px solid var(--cx-border);
   color: var(--cx-accent);
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .cx-btn-inline:hover {
   background: var(--cx-accent-soft);
+}
+
+.cx-btn-inline:focus-visible {
+  outline: 2px solid var(--cx-focus);
+  outline-offset: 2px;
 }
 
 .cx-section-title {
@@ -289,7 +266,7 @@ h1.cx-brand {
   height: 100%;
   width: 0%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--cx-accent), #ea580c);
+  background: var(--cx-accent);
   transition: width 0.25s ease;
 }
 
@@ -469,13 +446,14 @@ kbd {
 .cx-stats-refresh {
   flex-shrink: 0;
   margin-top: 2px;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  min-height: 28px;
+  padding: 4px 10px;
   border: 1px solid var(--cx-border);
   border-radius: 8px;
   background: var(--cx-surface);
   color: var(--cx-text-muted);
+  font: var(--cx-ts-caption);
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -489,14 +467,17 @@ kbd {
   outline-offset: 2px;
 }
 
-.cx-stats-refresh--busy .cx-stats-refresh-icon {
-  display: inline-block;
-  animation: cx-spin 0.7s linear infinite;
+.cx-stats-refresh--busy {
+  opacity: 0.55;
 }
 
-@keyframes cx-spin {
-  to {
-    transform: rotate(360deg);
+@media (prefers-reduced-motion: reduce) {
+  .cx-storage-bar {
+    transition: none;
+  }
+
+  .cx-stats-refresh--busy {
+    opacity: 0.7;
   }
 }
 
@@ -506,6 +487,12 @@ kbd {
   border-radius: 10px;
   background: var(--cx-surface);
   border: 1px solid var(--cx-border);
+}
+
+.cx-empty-next {
+  margin: 0 0 12px;
+  font: var(--cx-ts-small);
+  color: var(--cx-text-muted);
 }
 
 .cx-empty-lead {

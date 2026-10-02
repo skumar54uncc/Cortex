@@ -1,12 +1,22 @@
 /// <reference types="chrome"/>
 import { FetchDriveApi, trashMemory, type DriveApi, type StoredMemoryIds } from "./drive-api";
-import { enableAssistantSync, runSyncTick, type HistoryPerson, type HistoryVisit } from "./sync-engine";
+import {
+  disableAssistantSync,
+  enableAssistantSync,
+  runSyncTick,
+  type HistoryPerson,
+  type HistoryVisit,
+} from "./sync-engine";
 import { readSyncEngineState, writeSyncEngineState } from "./db";
 import { applyAssistantSyncPreferences } from "./preferences";
-import { ASSISTANT_SYNC_FILE_ID, ASSISTANT_SYNC_FOLDER_ID } from "./preference-keys";
+import {
+  ASSISTANT_SYNC_BACKUP_FILE_ID,
+  ASSISTANT_SYNC_FILE_ID,
+  ASSISTANT_SYNC_FOLDER_ID,
+} from "./preference-keys";
 import { loadTopicVectors } from "./topics";
 
-export { ASSISTANT_SYNC_FILE_ID, ASSISTANT_SYNC_FOLDER_ID };
+export { ASSISTANT_SYNC_BACKUP_FILE_ID, ASSISTANT_SYNC_FILE_ID, ASSISTANT_SYNC_FOLDER_ID };
 
 export interface MemoryIdStore {
   getIds(): Promise<StoredMemoryIds>;
@@ -87,6 +97,7 @@ export interface AssistantSyncWorkResult {
   created?: boolean;
   warning?: string;
   ids?: StoredMemoryIds;
+  backupFileId?: string | null;
 }
 
 function plainSyncError(error: unknown): string {
@@ -105,18 +116,27 @@ function plainSyncError(error: unknown): string {
 
 /** Token comes from the service worker. This function performs the Google fetches. */
 export async function runAssistantSyncFromChrome(
-  action: "alarm" | "now" | "enable",
+  action: "alarm" | "now" | "enable" | "disable",
   token: string,
   launch: {
     ids: StoredMemoryIds;
     retentionDays?: number;
     archivesEnabled?: boolean;
+    backupFileId?: string | null;
   }
 ): Promise<AssistantSyncWorkResult> {
   const store = memoryIdStore(launch.ids);
+  let backupFileId = launch.backupFileId ?? null;
+  const saveBackupId = async (id: string | null) => {
+    backupFileId = id;
+  };
   try {
-    const result = await runAssistantSyncWork(action, token, launch, store);
-    return { ...result, ids: store.current() };
+    if (action === "disable") {
+      await disableAssistantSync();
+      return { ok: true, status: "disabled", ids: store.current(), backupFileId };
+    }
+    const result = await runAssistantSyncWork(action, token, launch, store, saveBackupId, () => backupFileId);
+    return { ...result, ids: store.current(), backupFileId };
   } catch (error) {
     const message = plainSyncError(error);
     try {
@@ -125,7 +145,7 @@ export async function runAssistantSyncFromChrome(
     } catch {
       /* The page still receives the message below. */
     }
-    return { ok: false, error: message, ids: store.current() };
+    return { ok: false, error: message, ids: store.current(), backupFileId };
   }
 }
 
@@ -133,7 +153,9 @@ async function runAssistantSyncWork(
   action: "alarm" | "now" | "enable",
   token: string,
   launch: { retentionDays?: number; archivesEnabled?: boolean },
-  store: MemoryIdStore
+  store: MemoryIdStore,
+  saveBackupId: (id: string | null) => Promise<void>,
+  currentBackupId: () => string | null
 ): Promise<AssistantSyncWorkResult> {
   const api = new FetchDriveApi(token);
   const ids = await store.getIds();
@@ -143,6 +165,7 @@ async function runAssistantSyncWork(
   });
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const now = Date.now();
+  const loadLibraryPeople = async () => (await loadCortexHistory(0)).people;
   if (action === "enable") {
     const result = await enableAssistantSync({
       api,
@@ -152,6 +175,9 @@ async function runAssistantSyncWork(
       saveIds: (next) => store.setIds(next),
       sleep,
       loadHistory: loadCortexHistory,
+      loadLibraryPeople,
+      backupFileId: currentBackupId(),
+      saveBackupId,
     });
     return {
       ok: result.tick.status === "ready",
@@ -160,6 +186,7 @@ async function runAssistantSyncWork(
       created: result.created,
       error: result.tick.error,
       warning: result.tick.warning,
+      backupFileId: result.tick.backupFileId ?? currentBackupId(),
     };
   }
   const tick = await runSyncTick({
@@ -170,6 +197,9 @@ async function runAssistantSyncWork(
     fromAlarm: action === "alarm",
     fromUser: action === "now",
     sleep,
+    loadLibraryPeople,
+    backupFileId: currentBackupId(),
+    saveBackupId,
   });
   return {
     ok: tick.status === "ready",
@@ -178,6 +208,7 @@ async function runAssistantSyncWork(
     created: false,
     error: tick.error,
     warning: tick.warning,
+    backupFileId: tick.backupFileId ?? currentBackupId(),
   };
 }
 
@@ -187,6 +218,13 @@ export async function captureVisitFromChrome(visit: {
   url: string;
   title: string;
   visitedAt: number;
+  linkedInFields?: {
+    kind: "person" | "company";
+    name: string;
+    headline?: string;
+    company?: string;
+    profileUrl: string;
+  } | null;
 }): Promise<{ ok: true; stored: boolean }> {
   const state = await readSyncEngineState();
   if (!state.syncEnabled) return { ok: true, stored: false };
@@ -204,6 +242,7 @@ export async function captureVisitFromChrome(visit: {
     userDenylist: state.userDenylist,
     referrer: null,
     linkedInDocument: null,
+    linkedInFields: visit.linkedInFields ?? null,
     syncEnabled: true,
   });
   return { ok: true, stored: result.stored };

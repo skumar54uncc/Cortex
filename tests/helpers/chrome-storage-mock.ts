@@ -1,16 +1,15 @@
-/** In-memory chrome.storage.local shim for Vitest. */
+/** In-memory chrome.storage.local (+ optional session) shim for Vitest. */
 
 export type StorageRecord = Record<string, unknown>;
 
-export function createChromeStorageLocalMock(
-  initial: StorageRecord = {}
-): {
-  storage: { local: chrome.storage.LocalStorageArea };
+function makeArea(initial: StorageRecord = {}): {
+  area: chrome.storage.LocalStorageArea;
   getAll: () => StorageRecord;
+  setData: (next: StorageRecord) => void;
 } {
   let data: StorageRecord = { ...initial };
 
-  const local = {
+  const area = {
     get: (
       keys?: string | string[] | { [key: string]: unknown } | null,
       callback?: (items: { [key: string]: unknown }) => void
@@ -80,8 +79,30 @@ export function createChromeStorageLocalMock(
   } as unknown as chrome.storage.LocalStorageArea;
 
   return {
-    storage: { local },
+    area,
     getAll: () => ({ ...data }),
+    setData: (next) => {
+      data = { ...next };
+    },
+  };
+}
+
+export function createChromeStorageLocalMock(
+  initial: StorageRecord = {}
+): {
+  storage: { local: chrome.storage.LocalStorageArea; session: chrome.storage.SessionStorageArea };
+  getAll: () => StorageRecord;
+  getSessionAll: () => StorageRecord;
+} {
+  const local = makeArea(initial);
+  const session = makeArea();
+  return {
+    storage: {
+      local: local.area,
+      session: session.area as unknown as chrome.storage.SessionStorageArea,
+    },
+    getAll: local.getAll,
+    getSessionAll: session.getAll,
   };
 }
 

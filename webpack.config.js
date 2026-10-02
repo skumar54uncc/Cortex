@@ -106,6 +106,7 @@ module.exports = (env, argv) => {
         { from: "src/popup/popup.html", to: "." },
         { from: "src/popup/popup.css", to: "." },
         { from: "src/styles/cortex-theme.css", to: "." },
+        { from: "src/styles/cx-buttons.css", to: "." },
         { from: "src/options/options.html", to: "." },
         { from: "src/options/options.css", to: "." },
         { from: "src/onboarding/onboarding.html", to: "." },

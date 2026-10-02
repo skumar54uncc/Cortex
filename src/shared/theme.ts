@@ -117,7 +117,18 @@ function block(selector: string, palette: ThemePalette, scheme: ResolvedTheme): 
   const lines = (Object.keys(TOKEN_NAMES) as Array<keyof ThemePalette>).map(
     (k) => `  ${TOKEN_NAMES[k]}: ${palette[k]};`
   );
-  return `${selector} {\n${lines.join("\n")}\n  color-scheme: ${scheme};\n}`;
+  // Named type scale + focus: same steps as cortex-theme.css for overlay controls.
+  const shared = [
+    `  --cx-font-body: system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;`,
+    `  --cx-ts-caption: 500 11px/1.45 var(--cx-font-body);`,
+    `  --cx-ts-small: 500 13px/1.45 var(--cx-font-body);`,
+    `  --cx-ts-body: 400 14px/1.5 var(--cx-font-body);`,
+    `  --cx-ts-title: 700 14px/1.35 var(--cx-font-body);`,
+    `  --cx-ts-display: 700 19px/1.15 var(--cx-font-body);`,
+    `  --cx-ts-metric: 700 22px/1.2 var(--cx-font-body);`,
+    `  --cx-focus: rgba(199, 42, 9, 0.45);`,
+  ];
+  return `${selector} {\n${lines.join("\n")}\n${shared.join("\n")}\n  color-scheme: ${scheme};\n}`;
 }
 
 /** Custom properties for the overlay shadow root. Light on :host, dark under data-theme. */

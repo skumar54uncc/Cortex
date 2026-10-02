@@ -5,6 +5,7 @@ import {
   readSnapshot,
 } from "../lib/stats-snapshot-storage";
 import { sendRuntimeMessage } from "../shared/extension-runtime";
+import { INDEXING_CONSENT_KEY } from "../shared/onboarding-constants";
 import { storageLocalGet, storageLocalSet } from "../shared/storage-local";
 import {
   applySnapshotToDom,
@@ -53,14 +54,48 @@ async function activeTabInfo(): Promise<
   }
 }
 
+/** Fail closed: missing/unreadable consent must not show Indexing · Active. */
+async function readIndexingConsented(): Promise<boolean> {
+  try {
+    const r = await storageLocalGet([INDEXING_CONSENT_KEY]);
+    return Boolean(r[INDEXING_CONSENT_KEY]);
+  } catch {
+    return false;
+  }
+}
+
 async function refreshPrivacyBlurb(): Promise<void> {
   const wrap = document.querySelector<HTMLElement>("#cx-privacy-blurb");
-  if (!wrap) return;
+  if (wrap) {
+    try {
+      const r = await storageLocalGet([POPUP_PRIVACY_ACK_KEY]);
+      wrap.hidden = Boolean(r[POPUP_PRIVACY_ACK_KEY]);
+    } catch {
+      wrap.hidden = false;
+    }
+  }
+
+  // Sticky browsing-activity line always stays visible (SR-8). Optionally note
+  // when indexing has not been consented yet.
+  const sticky = document.querySelector<HTMLElement>("#cx-privacy-sticky");
+  if (!sticky) return;
   try {
-    const r = await storageLocalGet([POPUP_PRIVACY_ACK_KEY]);
-    wrap.hidden = Boolean(r[POPUP_PRIVACY_ACK_KEY]);
+    if (!(await readIndexingConsented())) {
+      sticky.textContent = "";
+      sticky.append(
+        document.createTextNode(
+          "Indexing is off until you agree on the welcome page. "
+        )
+      );
+      const a = document.createElement("a");
+      a.href = "onboarding.html";
+      a.target = "_blank";
+      a.className = "cx-privacy-sticky-link";
+      a.textContent = "Review and start";
+      sticky.append(a);
+    }
   } catch {
-    wrap.hidden = false;
+    /* keep default sticky copy from HTML */
   }
 }
 
@@ -92,22 +127,26 @@ async function refreshSnapshotFromBackground(): Promise<StatsSnapshot> {
 
 export async function loadPopup(): Promise<void> {
   const refs = popupRefs();
-  const snap = await readSnapshot();
+  const [snap, consented] = await Promise.all([
+    readSnapshot(),
+    readIndexingConsented(),
+  ]);
 
   if (snap == null) {
-    showEmptyState(refs);
+    showEmptyState(refs, consented);
     return;
   }
 
   const tab = await activeTabInfo();
-  applySnapshotToDom(snap, refs, tab);
+  applySnapshotToDom(snap, refs, tab, consented);
 
   if (isSnapshotStale(snap)) {
     void (async () => {
       try {
         const fresh = await refreshSnapshotFromBackground();
         const t = await activeTabInfo();
-        applySnapshotToDom(fresh, refs, t);
+        const c = await readIndexingConsented();
+        applySnapshotToDom(fresh, refs, t, c);
       } catch {
         /* keep last good snapshot */
       }
@@ -122,7 +161,8 @@ async function onManualRefresh(): Promise<void> {
   try {
     const fresh = await refreshSnapshotFromBackground();
     const tab = await activeTabInfo();
-    applySnapshotToDom(fresh, refs, tab);
+    const consented = await readIndexingConsented();
+    applySnapshotToDom(fresh, refs, tab, consented);
   } catch (e: unknown) {
     showRefreshError(
       refs,

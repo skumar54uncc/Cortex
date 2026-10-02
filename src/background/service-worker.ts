@@ -13,6 +13,8 @@ import { chunkArticle } from "../lib/chunking";
 import {
   ASSISTANT_SYNC_ALARM,
   ASSISTANT_SYNC_ALARM_PERIOD_MIN,
+  ASSISTANT_SYNC_SOON_ALARM,
+  ASSISTANT_SYNC_SOON_DELAY_MIN,
   readSyncEngineState,
   setDriveFolderTrashHandler,
   writeSyncEngineState,
@@ -47,6 +49,7 @@ import {
 import { storageLocalGet, storageLocalSet } from "../shared/storage-local";
 import {
   ASSISTANT_SYNC_ARCHIVES_KEY,
+  ASSISTANT_SYNC_BACKUP_FILE_ID,
   ASSISTANT_SYNC_FILE_ID,
   ASSISTANT_SYNC_FOLDER_ID,
   ASSISTANT_SYNC_RETENTION_KEY,
@@ -65,7 +68,6 @@ import type { SearchHitDTO } from "../lib/search-engine";
 import { CORTEX_EMBED_MODEL_ID } from "../shared/embed-model";
 import { agentDebugLog } from "../lib/agent-debug-log";
 import { devLog } from "../lib/extension-logger";
-import { extractPageTextFromHtml } from "../content/extract";
 import { redactPII } from "../lib/pii-filter";
 import { summarizeBestEffort } from "../lib/summarize";
 import {
@@ -152,6 +154,7 @@ import {
   FIRST_INSTALL_BACKFILL_DONE_KEY,
   FIRST_INSTALL_HISTORY_DAYS,
   FIRST_INSTALL_HISTORY_MAX_URLS,
+  INDEXING_CONSENT_KEY,
   ONBOARDING_DONE_KEY,
 } from "../shared/onboarding-constants";
 import { ensureIndexingHeadroom } from "../lib/storage-eviction";
@@ -339,12 +342,14 @@ function storedId(value: unknown): string | null {
 async function readAssistantSyncLaunch(): Promise<{
   folderId: string | null;
   fileId: string | null;
+  backupFileId: string | null;
   retentionDays?: number;
   archivesEnabled?: boolean;
 }> {
   const stored = await storageLocalGet([
     ASSISTANT_SYNC_FOLDER_ID,
     ASSISTANT_SYNC_FILE_ID,
+    ASSISTANT_SYNC_BACKUP_FILE_ID,
     ASSISTANT_SYNC_RETENTION_KEY,
     ASSISTANT_SYNC_ARCHIVES_KEY,
   ]);
@@ -353,17 +358,22 @@ async function readAssistantSyncLaunch(): Promise<{
   return {
     folderId: storedId(stored[ASSISTANT_SYNC_FOLDER_ID]),
     fileId: storedId(stored[ASSISTANT_SYNC_FILE_ID]),
+    backupFileId: storedId(stored[ASSISTANT_SYNC_BACKUP_FILE_ID]),
     retentionDays: typeof retention === "number" ? retention : undefined,
     archivesEnabled: typeof archives === "boolean" ? archives : undefined,
   };
 }
 
-async function writeAssistantSyncIds(ids: { folderId?: string | null; fileId?: string | null } | undefined): Promise<void> {
+async function writeAssistantSyncIds(
+  ids: { folderId?: string | null; fileId?: string | null; backupFileId?: string | null } | undefined
+): Promise<void> {
   if (!ids) return;
-  await storageLocalSet({
-    [ASSISTANT_SYNC_FOLDER_ID]: ids.folderId ?? null,
-    [ASSISTANT_SYNC_FILE_ID]: ids.fileId ?? null,
-  });
+  const patch: Record<string, string | null> = {};
+  if ("folderId" in ids) patch[ASSISTANT_SYNC_FOLDER_ID] = ids.folderId ?? null;
+  if ("fileId" in ids) patch[ASSISTANT_SYNC_FILE_ID] = ids.fileId ?? null;
+  if ("backupFileId" in ids) patch[ASSISTANT_SYNC_BACKUP_FILE_ID] = ids.backupFileId ?? null;
+  if (Object.keys(patch).length === 0) return;
+  await storageLocalSet(patch);
 }
 
 /** Silent token for the alarm and Sync now. The Enable click gets the interactive token itself. */
@@ -380,14 +390,52 @@ async function silentDriveToken(): Promise<string> {
   });
 }
 
-async function forwardAssistantSync(action: "alarm" | "now" | "enable", tokenFromPage?: string): Promise<unknown> {
+async function forwardAssistantSync(
+  action: "alarm" | "now" | "enable" | "disable",
+  tokenFromPage?: string
+): Promise<unknown> {
   try {
+    if (action === "disable") {
+      await ensureOffscreen();
+      const launch = await readAssistantSyncLaunch();
+      const response = await new Promise<
+        | {
+            ok?: boolean;
+            error?: string;
+            ids?: { folderId?: string | null; fileId?: string | null };
+            backupFileId?: string | null;
+          }
+        | undefined
+      >((resolve) => {
+        chrome.runtime.sendMessage(
+          {
+            type: "CORTEX_ASSISTANT_SYNC_WORK",
+            action: "disable",
+            token: "",
+            folderId: launch.folderId,
+            fileId: launch.fileId,
+            backupFileId: launch.backupFileId,
+          },
+          (result) => {
+            if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
+            else resolve(result as typeof response);
+          }
+        );
+      });
+      return response ?? { ok: true, status: "disabled" };
+    }
     const token = action === "enable" ? tokenFromPage : await silentDriveToken();
     if (!token) throw new Error("Sign in to Google is needed before Cortex can sync.");
     const launch = await readAssistantSyncLaunch();
     await ensureOffscreen();
     const response = await new Promise<
-      { ok?: boolean; error?: string; ids?: { folderId?: string | null; fileId?: string | null } } | undefined
+      | {
+          ok?: boolean;
+          error?: string;
+          ids?: { folderId?: string | null; fileId?: string | null };
+          backupFileId?: string | null;
+        }
+      | undefined
     >((resolve) => {
       chrome.runtime.sendMessage(
         {
@@ -396,21 +444,22 @@ async function forwardAssistantSync(action: "alarm" | "now" | "enable", tokenFro
           token,
           folderId: launch.folderId,
           fileId: launch.fileId,
+          backupFileId: launch.backupFileId,
           retentionDays: launch.retentionDays,
           archivesEnabled: launch.archivesEnabled,
         },
         (result) => {
           if (chrome.runtime.lastError) resolve({ ok: false, error: chrome.runtime.lastError.message });
-          else
-            resolve(
-              result as
-                | { ok?: boolean; error?: string; ids?: { folderId?: string | null; fileId?: string | null } }
-                | undefined
-            );
+          else resolve(result as typeof response);
         }
       );
     });
-    await writeAssistantSyncIds(response?.ids);
+    if (response?.ids || "backupFileId" in (response ?? {})) {
+      await writeAssistantSyncIds({
+        ...(response?.ids ? { folderId: response.ids.folderId, fileId: response.ids.fileId } : {}),
+        ...(response && "backupFileId" in response ? { backupFileId: response.backupFileId ?? null } : {}),
+      });
+    }
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Sign in to Google is needed before Cortex can sync.";
@@ -426,21 +475,39 @@ async function runAssistantSyncAlarm(): Promise<void> {
   await forwardAssistantSync("alarm");
 }
 
-function captureAssistantSyncVisit(visit: { id: string; url: string; title: string; visitedAt: number }): Promise<void> {
+function scheduleAssistantSyncSoon(): void {
+  chrome.alarms.create(ASSISTANT_SYNC_SOON_ALARM, { delayInMinutes: ASSISTANT_SYNC_SOON_DELAY_MIN });
+}
+
+function captureAssistantSyncVisit(visit: {
+  id: string;
+  url: string;
+  title: string;
+  visitedAt: number;
+  linkedInFields?: {
+    kind: "person" | "company";
+    name: string;
+    headline?: string;
+    company?: string;
+    profileUrl: string;
+  } | null;
+}): Promise<void> {
   return readSyncEngineState()
     .then((state) => {
-      if (!state.syncEnabled) return;
+      if (!state.syncEnabled) return false;
       return ensureOffscreen().then(
         () =>
-          new Promise<void>((resolve) => {
+          new Promise<boolean>((resolve) => {
             chrome.runtime.sendMessage({ type: "CORTEX_ASSISTANT_SYNC_CAPTURE", visit }, () => {
               chrome.runtime.lastError;
-              resolve();
+              resolve(true);
             });
           })
       );
     })
-    .then(() => undefined);
+    .then((captured) => {
+      if (captured && visit.linkedInFields) scheduleAssistantSyncSoon();
+    });
 }
 
 setDriveFolderTrashHandler(async () => {
@@ -462,6 +529,7 @@ setDriveFolderTrashHandler(async () => {
     await storageLocalSet({
       [ASSISTANT_SYNC_FOLDER_ID]: null,
       [ASSISTANT_SYNC_FILE_ID]: null,
+      [ASSISTANT_SYNC_BACKUP_FILE_ID]: null,
     });
   }
 });
@@ -748,11 +816,22 @@ async function commitIndexPayload(
     visitedAt: p.visitedAt,
     textLength: p.text.length,
   });
+  const linkedInFields =
+    p.person && (p.person.kind === "person" || p.person.kind === "company") && p.person.name.trim()
+      ? {
+          kind: p.person.kind,
+          name: p.person.name,
+          headline: p.person.headline,
+          company: p.person.company,
+          profileUrl: p.person.profileUrl,
+        }
+      : null;
   void captureAssistantSyncVisit({
     id: `doc:${docId}:${p.visitedAt}`,
     url: p.url,
     title: p.title,
     visitedAt: p.visitedAt,
+    linkedInFields,
   });
 
   onIndexCommitted();
@@ -828,6 +907,9 @@ async function runHistoryImportJob(
 
         const html = await fetchHtmlForHistory(item.url);
         if (html) {
+          const { extractPageTextFromHtml } = await import(
+            /* webpackChunkName: "history-extract" */ "../content/extract"
+          );
           const rawExtract = extractPageTextFromHtml(html, item.url);
           const titleRed = redactPII(rawExtract.title);
           const textRed = redactPII(rawExtract.text);
@@ -978,6 +1060,10 @@ async function shouldSkipIndexing(
   // Policy indexingDisabled wins over every bypass (history import included).
   if (settings.policy.indexingDisabled === true) {
     return { skip: true, reason: "managed_indexing_disabled" };
+  }
+  // Affirmative consent required before any browsing-activity collection.
+  if (!(await hasIndexingConsent())) {
+    return { skip: true, reason: "no_indexing_consent" };
   }
   if (settings.indexingPaused && !opts?.bypassIndexingPause) {
     return { skip: true, reason: "paused" };
@@ -1190,8 +1276,55 @@ async function primeOpenTabsAfterInstall(): Promise<void> {
   }
 }
 
+function isConsentUiSender(sender: chrome.runtime.MessageSender): boolean {
+  if (sender.id !== undefined && sender.id !== chrome.runtime.id) return false;
+  const u = sender.url ?? "";
+  return (
+    u.startsWith(chrome.runtime.getURL("onboarding.html")) ||
+    u.startsWith(chrome.runtime.getURL("options.html")) ||
+    u.startsWith(chrome.runtime.getURL("popup.html")) ||
+    isPrivilegedExtensionSender(sender)
+  );
+}
+
+async function hasIndexingConsent(): Promise<boolean> {
+  try {
+    const r = await storageLocalGet([INDEXING_CONSENT_KEY]);
+    return Boolean(r[INDEXING_CONSENT_KEY]);
+  } catch {
+    return false;
+  }
+}
+
+/** Existing installs already indexed before the consent gate shipped. */
+async function grandfatherIndexingConsentIfNeeded(): Promise<void> {
+  try {
+    const r = await storageLocalGet([
+      INDEXING_CONSENT_KEY,
+      FIRST_INSTALL_BACKFILL_DONE_KEY,
+      ONBOARDING_DONE_KEY,
+    ]);
+    if (r[INDEXING_CONSENT_KEY]) return;
+    if (r[FIRST_INSTALL_BACKFILL_DONE_KEY] || r[ONBOARDING_DONE_KEY]) {
+      await storageLocalSet({ [INDEXING_CONSENT_KEY]: Date.now() });
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+async function grantIndexingConsent(): Promise<void> {
+  await storageLocalSet({ [INDEXING_CONSENT_KEY]: Date.now() });
+}
+
+/**
+ * Runs only after affirmative UI consent. History backfill + open-tab priming
+ * are one-shot (FIRST_INSTALL_BACKFILL_DONE_KEY).
+ */
 async function maybeRunFirstInstallBackfill(): Promise<void> {
   try {
+    if (!(await hasIndexingConsent())) return;
+
     const r = await storageLocalGet([FIRST_INSTALL_BACKFILL_DONE_KEY]);
     if (r[FIRST_INSTALL_BACKFILL_DONE_KEY]) return;
 
@@ -1328,6 +1461,9 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   void getUserSettings();
+  void import("../shared/gemini-api-key").then((m) =>
+    m.ensureGeminiKeyTrustedAccess().then(() => m.migrateLegacyGeminiApiKey())
+  );
   devLog.info("[Cortex] installed: local-only indexing (chunk-level)");
   scheduleStorageMaintenanceAlarm();
 
@@ -1339,9 +1475,13 @@ chrome.runtime.onInstalled.addListener((details) => {
     void writeInitialStatsSnapshot();
   }
 
-  if (details.reason === "install") {
-    void maybeRunFirstInstallBackfill();
+  if (details.reason === "update") {
+    void grandfatherIndexingConsentIfNeeded();
+  }
 
+  if (details.reason === "install") {
+    // Do not start history backfill or live indexing until the user agrees
+    // on the welcome page (INDEXING_CONSENT_KEY).
     void storageLocalGet([ONBOARDING_DONE_KEY]).then((r) => {
       if (r[ONBOARDING_DONE_KEY]) return;
       void chrome.tabs.create({
@@ -1354,6 +1494,10 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 chrome.runtime.onStartup.addListener(() => {
   void getUserSettings();
+  void import("../shared/gemini-api-key").then((m) =>
+    m.ensureGeminiKeyTrustedAccess().then(() => m.migrateLegacyGeminiApiKey())
+  );
+  void grandfatherIndexingConsentIfNeeded();
   scheduleStorageMaintenanceAlarm();
   configureSidePanelBehavior();
   enableGlobalSidePanel();
@@ -1421,7 +1565,7 @@ async function runRechunkTick(): Promise<void> {
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === ASSISTANT_SYNC_ALARM) {
+  if (alarm.name === ASSISTANT_SYNC_ALARM || alarm.name === ASSISTANT_SYNC_SOON_ALARM) {
     void runAssistantSyncAlarm();
     return;
   }
@@ -2396,6 +2540,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (type === "CORTEX_HISTORY_IMPORT_START") {
+    // Settings-only: content scripts must not grant consent or scan history.
+    if (!isOptionsPageSender(sender)) {
+      sendResponse({
+        ok: false,
+        error: ERROR_CODES.FOREIGN_SENDER,
+        ...payloadFromCode(ERROR_CODES.FOREIGN_SENDER),
+      });
+      return true;
+    }
     if (!rateLimitHit("history_import_start", 3, sendResponse)) return true;
     void (async () => {
       const daysRaw = Number((msg as { daysBack?: number }).daysBack);
@@ -2413,9 +2566,41 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
         return;
       }
 
+      // Settings "Scan history" is affirmative consent for indexing + this import.
+      await grantIndexingConsent();
       sendResponse({ ok: true as const });
       await runHistoryImportJob(daysBack, maxAttempts);
     })();
+    return true;
+  }
+
+  if (type === "CORTEX_INDEXING_CONSENT_GRANT") {
+    if (!isConsentUiSender(sender)) {
+      sendResponse({ ok: false, error: "This action is only available from Cortex." });
+      return true;
+    }
+    const runBackfill =
+      (msg as { runFirstInstallBackfill?: unknown }).runFirstInstallBackfill === true;
+    void (async () => {
+      try {
+        await grantIndexingConsent();
+        sendResponse({ ok: true as const });
+        // One-time history + open-tab seed only when welcome page asks for it.
+        if (runBackfill) void maybeRunFirstInstallBackfill();
+      } catch (e: unknown) {
+        sendResponse({
+          ok: false as const,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    })();
+    return true;
+  }
+
+  if (type === "CORTEX_INDEXING_CONSENT_STATUS") {
+    void hasIndexingConsent().then((granted) => {
+      sendResponse({ ok: true as const, granted });
+    });
     return true;
   }
 
@@ -2427,6 +2612,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   }
 
   if (type === "CORTEX_HISTORY_IMPORT_CANCEL") {
+    if (!isOptionsPageSender(sender)) {
+      sendResponse({
+        ok: false,
+        error: ERROR_CODES.FOREIGN_SENDER,
+        ...payloadFromCode(ERROR_CODES.FOREIGN_SENDER),
+      });
+      return true;
+    }
     historyImportAbortRequested = true;
     sendResponse({ ok: true as const });
     return true;
@@ -2499,8 +2692,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
       void readSyncEngineState().then((state) => sendResponse({ ok: true, state }));
       return true;
     }
-    if (action !== "enable" && action !== "now") {
+    if (action !== "enable" && action !== "now" && action !== "disable") {
       sendResponse({ ok: false, error: "bad_action" });
+      return true;
+    }
+    // Interactive Enable must come from Settings (user gesture + getAuthToken).
+    if (action === "enable" && !isOptionsPageSender(sender)) {
+      sendResponse({ ok: false, error: "This action is only available from Cortex settings." });
+      return true;
+    }
+    if (action === "now") {
+      void readSyncEngineState().then((state) => {
+        if (!state.syncEnabled) {
+          sendResponse({ ok: false, error: "Turn Assist Sync on before syncing." });
+          return;
+        }
+        void forwardAssistantSync("now").then((result) => sendResponse(result));
+      });
       return true;
     }
     const pageToken = (msg as { token?: unknown }).token;
@@ -2513,7 +2721,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse): boolean => {
   if (type === "CORTEX_OPEN_OPTIONS") {
     void (async () => {
       try {
-        await chrome.runtime.openOptionsPage();
+        const section = String((msg as { section?: unknown }).section ?? "");
+        // Whitelist only known options sections (Assist Sync deep link from Agents tab).
+        if (section === "cx-sec-assistant") {
+          await chrome.tabs.create({
+            url: chrome.runtime.getURL(`options.html#${section}`),
+            active: true,
+          });
+        } else {
+          await chrome.runtime.openOptionsPage();
+        }
         sendResponse({ ok: true as const });
       } catch (e: unknown) {
         sendResponse({

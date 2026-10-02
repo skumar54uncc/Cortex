@@ -76,6 +76,13 @@ class MemoryDrive implements DriveApi {
   async updateRow(): Promise<void> {}
 
   async deleteRows(): Promise<void> {}
+
+  async upsertJsonFile(name: string, _parentId: string, _body: string, existingId: string | null): Promise<string> {
+    if (existingId && this.files.has(existingId)) return existingId;
+    const id = this.next();
+    this.files.set(id, { name, trashed: false });
+    return id;
+  }
 }
 
 const VISIT = [
@@ -101,7 +108,11 @@ describe("sheet layout", () => {
     expect(workbook.tabs.map((tab) => tab.title)).toEqual([...SHEET_TABS]);
     expect(workbook.tabs[0]?.rows[0]).toEqual(["Cortex Memory"]);
     expect(workbook.tabs[0]?.rows.at(-1)).toEqual(["schema_version: 3"]);
-    expect(workbook.tabs[0]?.rows.some((row) => row[0]?.includes("not for assistant queries"))).toBe(true);
+    const about = (workbook.tabs[0]?.rows ?? []).map((row) => row[0] ?? "");
+    expect(about).toContain("Questions");
+    expect(about.some((line) => line.includes("JSON backup"))).toBe(true);
+    expect(about.some((line) => line.includes("Who did I look up on LinkedIn?"))).toBe(true);
+    expect(workbook.tabs[0]?.rows.some((row) => row[0]?.includes("Do not read them for questions"))).toBe(true);
     expect(workbook.tabs[1]?.rows[0]).toEqual([...VISIT_HEADERS]);
     const dates = workbook.tabs[1]?.rows.slice(1).map((row) => row[1]) ?? [];
     expect(dates.every((date) => /^\d{4}-\d{2}-\d{2}$/.test(date ?? ""))).toBe(true);

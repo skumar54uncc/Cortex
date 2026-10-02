@@ -15,6 +15,7 @@ Decisions made where the spec left room for interpretation. All aim at Linear / 
 ## Theme
 
 - Light mode only on the options page (dark-mode toggle removed per product request).
+- **Settings and the toolbar popup stay light.** Appearance Light / Dark / System applies to the overlay panel and side panel shell only. The options page and popup chrome do not follow the panel theme.
 
 ## Favicons in recent activity
 
@@ -63,7 +64,7 @@ Measured contrast (WCAG 2.x, `contrastRatio` in `src/shared/theme.ts`):
 | dark | accent #ef7554 | surface #1e1c1a | 5.94:1 |
 | dark | accent #ef7554 | bg #141312 | 6.49:1 |
 
-Confidence badges (Strong, Good, Looser) have dedicated dark overrides at the end of `overlay.shadow.css`. The options page stays light (earlier product decision) apart from the theme picker itself.
+Confidence badges (Strong, Good, Looser) have dedicated dark overrides at the end of `overlay.shadow.css`. The options page and toolbar popup stay light (intentional product decision). Appearance theme picks only change the overlay / side panel. Settings copy states this under Appearance.
 
 ## Responsive layout (release 1.2.0)
 

@@ -20,6 +20,7 @@ function showFeedback(text: string, isError: boolean): void {
 }
 
 let poll = 0;
+let syncOn = false;
 
 function schedule(phase: string): void {
   window.clearInterval(poll);
@@ -32,10 +33,14 @@ function schedule(phase: string): void {
 }
 
 function paint(state: SyncEngineState): void {
+  syncOn = state.syncEnabled;
   const enabled = byId<HTMLElement>("cx-assistant-enabled");
   const last = byId<HTMLElement>("cx-assistant-last");
   const error = byId<HTMLElement>("cx-assistant-error");
   const backfill = byId<HTMLElement>("cx-assistant-backfill");
+  const enable = byId<HTMLButtonElement>("cx-assistant-enable");
+  const disable = byId<HTMLButtonElement>("cx-assistant-disable");
+  const now = byId<HTMLButtonElement>("cx-assistant-now");
   if (enabled) enabled.textContent = state.syncEnabled ? "On" : "Off";
   if (last) last.textContent = state.lastSyncedAt > 0 ? new Date(state.lastSyncedAt).toLocaleString() : "Not yet";
   if (error) error.textContent = state.lastError || "None";
@@ -43,6 +48,18 @@ function paint(state: SyncEngineState): void {
     backfill.textContent = state.backfillTotal
       ? `${state.backfillDone}/${state.backfillTotal}, ${state.backfillPhase}`
       : state.backfillPhase;
+  }
+  if (enable) {
+    enable.hidden = state.syncEnabled;
+    enable.disabled = false;
+  }
+  if (disable) {
+    disable.hidden = !state.syncEnabled;
+    disable.disabled = false;
+  }
+  if (now) {
+    now.disabled = !state.syncEnabled;
+    now.title = state.syncEnabled ? "Sync Cortex Memory now" : "Turn Assist Sync on before syncing";
   }
   schedule(state.backfillPhase);
 }
@@ -80,6 +97,7 @@ async function savePrefs(patch: { retentionDays?: number; archivesEnabled?: bool
 
 export function mountAssistantSyncPanel(): void {
   const enable = byId<HTMLButtonElement>("cx-assistant-enable");
+  const disable = byId<HTMLButtonElement>("cx-assistant-disable");
   const now = byId<HTMLButtonElement>("cx-assistant-now");
   const retention = byId<HTMLInputElement>("cx-assistant-retention");
   const archives = byId<HTMLInputElement>("cx-assistant-archives");
@@ -102,11 +120,33 @@ export function mountAssistantSyncPanel(): void {
         );
       })
       .finally(() => {
-        enable.disabled = false;
+        enable.disabled = syncOn;
+      });
+  });
+
+  disable?.addEventListener("click", () => {
+    disable.disabled = true;
+    showFeedback("", false);
+    void chrome.runtime
+      .sendMessage({ type: "CORTEX_ASSISTANT_SYNC", action: "disable" })
+      .then((res: { ok?: boolean; error?: string } | undefined) => {
+        if (!res?.ok) showFeedback(res?.error || "Sync could not be turned off.", true);
+        else showFeedback("Sync is off. Drive files were left in place.", false);
+        return refresh();
+      })
+      .catch((error: unknown) => {
+        showFeedback(error instanceof Error ? error.message : "Sync could not be turned off.", true);
+      })
+      .finally(() => {
+        disable.disabled = !syncOn;
       });
   });
 
   now.addEventListener("click", () => {
+    if (!syncOn) {
+      showFeedback("Turn Assist Sync on before syncing.", true);
+      return;
+    }
     now.disabled = true;
     void chrome.runtime
       .sendMessage({ type: "CORTEX_ASSISTANT_SYNC", action: "now" })
@@ -119,7 +159,7 @@ export function mountAssistantSyncPanel(): void {
         showFeedback(error instanceof Error ? error.message : "Sync did not finish.", true);
       })
       .finally(() => {
-        now.disabled = false;
+        now.disabled = !syncOn;
       });
   });
 

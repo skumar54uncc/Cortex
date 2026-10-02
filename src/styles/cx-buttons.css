@@ -1,0 +1,119 @@
+/**
+ * Shared button primitives for options, popup, and onboarding.
+ * Expects Cortex theme tokens (--cx-accent, --cx-focus, --cx-border, …)
+ * or the options bridge aliases defined in options.css.
+ */
+
+.cx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  min-height: 36px;
+  padding: 0 16px;
+  font-family: inherit;
+  font: var(--cx-ts-small, 500 13px/1.45 system-ui, sans-serif);
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease,
+    transform 80ms ease-out;
+}
+
+.cx-btn[hidden] {
+  display: none;
+}
+
+.cx-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.cx-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.cx-btn:focus-visible {
+  outline: 2px solid var(--cx-focus, var(--focus-ring, rgba(199, 42, 9, 0.45)));
+  outline-offset: 2px;
+}
+
+.cx-btn-primary {
+  border-color: var(--cx-accent, var(--accent, #a82207));
+  background: var(--cx-accent, var(--accent, #a82207));
+  color: #fffef9;
+}
+
+.cx-btn-primary:hover:not(:disabled) {
+  background: var(--cx-accent-hover, var(--accent-hover, #8a1c05));
+  border-color: var(--cx-accent-hover, var(--accent-hover, #8a1c05));
+}
+
+.cx-btn-secondary {
+  border-color: var(--cx-border, var(--border-strong, rgba(28, 25, 23, 0.14)));
+  background: var(--cx-surface, var(--surface, #f0eee9));
+  color: var(--cx-text, var(--text, #1c1917));
+}
+
+.cx-btn-secondary:hover:not(:disabled) {
+  background: var(--cx-accent-soft, var(--accent-subtle, rgba(199, 42, 9, 0.14)));
+}
+
+.cx-btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--cx-text-muted, var(--text-secondary, #57534e));
+}
+
+.cx-btn-ghost:hover:not(:disabled) {
+  background: var(--cx-accent-soft, var(--accent-subtle, rgba(199, 42, 9, 0.14)));
+  color: var(--cx-text, var(--text, #1c1917));
+}
+
+.cx-btn-danger {
+  border-color: var(--cx-danger, var(--danger, #b91c1c));
+  background: transparent;
+  color: var(--cx-danger, var(--danger, #b91c1c));
+}
+
+.cx-btn-danger:hover:not(:disabled) {
+  background: var(--cx-danger-soft, rgba(239, 68, 68, 0.12));
+}
+
+.cx-btn-sm {
+  min-height: 28px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.cx-btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  border: none;
+  background: none;
+  color: var(--cx-text-muted, var(--text-secondary, #57534e));
+  font: var(--cx-ts-caption, 500 11px/1.45 system-ui, sans-serif);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.cx-btn-link:hover {
+  color: var(--cx-accent, var(--accent, #a82207));
+}
+
+.cx-btn-link:focus-visible {
+  outline: 2px solid var(--cx-focus, var(--focus-ring, rgba(199, 42, 9, 0.45)));
+  outline-offset: 2px;
+  border-radius: 4px;
+}

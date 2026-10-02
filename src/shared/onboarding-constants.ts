@@ -1,9 +1,15 @@
-/** chrome.storage.local — set when user finishes welcome flow */
+/** chrome.storage.local - set when user finishes welcome flow */
 export const ONBOARDING_DONE_KEY = "cortex_onboarding_done_v1";
 
 /** One-time after fresh install: history scan + open-tab indexing kickoff */
 export const FIRST_INSTALL_BACKFILL_DONE_KEY =
   "cortex_first_install_backfill_done_v1";
+
+/**
+ * Affirmative in-product consent before live indexing or first-install history
+ * backfill (CWS User Data FAQ: browsing activity needs UI consent, not listing alone).
+ */
+export const INDEXING_CONSENT_KEY = "cortex_indexing_consent_v1";
 
 /** First-install history backfill matches Settings → Import (30 days, 500 URLs). */
 export const FIRST_INSTALL_HISTORY_DAYS = 30;

@@ -1,13 +1,14 @@
 /* Overlay runs in Shadow DOM: duplicate theme tokens on :host */
 :host {
   /* Colour tokens are injected from src/shared/theme.ts (light + dark) */
-  --cx-brand-font: system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --cx-brand-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", sans-serif;
 
   position: fixed;
   inset: 0;
   z-index: 2147483646;
-  font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  font-size: 14px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
   /* Aligned digits in counts, timestamps and table rows. */
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -712,7 +713,7 @@
   padding: 10px 14px;
   min-height: 40px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--cx-text-subtle);
   cursor: pointer;
@@ -1407,7 +1408,8 @@
   color: var(--cx-accent);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.82em;
+  /* Caption step; absolute size keeps superscript readable vs body. */
+  font-size: 11px;
   vertical-align: super;
   padding: 0 2px;
 }
@@ -1434,11 +1436,14 @@
 .cortex-chat-error {
   font-size: 14px;
   line-height: 1.45;
+  color: var(--cx-text);
 }
 
 .cortex-chat-error-hint {
   margin-top: 8px;
   font-size: 13px;
+  color: var(--cx-text-muted);
+  padding: 0;
 }
 
 .cortex-chat-error-link {
@@ -1970,6 +1975,22 @@
 .cortex-chat-stopped {
   margin: 6px 0 0;
   font-size: 12px;
+}
+
+/* Error / empty copy: primary text + muted detail on dark surfaces (AA). */
+:host([data-theme="dark"]) .cortex-chat-error,
+:host([data-theme="dark"]) .cortex-empty-title,
+:host([data-theme="dark"]) .cortex-chat-empty-title,
+:host([data-theme="dark"]) .cortex-digest-empty-title {
+  color: var(--cx-text);
+}
+
+:host([data-theme="dark"]) .cortex-chat-error-hint,
+:host([data-theme="dark"]) .cortex-chat-empty-hint,
+:host([data-theme="dark"]) .cortex-digest-empty-hint,
+:host([data-theme="dark"]) .cortex-empty-tips,
+:host([data-theme="dark"]) .cortex-muted {
+  color: var(--cx-text-muted);
 }
 
 /* Confidence badges in dark theme (AA on --cx-surface #1e1c1a) */
@@ -2574,7 +2595,7 @@ a.cortex-person-name:focus-visible {
   border-radius: 4px;
   background: var(--cx-hover);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.92em;
+  font-size: 13px; /* --cx-ts-small */
 }
 
 .cortex-msg-rich .cortex-md-pre {
@@ -2669,3 +2690,28 @@ a.cortex-person-name:focus-visible {
 .cortex-digest-site-link:focus-visible {
   text-decoration: underline;
 }
+
+/* Coach marks */
+.cortex-coach{position:absolute;z-index:40;box-sizing:border-box;padding:12px 14px 10px;border-radius:var(--cx-radius);background:var(--cx-surface);color:var(--cx-text);border:1px solid var(--cx-border);box-shadow:0 8px 24px rgba(28,25,23,.16)}
+.cortex-coach-arrow{position:absolute;top:-6px;width:12px;height:12px;background:var(--cx-surface);border-left:1px solid var(--cx-border);border-top:1px solid var(--cx-border);transform:rotate(45deg)}
+.cortex-coach--above .cortex-coach-arrow{top:auto;bottom:-6px;border-left:0;border-top:0;border-right:1px solid var(--cx-border);border-bottom:1px solid var(--cx-border)}
+.cortex-coach-title{margin:0 0 4px;font-size:14px;font-weight:700;line-height:1.3}
+.cortex-coach-body{margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--cx-text-muted)}
+.cortex-coach-actions{display:flex;justify-content:flex-end}
+.cortex-coach-dismiss{font:inherit;font-size:13px;font-weight:600;min-height:32px;padding:0 12px;border:0;border-radius:var(--cx-radius-sm);cursor:pointer;background:var(--cx-accent);color:#fffef9}
+.cortex-coach-dismiss:focus-visible{outline:2px solid var(--cx-accent);outline-offset:2px}
+
+/* Feedback card */
+.cortex-feedback{position:absolute;right:16px;bottom:16px;z-index:35;width:min(300px,calc(100% - 32px));box-sizing:border-box;padding:12px;border-radius:var(--cx-radius);background:var(--cx-surface);border:1px solid var(--cx-border);box-shadow:0 10px 28px rgba(28,25,23,.14);display:flex;flex-direction:column;gap:8px}
+.cortex-feedback-title{margin:0;font-size:14px;font-weight:700;line-height:1.3}
+.cortex-feedback-hint{margin:0;font-size:12px;line-height:1.45}
+.cortex-feedback-thumbs{display:flex;gap:8px}
+.cortex-feedback-thumb,.cortex-feedback-primary,.cortex-feedback-link,.cortex-feedback-dismiss{font:inherit;font-size:13px;font-weight:600;cursor:pointer;min-height:32px;border-radius:var(--cx-radius-sm)}
+.cortex-feedback-thumb{background:var(--cx-bg);color:var(--cx-text);border:1px solid var(--cx-border);padding:0 10px}
+.cortex-feedback-thumb.is-active{border-color:var(--cx-accent);background:var(--cx-accent-soft)}
+.cortex-feedback-note{width:100%;box-sizing:border-box;resize:vertical;min-height:52px;padding:8px 10px;border-radius:var(--cx-radius-sm);border:1px solid var(--cx-border);background:var(--cx-bg);color:var(--cx-text);font:inherit;font-size:13px;line-height:1.45;user-select:text;-webkit-user-select:text}
+.cortex-feedback-note:focus-visible,.cortex-feedback-thumb:focus-visible,.cortex-feedback-primary:focus-visible,.cortex-feedback-link:focus-visible,.cortex-feedback-dismiss:focus-visible{outline:2px solid var(--cx-accent);outline-offset:1px}
+.cortex-feedback-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cortex-feedback-primary{background:var(--cx-accent);color:#fffef9;border:1px solid transparent;padding:0 10px}
+.cortex-feedback-link,.cortex-feedback-dismiss{background:transparent;border:0;padding:0 8px;color:var(--cx-link)}
+.cortex-feedback-dismiss{color:var(--cx-text-muted);margin-left:auto}

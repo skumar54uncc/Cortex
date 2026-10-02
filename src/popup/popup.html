@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cortex</title>
     <link rel="stylesheet" href="cortex-theme.css" />
+    <link rel="stylesheet" href="cx-buttons.css" />
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
@@ -35,18 +36,24 @@
             aria-label="Refresh stats"
             title="Refresh library stats"
           >
-            <span class="cx-stats-refresh-icon" aria-hidden="true">↻</span>
+            Refresh
           </button>
         </div>
-        <p class="cx-tagline">Your AI assistant's memory of what you browse and read.</p>
+        <p class="cx-tagline">Private library of pages you read on this device.</p>
+        <p id="cx-privacy-sticky" class="cx-privacy-sticky">
+          Cortex indexes pages you read on this device (titles, URLs, readable text). Incognito is never indexed.
+          <a href="options.html#cx-sec-privacy" target="_blank" class="cx-privacy-sticky-link">Privacy controls</a>
+        </p>
         <div id="cx-privacy-blurb" class="cx-privacy-blurb">
           <p class="cx-privacy-note">
-            Indexed data stays on your device. Live indexing uses no network. The embedding model
-            is bundled with the extension. Optional Cloud Chat (off by default) can send retrieved
-            snippets to Google Gemini only when you enable it in settings.
+            The searchable index and embedding model stay on your device. Fetching a page URL for
+            history import or PDF text can use the network. Optional Assistant Sync (off until Enable)
+            copies memory into your Google Drive folder named Cortex Memory with the drive.file
+            permission only. Optional Cloud Chat can send retrieved snippets to Google Gemini only
+            when you enable it in settings.
           </p>
           <button type="button" id="cx-privacy-ack" class="cx-privacy-ack">
-            Got it, do not show again
+            Do not show again
           </button>
         </div>
       </header>
@@ -55,18 +62,18 @@
         <p class="cx-status-line" role="status">
           <span class="cx-status-prefix">Indexing</span>
           <span class="cx-status-sep" aria-hidden="true">·</span>
-          <strong id="cx-indexing-state" class="cx-indexing-state">Active</strong>
+          <strong id="cx-indexing-state" class="cx-indexing-state"></strong>
           <span id="cx-indexing-detail" class="cx-status-detail"></span>
         </p>
         <p id="cx-current-tab" class="cx-current-tab" hidden></p>
       </section>
 
       <div class="cx-popup-actions">
-        <button type="button" id="cx-open-search" class="cx-btn cx-btn-primary cx-btn-hero">
+        <button type="button" id="cx-open-search" class="cx-btn cx-btn-primary">
           Open search
         </button>
         <button type="button" id="cx-connect-assistant" class="cx-btn cx-btn-secondary">
-          Connect with your AI assistant
+          Assist Sync
         </button>
         <button type="button" id="cx-open-settings" class="cx-btn-link">
           Privacy &amp; settings
@@ -74,9 +81,10 @@
       </div>
 
       <section id="cx-empty-state" class="cx-popup-empty" hidden>
-        <p class="cx-empty-lead">Welcome. Browse a few pages to build your private library.</p>
+        <p class="cx-empty-lead">No pages in your library yet.</p>
+        <p class="cx-empty-next">Browse normally. Cortex saves pages on this device.</p>
         <button type="button" id="cx-empty-get-started" class="cx-btn cx-btn-primary">
-          Get started
+          Open welcome
         </button>
       </section>
 

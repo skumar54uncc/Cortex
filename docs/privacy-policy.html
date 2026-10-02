@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cortex — Privacy policy</title>
+    <title>Cortex  - Privacy policy</title>
     <style>
       :root {
         color-scheme: light dark;
@@ -99,18 +99,28 @@
         alt=""
       />
       <div>
-        <h1>Cortex — Privacy policy</h1>
+        <h1>Cortex  - Privacy policy</h1>
         <p class="muted policy-header-meta">Last updated: October 2026</p>
       </div>
     </header>
 
     <p>
       <strong>Summary:</strong> Cortex is a <strong>local-first</strong> Chrome extension. It builds a
-      searchable index of <strong>readable page text</strong> from sites you visit. Indexing and search run
-      <strong>on your device</strong> using IndexedDB and optional on-device ML. <strong>Optional cloud
-      chat</strong> (Google Gemini) sends only what you choose when you enable it in settings—typically
-      your question plus retrieved snippets—not your entire browsing history. Cortex does not operate a
-      backend that receives your indexed content.
+      searchable index of <strong>readable page text</strong> from sites you visit, only after you agree
+      in the product UI. Indexing and search run <strong>on your device</strong> using IndexedDB and
+      optional on-device ML. <strong>Optional Assistant Sync</strong> copies that memory into a folder
+      you own in Google Drive after you press Enable. <strong>Optional cloud chat</strong> (Google Gemini)
+      sends only what you choose when you enable it in settings: typically your question plus retrieved
+      snippets, not your entire browsing history. Cortex does not operate a backend that receives your
+      indexed content.
+    </p>
+
+    <p>
+      <strong>Google APIs Limited Use:</strong> Cortex's use of information received from Google APIs
+      adheres to the
+      <a href="https://developer.chrome.com/docs/webstore/program-policies/user-data-faq"
+        >Chrome Web Store User Data Policy</a
+      >, including the Limited Use requirements.
     </p>
 
     <h2>Data collected by Cortex</h2>
@@ -151,12 +161,30 @@
       <strong>Cortex does not sell your data.</strong>
     </p>
 
+    <h2>When indexing starts</h2>
+    <p>
+      Cortex does not begin indexing or history import on install by itself. On first run, the welcome
+      page asks you to <strong>Start indexing</strong>. Until you agree, or until you press
+      <strong>Allow indexing</strong> or <strong>Scan history</strong> in Settings, no new browsing
+      activity is stored.
+    </p>
+    <p>
+      After you agree, Cortex may index readable http(s) pages you open, and may run a one-time scan of
+      up to 500 URLs from the last 30 days of browser history to seed the library. You can also start a
+      history scan anytime from Settings.
+    </p>
+    <p>
+      <strong>Incognito:</strong> Cortex uses <code>incognito: not_allowed</code>. Incognito windows are
+      never indexed or synced. Sensitive sites (banking, health, email, login pages), your blocklist, and
+      admin policies are skipped before anything is read or stored.
+    </p>
+
     <h2>Optional Assistant Sync</h2>
     <p>
       Assistant Sync is off until you press Enable in settings. When it is on, Cortex copies a memory of
       your browsing into <strong>your own Google Drive</strong>, in one folder named Cortex Memory. That
       copy can include page titles, URLs, excerpts of pages you read for 5 minutes or more, searches,
-      LinkedIn profiles you opened, and topic labels.
+      LinkedIn profiles you opened, and topic labels. Drive writes run only while sync is enabled.
     </p>
     <p>
       The Google permission is <code>drive.file</code>. It lets Cortex create and edit only the files it
@@ -173,17 +201,18 @@
     <h2>Optional cloud chat (Gemini)</h2>
     <p>
       If you turn on cloud chat and add a Google Gemini API key, prompts are sent
-      <strong>from your browser directly to Google’s API</strong> under Google’s terms—not through Cortex
+      <strong>from your browser directly to Google's API</strong> under Google's terms, not through Cortex
       infrastructure. You can disable cloud chat at any time and remove your key from settings.
     </p>
 
     <h2>Permissions (Chrome)</h2>
     <ul>
-      <li><strong>tabs / broad host access:</strong> Read active-tab context for indexing and show the in-page overlay when you use Cortex.</li>
+      <li><strong>tabs / broad host access:</strong> Read active-tab context for indexing pages you visit and show the in-page overlay. Broad hosts are required for the core single purpose (index what you read on any site).</li>
       <li><strong>storage:</strong> Saves settings and local extension state.</li>
-      <li><strong>history:</strong> Used only for optional bulk import features you trigger (e.g. first-install backfill), not continuous surveillance.</li>
-      <li><strong>scripting / offscreen / alarms:</strong> Required for MV3 lifecycle, embeddings, and periodic maintenance (e.g. storage headroom). The 15 minute Assistant Sync alarm runs only after you enable sync.</li>
-      <li><strong>identity:</strong> Google sign-in, used only when you press Enable for Assistant Sync.</li>
+      <li><strong>history:</strong> Used for optional bulk import after you agree on the welcome page or press Scan history in Settings, not continuous surveillance.</li>
+      <li><strong>scripting / offscreen / alarms:</strong> Required for MV3 lifecycle, embeddings, and periodic maintenance. Assistant Sync work runs only while sync is enabled.</li>
+      <li><strong>identity:</strong> Google sign-in, used only when you press Enable for Assistant Sync (interactive token from that click).</li>
+      <li><strong>notifications:</strong> Optional notice when a first history scan starts and finishes.</li>
       <li><strong>https pages:</strong> The same page access used for indexing also lets Cortex create and update the Cortex Memory file in your Drive after you press Enable. Enable asks only for the Drive file permission.</li>
     </ul>
 

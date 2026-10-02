@@ -32,6 +32,7 @@ class Sheets implements DriveApi {
   failUntil = 0;
   hardStatus: number | null = null;
   creates = 0;
+  jsonFiles = new Map<string, string>();
 
   constructor() {
     this.files.set("folder", { name: "Cortex Memory", trashed: false });
@@ -41,6 +42,17 @@ class Sheets implements DriveApi {
 
   private next(): string {
     return `new-${this.files.size + 1}`;
+  }
+
+  async upsertJsonFile(name: string, parentId: string, body: string, existingId: string | null): Promise<string> {
+    if (existingId && this.files.has(existingId)) {
+      this.jsonFiles.set(existingId, body);
+      return existingId;
+    }
+    const id = this.next();
+    this.files.set(id, { name, trashed: false });
+    this.jsonFiles.set(id, body);
+    return id;
   }
 
   async createFolder(name: string): Promise<string> {
@@ -227,6 +239,8 @@ describe("sync engine", () => {
     const about = (sheets.tabs.get("file")?.get("About") ?? []).map((row) => row[0]);
     expect(about.at(-1)).toBe("schema_version: 3");
     expect(about.some((line) => line?.includes("Rows: 1 visits"))).toBe(true);
+    expect(about).toContain("Questions");
+    expect(about.some((line) => line?.includes("JSON backup"))).toBe(true);
     expect([...sheets.files.values()].some((file) => file.name.startsWith("Cortex Memory Archive"))).toBe(false);
   });
 

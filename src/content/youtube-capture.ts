@@ -49,8 +49,11 @@ async function fetchWindows(p: PlayerInfo | null): Promise<TranscriptWindow[]> {
   const url = track ? captionJson3Url(track.baseUrl) : null;
   if (url) {
     try {
-      // youtube.com itself, the page the user is already on: no new endpoint.
-      const res = await fetch(url, { credentials: "include" });
+      // captionJson3Url already restricts to https youtube.com /api/timedtext.
+      // Omit cookies: public captions work without auth; private/age-gated
+      // videos fall through to the on-page transcript panel instead of sending
+      // the user's YouTube session cookies on a credentialed fetch.
+      const res = await fetch(url, { credentials: "omit" });
       if (res.ok) {
         const windows = json3ToWindows(await res.json());
         if (windows.length) return windows;

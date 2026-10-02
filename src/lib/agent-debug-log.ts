@@ -1,13 +1,15 @@
-// #region agent log
 /**
- * Disabled in shipped builds: localhost ingest must not run for end users
- * (telemetry / accidental data leak if a listener is running).
- * Set to true only in local dev when intentionally using the ingest server.
+ * Optional local-dev ingest hook. Shipped builds keep this a pure noop:
+ * no loopback ingest URL, no fetch, no session ids — avoids accidental telemetry
+ * or data leak if a listener is running on the machine.
+ *
+ * To use during Cursor DEBUG MODE only, temporarily restore a fetch to your
+ * local ingest server inside the enabled branch below (never commit enabled).
  */
 const CORTEX_AGENT_DEBUG_INGEST_ENABLED = false;
 
 /** Optional debug ingest for local Cursor DEBUG MODE — noop unless enabled above. */
-export function agentDebugLog(p: {
+export function agentDebugLog(_p: {
   hypothesisId: string;
   location: string;
   message: string;
@@ -15,19 +17,5 @@ export function agentDebugLog(p: {
   runId?: string;
 }): void {
   if (!CORTEX_AGENT_DEBUG_INGEST_ENABLED) return;
-
-  fetch("http://127.0.0.1:7424/ingest/20586d25-1e13-43d3-91c2-b7a736125a56", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "4b56d4",
-    },
-    body: JSON.stringify({
-      sessionId: "4b56d4",
-      timestamp: Date.now(),
-      ...p,
-      data: p.data ?? {},
-    }),
-  }).catch(() => {});
+  // Intentionally empty when disabled. Do not add a hardcoded ingest URL here.
 }
-// #endregion agent log

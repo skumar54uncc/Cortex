@@ -1,21 +1,24 @@
 /**
- * Cortex brand: warm beige surfaces (#e4e2dd) + accent (#c72a09).
- * Imported before popup/options component CSS.
+ * Cortex brand tokens for extension pages (popup, options, onboarding).
+ * Warm beige surfaces (#e4e2dd) + accent (#a82207).
+ * Overlay/side panel light+dark tokens live in src/shared/theme.ts and map
+ * accent light to #b8250a (contrast on header gradient). Settings stay light.
+ * Shared buttons: cx-buttons.css. Type steps: --cx-ts-* below.
  */
 :root {
   /* System UI face: the same sans Chrome uses for its own chrome. */
   --cx-brand-font:
-    system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", sans-serif;
   --cx-font-body:
-    system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", sans-serif;
   --cx-font-mono:
     ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
 
-  --cx-ts-display: 700 19px/1.15 var(--cx-brand-font);
-  --cx-ts-title: 700 14px/1.35 var(--cx-font-body);
-  --cx-ts-body: 400 14px/1.5 var(--cx-font-body);
-  --cx-ts-small: 500 13px/1.45 var(--cx-font-body);
-  --cx-ts-caption: 500 11px/1.45 var(--cx-font-body);
+  --cx-ts-display: 700 20px/1.2 var(--cx-brand-font);
+  --cx-ts-title: 700 15px/1.4 var(--cx-font-body);
+  --cx-ts-body: 400 15px/1.55 var(--cx-font-body);
+  --cx-ts-small: 500 13px/1.5 var(--cx-font-body);
+  --cx-ts-caption: 500 12px/1.45 var(--cx-font-body);
   --cx-ts-metric: 700 22px/1.2 var(--cx-font-body);
 
   --cx-bg: #e4e2dd;

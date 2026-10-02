@@ -2,6 +2,7 @@ import { canonicalizeUrl, domainFromUrl } from "./canonical-url";
 import { assistantSyncDb } from "./db";
 import { syncDenyReason } from "./denylist";
 import { buildExcerpt } from "./excerpt";
+import { COMPANY_SECTIONS, HOW_FOUND, type CompanySection, type HowFound } from "./linkedin-selectors";
 import { linkedInSyncRow } from "./linkedin-sync";
 import { pageTypeForUrl } from "./page-type";
 import { redactForSync } from "./redact-sync";
@@ -22,6 +23,19 @@ export interface FinalizedVisitInput {
   userDenylist: string[];
   referrer: string | null;
   linkedInDocument: Document | null;
+  /**
+   * Parsed LinkedIn fields from index time (no Document needed).
+   * Used when extract.js already sent a person/company with the visit.
+   */
+  linkedInFields?: {
+    kind: "person" | "company";
+    name: string;
+    headline?: string;
+    company?: string;
+    profileUrl: string;
+    howFound?: string;
+    sectionViewed?: string;
+  } | null;
   excerptMinDwellMinutes?: number;
   /** Writes nothing unless the user has turned sync on. */
   syncEnabled: boolean;
@@ -110,31 +124,65 @@ export async function captureFinalizedVisit(input: FinalizedVisitInput): Promise
     });
   }
 
-  if (input.linkedInDocument) {
-    const row = linkedInSyncRow(input.linkedInDocument, input.url, input.referrer);
-    if (row?.kind === "person") {
-      await assistantSyncDb.people.put({
-        id: input.id,
-        visitedAt: input.visitedAt,
-        name: row.person.name,
-        headline: row.person.headline,
-        company: row.person.company,
-        profileUrl: row.person.profileUrl,
-        howFound: row.person.howFound,
-        dwellMinutes,
-        maxScrollPct,
-      });
-    } else if (row?.kind === "company") {
-      await assistantSyncDb.companies.put({
-        id: input.id,
-        visitedAt: input.visitedAt,
-        company: row.company.company,
-        sectionViewed: row.company.sectionViewed,
-        linkedinUrl: row.company.linkedinUrl,
-        dwellMinutes,
-      });
-    }
+  const linkedRow = input.linkedInDocument
+    ? linkedInSyncRow(input.linkedInDocument, input.url, input.referrer)
+    : fieldsToLinkedRow(input.linkedInFields ?? null);
+  if (linkedRow?.kind === "person") {
+    await assistantSyncDb.people.put({
+      id: input.id,
+      visitedAt: input.visitedAt,
+      name: linkedRow.person.name,
+      headline: linkedRow.person.headline,
+      company: linkedRow.person.company,
+      profileUrl: linkedRow.person.profileUrl,
+      howFound: linkedRow.person.howFound,
+      dwellMinutes,
+      maxScrollPct,
+    });
+  } else if (linkedRow?.kind === "company") {
+    await assistantSyncDb.companies.put({
+      id: input.id,
+      visitedAt: input.visitedAt,
+      company: linkedRow.company.company,
+      sectionViewed: linkedRow.company.sectionViewed,
+      linkedinUrl: linkedRow.company.linkedinUrl,
+      dwellMinutes,
+    });
   }
 
   return { stored: true };
+}
+
+function asHowFound(value: string | undefined): HowFound | "" {
+  return value && (HOW_FOUND as readonly string[]).includes(value) ? (value as HowFound) : "";
+}
+
+function asCompanySection(value: string | undefined): CompanySection | "" {
+  return value && (COMPANY_SECTIONS as readonly string[]).includes(value) ? (value as CompanySection) : "";
+}
+
+function fieldsToLinkedRow(
+  fields: FinalizedVisitInput["linkedInFields"]
+): ReturnType<typeof linkedInSyncRow> {
+  if (!fields || !fields.name.trim() || !fields.profileUrl.trim()) return null;
+  if (fields.kind === "company") {
+    return {
+      kind: "company",
+      company: {
+        company: redactForSync(fields.name.replace(/\s+/g, " ").trim()),
+        sectionViewed: asCompanySection(fields.sectionViewed),
+        linkedinUrl: fields.profileUrl,
+      },
+    };
+  }
+  return {
+    kind: "person",
+    person: {
+      name: redactForSync(fields.name.replace(/\s+/g, " ").trim()),
+      headline: redactForSync((fields.headline ?? "").replace(/\s+/g, " ").trim()),
+      company: redactForSync((fields.company ?? "").replace(/\s+/g, " ").trim()),
+      profileUrl: fields.profileUrl,
+      howFound: asHowFound(fields.howFound),
+    },
+  };
 }

@@ -98,3 +98,53 @@ describe("loadPopup snapshot path", () => {
     expect(document.querySelector("#cx-pages")?.textContent).toBe("10");
   });
 });
+
+describe("applyIndexingStatus", () => {
+  it("shows Off when consent is missing, never Active", async () => {
+    const { applyIndexingStatus } = await import("./popup-stats");
+    const indexingState = document.createElement("strong");
+    const indexingDetail = document.createElement("span");
+    applyIndexingStatus(
+      { indexingState, indexingDetail },
+      { indexingConsented: false, indexingPaused: false }
+    );
+    expect(indexingState.textContent).toBe("Off");
+    expect(indexingState.className).toContain("cx-indexing-state--off");
+    expect(indexingDetail.textContent).toBe("");
+  });
+
+  it("shows Paused when consented but paused", async () => {
+    const { applyIndexingStatus } = await import("./popup-stats");
+    const indexingState = document.createElement("strong");
+    const indexingDetail = document.createElement("span");
+    applyIndexingStatus(
+      { indexingState, indexingDetail },
+      { indexingConsented: true, indexingPaused: true }
+    );
+    expect(indexingState.textContent).toBe("Paused");
+    expect(indexingState.className).toContain("cx-indexing-state--paused");
+  });
+
+  it("shows Active only when consented and not paused", async () => {
+    const { applyIndexingStatus } = await import("./popup-stats");
+    const indexingState = document.createElement("strong");
+    const indexingDetail = document.createElement("span");
+    applyIndexingStatus(
+      { indexingState, indexingDetail },
+      { indexingConsented: true, indexingPaused: false }
+    );
+    expect(indexingState.textContent).toBe("Active");
+    expect(indexingState.className).toContain("cx-indexing-state--active");
+  });
+
+  it("prefers Off over Paused when consent is missing", async () => {
+    const { applyIndexingStatus } = await import("./popup-stats");
+    const indexingState = document.createElement("strong");
+    const indexingDetail = document.createElement("span");
+    applyIndexingStatus(
+      { indexingState, indexingDetail },
+      { indexingConsented: false, indexingPaused: true }
+    );
+    expect(indexingState.textContent).toBe("Off");
+  });
+});

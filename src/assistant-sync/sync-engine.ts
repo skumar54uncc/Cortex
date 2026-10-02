@@ -16,6 +16,7 @@ import {
 import { syncDenyReason } from "./denylist";
 import {
   appendNewRows,
+  DRIVE_JSON_BACKUP_NAME,
   googleStatus,
   inspectMemory,
   reenableMemory,
@@ -90,6 +91,7 @@ export interface SyncTickResult {
   created: false;
   error?: string;
   warning?: string;
+  backupFileId?: string | null;
 }
 
 export interface SyncClock {
@@ -101,6 +103,10 @@ export interface SyncClock {
   fromUser: boolean;
   sleep: (ms: number) => Promise<void>;
   random?: () => number;
+  /** LinkedIn people/companies already in the local Cortex library. */
+  loadLibraryPeople?: () => Promise<HistoryPerson[]>;
+  backupFileId?: string | null;
+  saveBackupId?: (id: string | null) => Promise<void>;
 }
 
 /** Exponential delay with jitter in [0.5, 1]. `failureCount` starts at 1. */
@@ -459,6 +465,14 @@ export async function runSyncTick(deps: SyncClock): Promise<SyncTickResult> {
     }
     const fileId = deps.ids.fileId;
     await ensureHeaders(deps, state, fileId);
+    if (deps.loadLibraryPeople) {
+      const libraryPeople = await deps.loadLibraryPeople();
+      await seedPeopleFromLibrary({
+        people: libraryPeople,
+        now: deps.now,
+        retentionDays: state.retentionDays,
+      });
+    }
     const synced = await syncedSet();
     await reconcileSheet(deps, state, fileId, synced);
     await purgeRetention(deps, state, fileId);
@@ -466,12 +480,27 @@ export async function runSyncTick(deps: SyncClock): Promise<SyncTickResult> {
     const appended = await flushPending(deps, state, fileId, synced);
     await upsertDaily(deps, state, fileId, synced);
     const warning = await rewriteAbout(deps, state, fileId);
+    let backupFileId: string | null | undefined = deps.backupFileId;
+    let backupWarning: string | undefined;
+    try {
+      backupFileId = await upsertDriveJsonBackup(deps, state);
+    } catch {
+      backupWarning =
+        "The live sheet updated. The JSON backup file in Drive could not be written.";
+    }
     state.consecutiveFailures = 0;
     state.stoppedUntilAlarm = false;
     state.lastError = "";
     state.lastSyncedAt = deps.now;
     await writeSyncEngineState(state);
-    return { status: "ready", appended, created: false, ...(warning ? { warning } : {}) };
+    const combinedWarning = [warning, backupWarning].filter(Boolean).join(" ");
+    return {
+      status: "ready",
+      appended,
+      created: false,
+      backupFileId: backupFileId ?? null,
+      ...(combinedWarning ? { warning: combinedWarning } : {}),
+    };
   } catch (error) {
     if (error instanceof SyncStopped) {
       return { status: "stopped", appended: 0, created: false, error: SYNC_STOPPED_MESSAGE };
@@ -481,6 +510,87 @@ export async function runSyncTick(deps: SyncClock): Promise<SyncTickResult> {
     await writeSyncEngineState(state);
     return { status: "error", appended: 0, created: false, error: message };
   }
+}
+
+/**
+ * Copy LinkedIn people/companies already stored in Cortex onto Assist Sync
+ * People/Companies rows when that profile URL was visited inside retention.
+ * Runs on every sync tick. Does not call Google.
+ */
+export async function seedPeopleFromLibrary(input: {
+  people: HistoryPerson[];
+  now: number;
+  retentionDays: number;
+}): Promise<number> {
+  if (!input.people.length) return 0;
+  const cutoff = retentionCutoffMs(input.now, input.retentionDays);
+  const peopleByUrl = new Map(
+    input.people.map((person) => [canonicalizeUrl(person.profileUrl) ?? person.profileUrl, person])
+  );
+  const visits = await assistantSyncDb.visits.where("visitedAt").aboveOrEqual(cutoff).toArray();
+  let added = 0;
+  for (const visit of visits) {
+    const linked = peopleByUrl.get(visit.url);
+    if (!linked) continue;
+    if (linked.kind === "person" && linked.name.trim()) {
+      const existing = await assistantSyncDb.people.get(visit.id);
+      if (existing) continue;
+      await assistantSyncDb.people.put({
+        id: visit.id,
+        visitedAt: visit.visitedAt,
+        name: redactForSync(linked.name),
+        headline: redactForSync(linked.headline),
+        company: redactForSync(linked.company),
+        profileUrl: canonicalizeUrl(linked.profileUrl) ?? linked.profileUrl,
+        howFound: "",
+        dwellMinutes: visit.dwellMinutes,
+        maxScrollPct: visit.maxScrollPct,
+      });
+      added += 1;
+    } else if (linked.kind === "company" && (linked.company.trim() || linked.name.trim())) {
+      const existing = await assistantSyncDb.companies.get(visit.id);
+      if (existing) continue;
+      await assistantSyncDb.companies.put({
+        id: visit.id,
+        visitedAt: visit.visitedAt,
+        company: redactForSync(linked.company.trim() || linked.name),
+        sectionViewed: "",
+        linkedinUrl: canonicalizeUrl(linked.profileUrl) ?? linked.profileUrl,
+        dwellMinutes: visit.dwellMinutes,
+      });
+      added += 1;
+    }
+  }
+  return added;
+}
+
+/** Turn sync off. Leaves Drive files in place unless the user chooses Delete all. */
+export async function disableAssistantSync(): Promise<SyncEngineState> {
+  const state = await readSyncEngineState();
+  const next: SyncEngineState = {
+    ...state,
+    syncEnabled: false,
+    lastError: "",
+    stoppedUntilAlarm: false,
+    consecutiveFailures: 0,
+    backfillPhase: "idle",
+  };
+  await writeSyncEngineState(next);
+  return next;
+}
+
+async function upsertDriveJsonBackup(deps: SyncClock, state: SyncEngineState): Promise<string | null> {
+  if (!deps.ids.folderId) return deps.backupFileId ?? null;
+  const { collectBackup } = await import(
+    /* webpackChunkName: "assistant-sync-json-backup" */ "../lib/export/backup"
+  );
+  const backup = await collectBackup(deps.now);
+  const body = JSON.stringify(backup);
+  const id = await withBackoff(state, deps, () =>
+    deps.api.upsertJsonFile(DRIVE_JSON_BACKUP_NAME, deps.ids.folderId!, body, deps.backupFileId ?? null)
+  );
+  await deps.saveBackupId?.(id);
+  return id;
 }
 
 export async function backfillHistory(input: {
@@ -551,11 +661,11 @@ export async function backfillHistory(input: {
           dwellMinutes: null,
           maxScrollPct: null,
         });
-      } else if (linked?.kind === "company" && linked.company.trim()) {
+      } else if (linked?.kind === "company" && (linked.company.trim() || linked.name.trim())) {
         await assistantSyncDb.companies.put({
           id: visit.id,
           visitedAt: visit.visitedAt,
-          company: redactForSync(linked.company),
+          company: redactForSync(linked.company.trim() || linked.name),
           sectionViewed: "",
           linkedinUrl: canonical,
           dwellMinutes: null,
@@ -581,6 +691,9 @@ export async function enableAssistantSync(input: {
   history?: HistoryVisit[];
   people?: HistoryPerson[];
   loadHistory?: (cutoffMs: number) => Promise<{ visits: HistoryVisit[]; people: HistoryPerson[] }>;
+  loadLibraryPeople?: () => Promise<HistoryPerson[]>;
+  backupFileId?: string | null;
+  saveBackupId?: (id: string | null) => Promise<void>;
   saveIds: (ids: StoredMemoryIds) => Promise<void>;
   sleep: (ms: number) => Promise<void>;
   random?: () => number;
@@ -622,6 +735,9 @@ export async function enableAssistantSync(input: {
     fromUser: true,
     sleep: input.sleep,
     random: input.random,
+    loadLibraryPeople: input.loadLibraryPeople,
+    backupFileId: input.backupFileId,
+    saveBackupId: input.saveBackupId,
   });
   return { ids, created, backfill, tick };
 }

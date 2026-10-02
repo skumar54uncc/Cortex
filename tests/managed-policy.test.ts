@@ -7,7 +7,16 @@ import {
   getEffectiveChatSettings,
   MANAGED_POLICY_KEYS,
 } from "../src/shared/managed-policy";
-import { DEFAULT_USER_SETTINGS, type CortexUserSettings } from "../src/shared/extension-settings";
+import {
+  DEFAULT_USER_SETTINGS,
+  resetUserSettingsMemoryForTests,
+  type CortexUserSettings,
+} from "../src/shared/extension-settings";
+import {
+  GEMINI_API_KEY_STORAGE_KEY,
+  resetGeminiApiKeyStoreForTests,
+  setGeminiApiKey,
+} from "../src/shared/gemini-api-key";
 import { createChromeStorageLocalMock } from "./helpers/chrome-storage-mock";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -40,6 +49,8 @@ function installChrome(managed: Record<string, unknown> | "throws", local: Recor
 }
 
 afterEach(() => {
+  resetUserSettingsMemoryForTests();
+  resetGeminiApiKeyStoreForTests();
   // @ts-expect-error test cleanup
   delete globalThis.chrome;
 });
@@ -196,5 +207,40 @@ describe("reading chrome.storage.managed", () => {
     );
     const chat = await getEffectiveChatSettings();
     expect(chat).toEqual({ mode: "auto", cloudEnabled: false, geminiApiKey: "", peopleEnabled: true });
+  });
+
+  it("getEffectiveChatSettings reads the key from the secret store, not cortex_user_settings", async () => {
+    installChrome(
+      {},
+      {
+        cortex_user_settings: {
+          ...DEFAULT_USER_SETTINGS,
+          cloudChatEnabled: true,
+          geminiApiKey: "",
+          chatMode: "auto",
+        },
+        [GEMINI_API_KEY_STORAGE_KEY]: "AIza-secret-store",
+      }
+    );
+    const chat = await getEffectiveChatSettings();
+    expect(chat.geminiApiKey).toBe("AIza-secret-store");
+    expect(chat.cloudEnabled).toBe(true);
+  });
+
+  it("setGeminiApiKey + getEffectiveChatSettings round-trip without writing into settings blob", async () => {
+    const { storage, getAll } = createChromeStorageLocalMock({
+      cortex_user_settings: { ...DEFAULT_USER_SETTINGS, cloudChatEnabled: true },
+    });
+    globalThis.chrome = {
+      storage: { ...storage, managed: { get: (_k: unknown, cb?: (i: Record<string, unknown>) => void) => { cb?.({}); return Promise.resolve({}); } } },
+      runtime: { id: "test", lastError: undefined },
+    } as unknown as typeof chrome;
+    await setGeminiApiKey("AIza-round-trip");
+    const chat = await getEffectiveChatSettings();
+    expect(chat.geminiApiKey).toBe("AIza-round-trip");
+    const local = getAll();
+    const settings = local.cortex_user_settings as Record<string, unknown>;
+    expect(settings.geminiApiKey).toBe("");
+    expect(local[GEMINI_API_KEY_STORAGE_KEY]).toBe("AIza-round-trip");
   });
 });

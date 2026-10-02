@@ -16,6 +16,14 @@ export interface PopupDomRefs {
   emptyState: HTMLElement;
 }
 
+/** Flags that drive the Indexing · Status line (aligned with SW gate). */
+export interface IndexingStatusFlags {
+  /** Affirmative INDEXING_CONSENT_KEY present. */
+  indexingConsented: boolean;
+  /** User/settings pause (or managed indexingDisabled → paused). */
+  indexingPaused: boolean;
+}
+
 export function fmtBytes(n: number): string {
   if (!Number.isFinite(n) || n < 0) return "0 B";
   const u = ["B", "KB", "MB", "GB"];
@@ -28,10 +36,36 @@ export function fmtBytes(n: number): string {
   return `${v < 10 && i > 0 ? v.toFixed(1) : Math.round(v)} ${u[i]}`;
 }
 
+/**
+ * Honest indexing line: never claim Active when consent is missing or indexing
+ * is paused. Order matches service-worker shouldSkipIndexing (consent before pause).
+ */
+export function applyIndexingStatus(
+  refs: Pick<PopupDomRefs, "indexingState" | "indexingDetail">,
+  flags: IndexingStatusFlags
+): void {
+  if (!flags.indexingConsented) {
+    refs.indexingState.textContent = "Off";
+    refs.indexingState.className = "cx-indexing-state cx-indexing-state--off";
+    refs.indexingDetail.textContent = "";
+    return;
+  }
+  if (flags.indexingPaused) {
+    refs.indexingState.textContent = "Paused";
+    refs.indexingState.className = "cx-indexing-state cx-indexing-state--paused";
+    refs.indexingDetail.textContent = " · Search works; new saves off.";
+    return;
+  }
+  refs.indexingState.textContent = "Active";
+  refs.indexingState.className = "cx-indexing-state cx-indexing-state--active";
+  refs.indexingDetail.textContent = "";
+}
+
 export function applySnapshotToDom(
   snap: StatsSnapshot,
   refs: PopupDomRefs,
-  activeTab?: { url?: string; incognito?: boolean }
+  activeTab: { url?: string; incognito?: boolean } | undefined,
+  indexingConsented: boolean
 ): void {
   refs.statsError.hidden = true;
   refs.statsDl.classList.remove("cx-stats--dimmed");
@@ -42,15 +76,10 @@ export function applySnapshotToDom(
   refs.chunks.textContent = String(snap.chunkCount);
   refs.visits.textContent = String(snap.visitCount);
 
-  if (snap.indexingPaused) {
-    refs.indexingState.textContent = "Paused";
-    refs.indexingState.className = "cx-indexing-state cx-indexing-state--paused";
-    refs.indexingDetail.textContent = " · Search works; new saves off.";
-  } else {
-    refs.indexingState.textContent = "Active";
-    refs.indexingState.className = "cx-indexing-state cx-indexing-state--active";
-    refs.indexingDetail.textContent = "";
-  }
+  applyIndexingStatus(refs, {
+    indexingConsented,
+    indexingPaused: snap.indexingPaused,
+  });
 
   const ct = snap.currentTab;
   const tabUrl = activeTab?.url;
@@ -90,15 +119,19 @@ export function applySnapshotToDom(
   }
 }
 
-export function showEmptyState(refs: PopupDomRefs): void {
+export function showEmptyState(
+  refs: PopupDomRefs,
+  indexingConsented: boolean
+): void {
   refs.emptyState.hidden = false;
   refs.librarySection.hidden = true;
   refs.statsError.hidden = true;
   refs.currentTab.hidden = true;
   refs.storageWrap.hidden = true;
-  refs.indexingState.textContent = "Active";
-  refs.indexingState.className = "cx-indexing-state cx-indexing-state--active";
-  refs.indexingDetail.textContent = "";
+  applyIndexingStatus(refs, {
+    indexingConsented,
+    indexingPaused: false,
+  });
 }
 
 export function showRefreshError(refs: PopupDomRefs, message: string): void {

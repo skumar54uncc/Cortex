@@ -9,6 +9,8 @@ import {
 import { getEffectiveSettings } from "../shared/managed-policy";
 import { applyManagedLockout, stripLockedFields } from "./managed-ui";
 import type { HistoryImportProgress } from "../lib/history-import";
+import { INDEXING_CONSENT_KEY } from "../shared/onboarding-constants";
+import { storageLocalGet } from "../shared/storage-local";
 import { injectBrandFontFacesInto } from "../styles/brand-fonts";
 import { siteBadgeColors, siteInitial } from "../lib/site-badge";
 
@@ -410,6 +412,17 @@ async function saveUserSettings(partial: Partial<CortexUserSettings>): Promise<v
   await setUserSettings(stripLockedFields(partial, eff, user));
 }
 
+async function refreshIndexingConsentUi(): Promise<void> {
+  const group = document.getElementById("cx-indexing-consent-group");
+  if (!group) return;
+  try {
+    const r = await storageLocalGet([INDEXING_CONSENT_KEY]);
+    group.hidden = Boolean(r[INDEXING_CONSENT_KEY]);
+  } catch {
+    group.hidden = false;
+  }
+}
+
 async function loadSettingsUi(): Promise<void> {
   try {
     const v = chrome.runtime.getManifest().version;
@@ -418,7 +431,8 @@ async function loadSettingsUi(): Promise<void> {
   } catch {
     /* not in an extension context */
   }
-  const s = await getUserSettings();
+  void refreshIndexingConsentUi();
+  const [s, eff] = await Promise.all([getUserSettings(), getEffectiveSettings()]);
   syncPauseToggle(s.indexingPaused);
   qs<HTMLTextAreaElement>("#cx-opt-blocklist").value = s.blocklist.join("\n");
 
@@ -439,7 +453,8 @@ async function loadSettingsUi(): Promise<void> {
       r.checked = r.value === (s.panelPreference ?? "auto");
     });
   (qs("#cx-opt-cloud-chat") as HTMLInputElement).checked = s.cloudChatEnabled;
-  (qs("#cx-opt-gemini-key") as HTMLInputElement).value = s.geminiApiKey ?? "";
+  // S-2: key comes from secret store via getEffectiveSettings, not getUserSettings.
+  (qs("#cx-opt-gemini-key") as HTMLInputElement).value = eff.geminiApiKey ?? "";
   qs<HTMLSelectElement>("#cx-opt-retention").value = String(s.retentionDays ?? 0);
   document.querySelectorAll<HTMLInputElement>("input[data-feature]").forEach((box) => {
     const key = box.dataset.feature as FeatureToggle;
@@ -449,7 +464,7 @@ async function loadSettingsUi(): Promise<void> {
   renderBlocklistChips();
 
   // Enterprise policy: lock and label managed fields (Phase 4.1).
-  applyManagedLockout(document, await getEffectiveSettings());
+  applyManagedLockout(document, eff);
 }
 
 type CollectionRow = { id: number; name: string; count: number };
@@ -742,6 +757,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  const consentAllow = document.getElementById(
+    "cx-indexing-consent-allow"
+  ) as HTMLButtonElement | null;
+  consentAllow?.addEventListener("click", async () => {
+    const msg = document.getElementById("cx-indexing-consent-msg");
+    if (msg) {
+      msg.hidden = true;
+      msg.classList.remove("is-error");
+    }
+    consentAllow.disabled = true;
+    try {
+      const res = (await chrome.runtime.sendMessage({
+        type: "CORTEX_INDEXING_CONSENT_GRANT",
+      })) as { ok?: boolean; error?: string } | undefined;
+      if (!res?.ok) {
+        if (msg) {
+          msg.textContent =
+            res?.error?.trim() || "Could not allow indexing.";
+          msg.classList.add("is-error");
+          msg.hidden = false;
+        }
+        consentAllow.disabled = false;
+        return;
+      }
+      await refreshIndexingConsentUi();
+      if (msg) {
+        msg.textContent = "Indexing is allowed. New pages you read can be saved on this device.";
+        msg.hidden = false;
+      }
+    } catch {
+      if (msg) {
+        msg.textContent = "Could not allow indexing.";
+        msg.classList.add("is-error");
+        msg.hidden = false;
+      }
+      consentAllow.disabled = false;
+    }
+  });
+
   qs<HTMLButtonElement>("#cx-opt-history-start").addEventListener("click", async () => {
     qs<HTMLElement>("#cx-opt-history-status").textContent = "";
     const days = Number(qs<HTMLSelectElement>("#cx-opt-history-days").value);
@@ -759,6 +813,7 @@ document.addEventListener("DOMContentLoaded", () => {
           : "Could not start scan.";
       return;
     }
+    void refreshIndexingConsentUi();
     startHistoryPolling();
   });
 

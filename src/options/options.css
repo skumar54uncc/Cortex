@@ -1,42 +1,43 @@
 /* Cortex options: linked from options.html; fonts via options.ts injectBrandFontFacesInto */
 
 :root {
-  --bg: #fafaf8;
-  --surface: #ffffff;
-  --surface-elevated: #ffffff;
-  --border: #e8e6e1;
-  --border-strong: #d4d2cc;
-  --text: #1a1a1a;
-  --text-secondary: #5c5c5c;
-  /* #8a8a8a was 3.3:1 on --bg; #666666 is 5.5:1 (axe color-contrast, release 1.2.0) */
+  /* Bridged to cortex-theme.css (linked first). Local aliases keep options selectors stable. */
+  --bg: var(--cx-bg, #e4e2dd);
+  --surface: var(--cx-surface-raised, #faf8f4);
+  --surface-elevated: var(--cx-surface-raised, #faf8f4);
+  --border: var(--cx-border, rgba(28, 25, 23, 0.14));
+  --border-strong: rgba(28, 25, 23, 0.22);
+  --text: var(--cx-text, #1c1917);
+  --text-secondary: var(--cx-text-muted, #57534e);
   --text-tertiary: #666666;
-  --accent: #c72a09;
-  --accent-hover: #a82207;
-  --accent-subtle: rgba(199, 42, 9, 0.1);
+  --accent: var(--cx-accent, #a82207);
+  --accent-hover: var(--cx-accent-hover, #8a1c05);
+  --accent-subtle: var(--cx-accent-soft, rgba(199, 42, 9, 0.14));
   --accent-text: #ffffff;
-  --success: #2d6a4f;
-  --warning: #b45309;
-  --danger: #b91c1c;
-  --focus-ring: rgba(199, 42, 9, 0.4);
+  --success: var(--cx-success, #166534);
+  --warning: var(--cx-warning, #92400e);
+  --danger: var(--cx-danger, #b91c1c);
+  --focus-ring: var(--cx-focus, rgba(199, 42, 9, 0.45));
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --font-sans: system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: var(--cx-font-body, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif);
+  --font-mono: var(--cx-font-mono, ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace);
 
-  --font-size-xs: 11px;
+  /* Named type scale (caption / small / body / title / display / metric) */
+  --font-size-xs: 11px; /* caption */
   --line-xs: 16px;
-  --font-size-sm: 13px;
+  --font-size-sm: 13px; /* small */
   --line-sm: 18px;
-  --font-size-base: 14px;
-  --line-base: 22px;
-  --font-size-md: 16px;
+  --font-size-base: 15px; /* body */
+  --line-base: 24px;
+  --font-size-md: 16px; /* title */
   --line-md: 24px;
-  --font-size-lg: 18px;
+  --font-size-lg: 18px; /* display-ish */
   --line-lg: 26px;
   --font-size-xl: 24px;
   --line-xl: 32px;
-  --font-size-stat: 32px;
-  --line-stat: 36px;
+  --font-size-stat: 22px; /* metric - aligned with --cx-ts-metric */
+  --line-stat: 28px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -529,7 +530,7 @@ body {
 
 .cx-prose code {
   font-family: var(--font-mono);
-  font-size: 0.92em;
+  font-size: var(--font-size-sm);
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   background: var(--accent-subtle);
@@ -911,96 +912,10 @@ body {
   color: var(--danger);
 }
 
-/* Buttons */
-.cx-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 36px;
-  padding: 0 var(--space-4);
-  font-family: inherit;
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  line-height: 1;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background 50ms ease-out, border-color 50ms ease-out, transform 80ms ease-out,
-    opacity var(--ease-out);
-}
-
-/* [hidden] has to beat the display above, or "Stop" shows while idle. */
-.cx-btn[hidden] {
-  display: none;
-}
-
-.cx-btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.cx-btn:disabled {
-  opacity: 0.4;
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
-.cx-btn:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.cx-btn-primary {
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--accent-text);
-}
-
-.cx-btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-
-.cx-btn-secondary {
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text);
-}
-
-.cx-btn-secondary:hover:not(:disabled) {
-  background: var(--accent-subtle);
-}
-
-.cx-btn-ghost {
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-}
-
-.cx-btn-ghost:hover:not(:disabled) {
-  background: var(--accent-subtle);
-  color: var(--text);
-}
-
-.cx-btn-danger {
-  border: 1px solid var(--danger);
-  background: transparent;
-  color: var(--danger);
-}
-
-.cx-btn-danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-}
-
-.cx-btn-sm {
-  min-height: 28px;
-  padding: 0 var(--space-3);
-  font-size: var(--font-size-sm);
-}
-
+/* Buttons: shared via cx-buttons.css (linked from options.html). */
 .cx-btn.is-loading .cx-btn-label {
   visibility: hidden;
 }
-
 .cx-btn.is-loading::after {
   content: "";
   position: absolute;
@@ -1011,16 +926,12 @@ body {
   border-radius: 50%;
   animation: cx-spin 0.7s linear infinite;
 }
-
-.cx-btn {
-  position: relative;
-}
-
 @keyframes cx-spin {
   to {
     transform: rotate(360deg);
   }
 }
+
 
 .cx-btn.is-success {
   border-color: var(--success);

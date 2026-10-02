@@ -8,6 +8,8 @@ export interface DriveFileInfo {
   trashed: boolean;
 }
 
+export const DRIVE_JSON_BACKUP_NAME = "Cortex Memory Backup.json";
+
 export interface DriveApi {
   createFolder(name: string): Promise<string>;
   createSpreadsheet(name: string, parentId: string): Promise<string>;
@@ -19,6 +21,8 @@ export interface DriveApi {
   readTab(fileId: string, tab: SheetTabName): Promise<string[][]>;
   updateRow(fileId: string, tab: SheetTabName, rowIndex: number, values: string[]): Promise<void>;
   deleteRows(fileId: string, tab: SheetTabName, ranges: RowRange[]): Promise<void>;
+  /** Create or replace the JSON backup file in the Cortex Memory folder. */
+  upsertJsonFile(name: string, parentId: string, body: string, existingId: string | null): Promise<string>;
 }
 
 export interface RowRange {
@@ -267,7 +271,58 @@ export class FetchDriveApi implements DriveApi {
     });
     if (!res.ok) throw new Error(`google_${res.status}`);
   }
+
+  async upsertJsonFile(name: string, parentId: string, body: string, existingId: string | null): Promise<string> {
+    if (existingId) {
+      const existing = await this.getFile(existingId);
+      if (existing && !existing.trashed) {
+        const res = await this.fetchImpl(
+          `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(existingId)}?uploadType=media`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+              "Content-Type": "application/json",
+            },
+            body,
+          }
+        );
+        if (!res.ok) throw new Error(`google_${res.status}`);
+        return existingId;
+      }
+    }
+    const meta = JSON.stringify({
+      name,
+      parents: [parentId],
+      mimeType: "application/json",
+    });
+    const boundary = "cortex_backup_boundary";
+    const multipart =
+      `--${boundary}\r\n` +
+      `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+      `${meta}\r\n` +
+      `--${boundary}\r\n` +
+      `Content-Type: application/json\r\n\r\n` +
+      `${body}\r\n` +
+      `--${boundary}--`;
+    const res = await this.fetchImpl(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`,
+        },
+        body: multipart,
+      }
+    );
+    const json = await readJson(res);
+    const id = json.id;
+    if (typeof id !== "string") throw new Error("drive_backup_failed");
+    return id;
+  }
 }
+
 
 export function googleStatus(error: unknown): number | null {
   const message = error instanceof Error ? error.message : "";

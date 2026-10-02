@@ -30,10 +30,21 @@ import { createStreamRenderer, type StreamRenderer } from "./stream-renderer";
 import { createFocusTrap, focusOnceAfterTransition } from "./focus-trap";
 import { createForgetMenu } from "./forget-menu";
 import { renderPeopleView, type PersonRow } from "./people-view";
+import { renderAgentsView } from "./agents-view";
+import { installCoachMarks, type CoachMarksController } from "./coach-marks";
+import { installFeedbackCard } from "./feedback-card";
+import { recordPanelOpen, type CoachTipId } from "../shared/ux-local";
 import { siteBadgeColors, siteInitial } from "../lib/site-badge";
 import { overlayHostModifierClass } from "./overlay-host";
 import { createScopeBar, type ScopeCollection } from "./scope-bar";
 import { applyThemeToHost, themeTokensCss } from "../shared/theme";
+import {
+  EMPTY_ASK_HINT,
+  EMPTY_ASK_TITLE,
+  EMPTY_SEARCH_TIPS,
+  EMPTY_SEARCH_TITLE,
+  emptyDigestTitle,
+} from "../shared/empty-copy";
 import { getUserSettings } from "../shared/extension-settings";
 import type { DigestRange, DigestResult } from "../lib/chat/digest-types";
 import type { ChunkWithDoc } from "../lib/search-engine";
@@ -73,8 +84,12 @@ function esc(s: string): string {
 const CORTEX_SETTINGS_PHRASE = "Cortex settings";
 
 /** Plain segment: optionally link the exact phrase "Cortex settings" to the options page. */
-function openExtensionOptionsFromOverlay(): void {
-  void sendRuntimeMessage({ type: "CORTEX_OPEN_OPTIONS" }).catch(() => {
+function openExtensionOptionsFromOverlay(section?: string): void {
+  const msg: { type: "CORTEX_OPEN_OPTIONS"; section?: string } = {
+    type: "CORTEX_OPEN_OPTIONS",
+  };
+  if (section === "cx-sec-assistant") msg.section = section;
+  void sendRuntimeMessage(msg).catch(() => {
     /* invalidated extension / no receiver */
   });
 }
@@ -241,7 +256,7 @@ function siteBadgeElement(hostname: string, className: string): HTMLElement {
   return span;
 }
 
-type OverlayMode = "search" | "ask" | "digest" | "people";
+type OverlayMode = "search" | "ask" | "digest" | "people" | "agents";
 
 export type OpenCortexOverlayOptions = {
   /** Pin to the right edge with no backdrop; used when the side panel cannot open. */
@@ -327,7 +342,7 @@ ${shadowCss}`;
           </span>
           <div class="cx-brand-text">
             <span id="cortex-overlay-title" class="cx-brand-wordmark">Cortex</span>
-            <span id="cortex-overlay-tagline" class="cx-brand-tagline">Your AI assistant's memory of what you browse and read</span>
+            <span id="cortex-overlay-tagline" class="cx-brand-tagline">Private library of pages you read on this device</span>
           </div>
         </div>
         <div class="cortex-head-actions">
@@ -385,6 +400,20 @@ ${shadowCss}`;
       el.textContent = text;
     });
   };
+
+  const coachMarks: CoachMarksController = installCoachMarks(panel);
+  const feedbackCard = installFeedbackCard(panel);
+
+  function refreshCoachMarks(): void {
+    const targets: { id: CoachTipId; anchor: HTMLElement }[] = [];
+    for (const id of ["search", "ask", "people", "agents"] as const) {
+      const anchor = tabBar.querySelector<HTMLElement>(`[data-coach="${id}"]`);
+      if (anchor) targets.push({ id, anchor });
+    }
+    const gear = shell.querySelector<HTMLElement>("[data-cortex-open-options]");
+    if (gear) targets.push({ id: "assistSync", anchor: gear });
+    coachMarks.refresh(targets);
+  }
 
   // Forget controls in the header (Phase 4.3).
   const forgetMenu = createForgetMenu({
@@ -629,6 +658,7 @@ ${shadowCss}`;
       { id: "ask", label: "Ask" },
       { id: "digest", label: "Digest" },
       ...(peopleTabEnabled ? [{ id: "people" as OverlayMode, label: "People & Companies" }] : []),
+      { id: "agents", label: "Connect AI Agents" },
     ];
 
     for (const tab of tabs) {
@@ -639,9 +669,16 @@ ${shadowCss}`;
       btn.setAttribute("aria-label", `${tab.label} tab`);
       btn.setAttribute("role", "tab");
       btn.setAttribute("aria-selected", String(currentMode === tab.id));
-      btn.addEventListener("click", () => switchMode(tab.id));
+      if (tab.id === "search" || tab.id === "ask" || tab.id === "people" || tab.id === "agents") {
+        btn.setAttribute("data-coach", tab.id);
+      }
+      btn.addEventListener("click", () => {
+        switchMode(tab.id);
+        refreshCoachMarks();
+      });
       tabBar.appendChild(btn);
     }
+    refreshCoachMarks();
   }
 
   let askSidebarListEl: HTMLElement | null = null;
@@ -1032,11 +1069,10 @@ ${shadowCss}`;
       mark.append(markImg);
       const title = document.createElement("p");
       title.className = "cortex-chat-empty-title";
-      title.textContent = "What would you like to know?";
+      title.textContent = EMPTY_ASK_TITLE;
       const hint = document.createElement("p");
       hint.className = "cortex-chat-empty-hint cortex-muted";
-      hint.textContent =
-        "Ask about pages you have read. Answers stay grounded in your local library, with citations.";
+      hint.textContent = EMPTY_ASK_HINT;
       const chips = document.createElement("div");
       chips.className = "cortex-example-chips";
       chips.setAttribute("aria-label", "Example questions");
@@ -1615,7 +1651,7 @@ ${shadowCss}`;
     if (digest.pageCount === 0) {
       const empty = document.createElement("div");
       empty.className = "cortex-digest-empty-card";
-      empty.innerHTML = `<p class="cortex-digest-empty-title">Nothing indexed for ${esc(digestRangeLabel(digest.range as DigestRange))}</p><p class="cortex-digest-empty-hint">${esc(digest.narrative)}</p>`;
+      empty.innerHTML = `<p class="cortex-digest-empty-title">${esc(emptyDigestTitle(digestRangeLabel(digest.range as DigestRange)))}</p><p class="cortex-digest-empty-hint">${esc(digest.narrative)}</p>`;
       wrapper.appendChild(empty);
       return wrapper;
     }
@@ -1926,11 +1962,9 @@ ${shadowCss}`;
               ? `<p class="cortex-evidence-note">${esc(res.evidence)}</p>`
               : "";
             const tips = `
-              <div class="cortex-empty-title">No matching memory</div>
+              <div class="cortex-empty-title">${EMPTY_SEARCH_TITLE}</div>
               <ul class="cortex-empty-tips">
-                <li>Try fewer words or a phrase you remember.</li>
-                <li>Include a site or topic.</li>
-                <li>Visit more pages. Your index grows as you read.</li>
+                ${EMPTY_SEARCH_TIPS.map((t) => `<li>${esc(t)}</li>`).join("")}
               </ul>`;
             results.innerHTML = `<div class="cortex-empty cortex-muted">${evidenceNote}${tips}</div>`;
             announcePolite("No matching pages found.");
@@ -2115,7 +2149,7 @@ ${shadowCss}`;
       inputInner.className = "cortex-ask-input-inner";
       const ta = document.createElement("textarea");
       ta.className = "cortex-ask-input";
-      ta.placeholder = "Ask anything about what you've read…";
+      ta.placeholder = "Ask about pages you have read";
       ta.rows = 1;
       ta.maxLength = CHAT_LIMITS.MAX_QUESTION_CHARS;
       ta.setAttribute("aria-label", "Your question");
@@ -2206,6 +2240,22 @@ ${shadowCss}`;
       return;
     }
 
+    if (currentMode === "agents") {
+      const host = document.createElement("div");
+      host.className = "cortex-agents-host";
+      bodyEl.appendChild(host);
+      renderAgentsView(host, {
+        openAssistSyncSettings: () => openExtensionOptionsFromOverlay("cx-sec-assistant"),
+        announce: announcePolite,
+      });
+      requestAnimationFrame(() => {
+        host
+          .querySelector<HTMLButtonElement>("[data-cortex-open-assist-sync]")
+          ?.focus({ preventScroll: true });
+      });
+      return;
+    }
+
     if (currentMode === "digest") {
       const rangeBar = document.createElement("div");
       rangeBar.className = "cortex-digest-range";
@@ -2244,6 +2294,8 @@ ${shadowCss}`;
   }
 
   function closeOverlay(): void {
+    coachMarks.destroy();
+    feedbackCard.destroy();
     flushPendingDeletes();
     hideUndoToast();
     stopTheme();
@@ -2275,5 +2327,15 @@ ${shadowCss}`;
 
   requestAnimationFrame(() => {
     panel.classList.add("is-visible");
+  });
+
+  void recordPanelOpen().then((ux) => {
+    if (!host.isConnected) return;
+    refreshCoachMarks();
+    // Delay feedback so it does not compete with first-run tips.
+    window.setTimeout(() => {
+      if (!host.isConnected) return;
+      feedbackCard.maybeShow(ux);
+    }, 1200);
   });
 }
